@@ -1,0 +1,8 @@
+{
+    "rainfall 1-month anomaly [%]": {
+        "tukey": {
+            "alarm": 50.0,
+            "alert": 60.0
+        }
+    }
+}
