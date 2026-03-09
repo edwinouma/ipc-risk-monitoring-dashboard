@@ -1,0 +1,91 @@
+folder
+
+climate_thresholds_project/
+│
+├── data/
+│   └── rainfall_ndvi.xlsx
+│
+├── src/
+│   ├── __init__.py
+│   ├── data_loader.py
+│   ├── preprocessing.py
+│   ├── spatial_percentiles.py
+│   ├── composite_thresholds.py
+│   └── config.py
+│
+├── outputs/
+│   └── thresholds_results.csv
+│
+├── main.py
+├── requirements.txt
+└── README.md
+
+STEPS
+
+STEP 1 — Load Data
+
+Filter only:
+
+'rainfall 1-month anomaly [%]'
+
+'rainfall 3-month anomaly [%]'
+
+'10 day NDVI anomaly'
+
+
+
+STEP 2 — Preprocess
+
+Ensure date column is datetime
+
+Extract Year-Month
+
+Remove missing values
+
+
+STEP 3 — Spatial Percentiles (Across Units Per Month-Year)
+
+For each:
+
+indicator
+
+date
+
+Compute across adm1_name:
+
+Q25
+
+Q50
+
+Q75
+
+
+
+
+STEP 4 — Composite Thresholds (Across Years)
+
+For each indicator:
+
+Compute:
+
+Median of Q25 across time → Alert
+
+Median of Q75 across time → Alarm
+
+(Or mean if you prefer — but we’ll default to median)
+
+
+
+
+
+
+
+
+Always install packages from PyCharm Terminal inside the project
+
+
+ Install the required libraries
+ pip install pandas numpy matplotlib statsmodels scikit-learn
+
+ Then automatically generate requirements.txt file where to save them
+ pip freeze > requirements.txt

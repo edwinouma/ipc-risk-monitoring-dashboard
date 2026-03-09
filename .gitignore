@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.idea/
+
+# Data
+data/
+outputs/
+
+# Large files
+*.parquet
+*.csv
+*.xlsx
+
+# OS
+.DS_Store
+Thumbs.db
