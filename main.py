@@ -381,20 +381,21 @@ def main():
     final_spatial_percentiles.to_csv("outputs/spatial_percentiles_with_proportions.csv", index=False)
 
     print("\nTables saved successfully.")
+    import streamlit as st
 
-    # ---------------------------------------------------
-    # 10. Charts (UNCHANGED)
     # ---------------------------------------------------
     for ind in INDICATORS:
         print(f"Generating charts for: {ind}")
 
-        plot_monthly_trigger_counts(
+        fig = plot_monthly_trigger_counts(
             final_trigger_counts,
             indicator_value=ind,
             method="percentile",
-            use_percent=False,
-            save_path="outputs"
+            use_percent=False
         )
+
+        st.subheader(f"{ind} – Percentile Triggers")
+        st.plotly_chart(fig, use_container_width=True)
 
         plot_monthly_trigger_counts(
             final_trigger_counts,
