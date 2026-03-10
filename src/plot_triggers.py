@@ -51,50 +51,48 @@ def plot_monthly_trigger_counts(
         raise ValueError("method must be 'percentile' or 'tukey'")
 
     # ---------------------------------------------------
-    # Reduce x-axis clutter
+    # Plot using Plotly instead of matplotlib
     # ---------------------------------------------------
-    total_points = len(df)
-    step = max(1, total_points // 15)
 
-    x = range(total_points)
+    fig = go.Figure()
 
-    fig, ax = plt.subplots(figsize=(20, 6))
+    fig.add_bar(
+        x=df["date"],
+        y=df[alarm_col],
+        name="Alarm",
+        marker_color="red"
+    )
 
-    # --- STACK ORDER: Alarm → Alert → Minimal ---
+    fig.add_bar(
+        x=df["date"],
+        y=df[alert_col],
+        name="Alert",
+        marker_color="orange"
+    )
 
-    ax.bar(x, df[alarm_col],
-           label="Alarm", color="red")
-
-    ax.bar(x, df[alert_col],
-           bottom=df[alarm_col],
-           label="Alert", color="orange")
-
-    ax.bar(x, df[minimal_col],
-           bottom=df[alarm_col] + df[alert_col],
-           label="Minimal", color="lightgreen")
-
-    ax.set_xticks([i for i in x if i % step == 0])
-    ax.set_xticklabels(
-        df["date"].dt.strftime("%Y %b")[::step],
-        rotation=45,
-        ha="right"
+    fig.add_bar(
+        x=df["date"],
+        y=df[minimal_col],
+        name="Minimal",
+        marker_color="lightgreen"
     )
 
     ylabel = "Percentage (%)" if use_percent else "Number of Units"
 
-    ax.set_ylabel(ylabel)
-    ax.set_title(
-        f"Stacked Units by Alarm/Alert Levels ({method.capitalize()})"
+    fig.update_layout(
+        barmode="stack",
+        title=f"Stacked Units by Alarm/Alert Levels ({method.capitalize()})",
+        xaxis_title="Month",
+        yaxis_title=ylabel,
+        width=1400,
+        height=600
     )
 
-    ax.legend()
-    plt.tight_layout()
-
-    # ---------------------------------------------------
-    # Save Files
-    # ---------------------------------------------------
     safe_name = indicator_value.replace(" ", "_").replace("%", "")
     filename_base = f"{safe_name}_{method}_stacked"
+
+    return fig
+
 
 # =====================================================
 # INTERACTIVE STACKED BAR (HTML with Zoom/Scroll)
@@ -141,7 +139,6 @@ def plot_monthly_trigger_counts_interactive(
 
     fig = go.Figure()
 
-    # STACK ORDER matters in Plotly
     fig.add_bar(
         x=df["date"],
         y=df[alarm_col],
