@@ -16,8 +16,8 @@ def plot_monthly_trigger_counts(
     save_path="outputs"
 ):
     """
-    Create stacked bar chart (Alarm bottom → Alert → Minimal top)
-    and save as PNG + PDF.
+    Create stacked bar chart (Alarm → Alert → Minimal)
+    and return the figure.
     """
 
     os.makedirs(save_path, exist_ok=True)
@@ -95,14 +95,6 @@ def plot_monthly_trigger_counts(
     # ---------------------------------------------------
     safe_name = indicator_value.replace(" ", "_").replace("%", "")
     filename_base = f"{safe_name}_{method}_stacked"
-
-    plt.savefig(f"{save_path}/{filename_base}.png", dpi=300)
-    plt.savefig(f"{save_path}/{filename_base}.pdf")
-
-    plt.close()
-
-    print(f"Saved static stacked chart: {filename_base}.png and .pdf")
-
 
 # =====================================================
 # INTERACTIVE STACKED BAR (HTML with Zoom/Scroll)
@@ -183,8 +175,6 @@ def plot_monthly_trigger_counts_interactive(
     )
 
     safe_name = indicator_value.replace(" ", "_").replace("%", "")
-    filename = f"{save_path}/{safe_name}_{method}_stacked_interactive.html"
+    filename_base = f"{safe_name}_{method}_stacked"
 
-    fig.write_html(filename)
-
-    print(f"Saved interactive stacked chart: {filename}")
+    return fig
