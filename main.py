@@ -24,7 +24,10 @@ import os
 
 ROBUST_MIN_RETENTION = 40
 
+import streamlit as st
 
+
+@st.cache_data
 def main():
 
     import time
@@ -395,7 +398,7 @@ def main():
         )
 
         st.subheader(f"{ind} – Percentile Triggers")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         plot_monthly_trigger_counts(
             final_trigger_counts,
