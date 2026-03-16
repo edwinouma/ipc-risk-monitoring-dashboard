@@ -1,7 +1,6 @@
 from src.unit_month import compute_unit_month_values
 import pandas as pd
-from src.config import INDICATOR_DIRECTION
-
+from src.config import INDICATOR_DIRECTION, CLIMATE_INDICATORS, PRICE_INDICATORS
 
 def compute_spatial_percentiles(
     df,
@@ -73,22 +72,43 @@ def compute_spatial_percentiles(
     # ---------------------------------------------------
     # 4. Directional filtering
     # ---------------------------------------------------
+
     direction = INDICATOR_DIRECTION.get(indicator_value, "lower")
 
-    if direction == "lower":
+    # ---------------------------------------------------
+    # Climate indicators (anomaly-based)
+    # ---------------------------------------------------
+    if indicator_value in CLIMATE_INDICATORS:
 
-        # drought-style indicators
         df_filtered = df_unit_month[
             df_unit_month[value_col] < 100
-        ].copy()
+            ].copy()
 
-    elif direction == "upper":
+    # ---------------------------------------------------
+    # Market indicators (prices, livestock, ToT)
+    # ---------------------------------------------------
+    elif indicator_value in PRICE_INDICATORS:
 
-        # inflation-style indicators
-        df_filtered = df_unit_month[
-            df_unit_month[value_col] > 0
-        ].copy()
+        if direction == "upper":
 
+            # food price inflation
+            df_filtered = df_unit_month[
+                df_unit_month[value_col] > 0
+                ].copy()
+
+        elif direction == "lower":
+
+            # livestock / ToT decline
+            df_filtered = df_unit_month[
+                df_unit_month[value_col] < 0
+                ].copy()
+
+        else:
+            df_filtered = df_unit_month.copy()
+
+    # ---------------------------------------------------
+    # Fallback (future indicators)
+    # ---------------------------------------------------
     else:
 
         df_filtered = df_unit_month.copy()
@@ -154,20 +174,20 @@ def compute_spatial_percentiles(
     # ---------------------------------------------------
     # 11. Overall retention stats
     # ---------------------------------------------------
-    overall_total = len(df_unit_month)
-    overall_filtered = len(df_filtered)
+    total_points_available = grouped["count_total"].sum()
+    total_points_used = grouped["count_filtered"].sum()
 
     overall_percent = (
-        round(overall_filtered / overall_total * 100, 1)
-        if overall_total > 0 else 0
+        round(total_points_used / total_points_available * 100, 1)
+        if total_points_available > 0 else 0
     )
 
-    grouped["overall_count_total"] = overall_total
-    grouped["overall_count_filtered"] = overall_filtered
+    grouped["overall_count_total"] = total_points_available
+    grouped["overall_count_filtered"] = total_points_used
     grouped["overall_percent_used"] = overall_percent
 
     grouped["overall_display"] = (
-        f"{overall_filtered} ({overall_percent}%)"
+        f"{total_points_used} ({overall_percent}%)"
     )
 
     # ---------------------------------------------------

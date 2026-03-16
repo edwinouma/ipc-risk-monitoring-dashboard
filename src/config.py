@@ -1,3 +1,4 @@
+DEFAULT_THRESHOLD_METHOD = "percentile"
 # ---------------------------------------------------
 # Indicator Groups
 # ---------------------------------------------------
@@ -31,6 +32,16 @@ PRICE_INDICATORS = [
 ]
 
 # ---------------------------------------------------
+# Shock Indicators
+# ---------------------------------------------------
+
+SHOCK_INDICATORS = [
+    "conflict_events",
+    "flood_occurrence",
+    "flood_area"
+]
+
+# ---------------------------------------------------
 # All Indicators
 # ---------------------------------------------------
 
@@ -44,9 +55,9 @@ INDICATORS = CLIMATE_INDICATORS + PRICE_INDICATORS
 INDICATOR_COUNTRY_MAP = {
 
     # Climate indicators apply everywhere
-    "rainfall 1-month anomaly [%]": ["Afghanistan", "Somalia", "Kenya"],
-    "rainfall 3-month anomaly [%]": ["Afghanistan", "Somalia", "Kenya"],
-    "10 day NDVI anomaly": ["Afghanistan", "Somalia", "Kenya"],
+    "rainfall 1-month anomaly [%]": ["Afghanistan", "South Sudan", "Kenya"],
+    "rainfall 3-month anomaly [%]": ["Afghanistan", "South Sudan", "Kenya"],
+    "10 day NDVI anomaly": ["Afghanistan", "South Sudan", "Kenya"],
 
     # Afghanistan price indicators
     "Bread": ["Afghanistan"],
@@ -123,9 +134,97 @@ INDICATOR_DIRECTION = {
     "Wheat flour (low quality)": "upper",
 
     # Kenya prices
-    "Goat": "upper",
+    "Goat": "lower",
     "Maize": "upper",
-    "Beans": "upper"
+    "Beans": "upper",
+
+    # Shock indicators
+    "conflict_events": "upper",
+    "conflict_fatalities": "upper",
+    "flood_area": "upper"
+}
+
+
+# ---------------------------------------------------
+# Indicator Threshold Computation Method
+# ---------------------------------------------------
+
+# Defines how thresholds are computed for each indicator
+# tukey = Tukey IQR method
+# percentile = historical percentile thresholds
+# event = binary hazard event trigger
+
+INDICATOR_METHOD = {
+
+    # Climate indicators
+    "rainfall 1-month anomaly [%]": "tukey",
+    "rainfall 3-month anomaly [%]": "tukey",
+    "10 day NDVI anomaly": "tukey",
+
+    # Afghanistan price indicators
+    "Bread": "percentile",
+    "Exchange rate": "percentile",
+    "Fuel (diesel)": "percentile",
+    "Oil (cooking)": "percentile",
+    "Pulses": "percentile",
+    "Rice (high quality)": "percentile",
+    "Rice (low quality)": "percentile",
+    "Sugar": "percentile",
+    "Wage (non-qualified labour, non-agricultural)": "percentile",
+    "Wheat": "percentile",
+    "Wheat flour (high quality)": "percentile",
+    "Wheat flour (low quality)": "percentile",
+
+    # Kenya indicators
+    "Goat": "percentile",
+    "Maize": "percentile",
+    "Beans": "percentile",
+    "ToT": "percentile",
+
+    # Shock indicators
+    "conflict_events": "percentile",
+    "conflict_fatalities": "percentile",
+    "flood_occurrence": "event",
+    "flood_area": "percentile"
+}
+
+
+# ---------------------------------------------------
+# Indicator Type (for future composite risk modelling)
+# ---------------------------------------------------
+
+INDICATOR_TYPE = {
+
+    # Climate indicators
+    "rainfall 1-month anomaly [%]": "climate",
+    "rainfall 3-month anomaly [%]": "climate",
+    "10 day NDVI anomaly": "climate",
+
+    # Market indicators
+    "Bread": "market",
+    "Exchange rate": "market",
+    "Fuel (diesel)": "market",
+    "Oil (cooking)": "market",
+    "Pulses": "market",
+    "Rice (high quality)": "market",
+    "Rice (low quality)": "market",
+    "Sugar": "market",
+    "Wage (non-qualified labour, non-agricultural)": "market",
+    "Wheat": "market",
+    "Wheat flour (high quality)": "market",
+    "Wheat flour (low quality)": "market",
+
+    "Goat": "market",
+    "Maize": "market",
+    "Beans": "market",
+    "ToT": "market",
+
+    # Shock indicators
+
+    "conflict_events": "shock",
+    "conflict_fatalities": "shock",
+    "flood_occurrence": "hazard",
+    "flood_area": "hazard"
 }
 
 
@@ -173,7 +272,13 @@ SEASONAL_DEFINITIONS = {
     "Goat": {"All Months": None},
     "Maize": {"All Months": None},
     "Beans": {"All Months": None},
-    "ToT": {"All Months": None}
+    "ToT": {"All Months": None},
+
+    # Shock indicators
+    "conflict_events": {"All Months": None},
+    "conflict_fatalities": {"All Months": None},
+    "flood_occurrence": {"All Months": None},
+    "flood_area": {"All Months": None}
 }
 
 
@@ -189,10 +294,10 @@ COUNTRY_CONFIG = {
         "rainfall_file": "data/rainfall_ndvi.xlsx"
     },
 
-    "Somalia": {
+    "South Sudan": {
         "unit_col": "admin1",
-        "price_file": "data/price_data_somalia.xlsx",
-        "rainfall_file": "data/rainfall_ndvi_somalia.xlsx"
+        "price_file": "data/price_data_south sudan.xlsx",
+        "rainfall_file": "data/rainfall_ndvi_South Sudan.xlsx"
     },
 
     # Temporarily using adm1_name until dataset changes to county
@@ -230,7 +335,13 @@ INDICATOR_LABELS = {
     "Goat": "Goat Price",
     "Maize": "Maize Price",
     "Beans": "Beans Price",
-    "ToT": "Terms of Trade"
+    "ToT": "Terms of Trade",
+
+    # Shock indicators
+    "conflict_events": "Conflict Events",
+    "conflict_fatalities":"Conflict Fatalities",
+    "flood_occurrence": "Flood Occurrence",
+    "flood_area": "Flooded Area"
 }
 
 # ---------------------------------------------------

@@ -4,5 +4,11 @@
             "alarm": 50.0,
             "alert": 60.0
         }
+    },
+    "Maize": {
+        "percentile": {
+            "alarm": 35.0,
+            "alert": 25.0
+        }
     }
 }

@@ -488,10 +488,22 @@ else:
 
         direction = INDICATOR_DIRECTION.get(indicator, "lower")
 
-        if direction == "lower":
+        # Climate indicators
+        if indicator in CLIMATE_INDICATORS:
             filtered_count = df_retention[df_retention["value"] < 100]["value"].count()
-        elif direction == "upper":
-            filtered_count = df_retention[df_retention["value"] > 0]["value"].count()
+
+        # Market indicators
+        elif indicator in PRICE_INDICATORS:
+
+            if direction == "upper":
+                filtered_count = df_retention[df_retention["value"] > 0]["value"].count()
+
+            elif direction == "lower":
+                filtered_count = df_retention[df_retention["value"] < 0]["value"].count()
+
+            else:
+                filtered_count = total_count
+
         else:
             filtered_count = total_count
 
@@ -502,8 +514,10 @@ else:
             overall_display = "N/A"
             overall_percent = None
 
-        # ---- Monthly retention ----
-        if direction == "lower":
+        # ---- Monthly retention (consistent with spatial_percentiles logic) ----
+
+        if indicator in CLIMATE_INDICATORS:
+
             monthly_stats = (
                 df_retention
                 .groupby("year_month")["value"]
@@ -513,17 +527,45 @@ else:
                 )
                 .reset_index()
             )
-        elif direction == "upper":
-            monthly_stats = (
-                df_retention
-                .groupby("year_month")["value"]
-                .agg(
-                    total="count",
-                    filtered=lambda x: (x > 0).sum()
+
+        elif indicator in PRICE_INDICATORS:
+
+            if direction == "upper":
+
+                # food price inflation
+                monthly_stats = (
+                    df_retention
+                    .groupby("year_month")["value"]
+                    .agg(
+                        total="count",
+                        filtered=lambda x: (x > 0).sum()
+                    )
+                    .reset_index()
                 )
-                .reset_index()
-            )
+
+            elif direction == "lower":
+
+                # livestock / ToT decline
+                monthly_stats = (
+                    df_retention
+                    .groupby("year_month")["value"]
+                    .agg(
+                        total="count",
+                        filtered=lambda x: (x < 0).sum()
+                    )
+                    .reset_index()
+                )
+
+            else:
+                monthly_stats = (
+                    df_retention
+                    .groupby("year_month")["value"]
+                    .agg(total="count", filtered="count")
+                    .reset_index()
+                )
+
         else:
+
             monthly_stats = (
                 df_retention
                 .groupby("year_month")["value"]
