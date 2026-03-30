@@ -7,9 +7,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-
-from src.config import METHOD_DESCRIPTIONS, DEFAULT_METHOD_DESCRIPTIONS
-
 def get_method_description(indicator, method):
 
     # 1. Try indicator-specific description
@@ -44,7 +41,9 @@ from src.config import (
     DEFAULT_BASELINE,
     INDICATOR_ALLOWED_BASELINES,
     INDICATOR_ALLOWED_METHODS,   # 🔥 ADD THIS
-    EVENT_THRESHOLDS
+    EVENT_THRESHOLDS,
+    METHOD_DESCRIPTIONS,
+    DEFAULT_METHOD_DESCRIPTIONS
 )
 from src.event_loader import load_reference_events, get_reference_events
 
