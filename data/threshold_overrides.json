@@ -1,14 +1,12 @@
 {
-    "rainfall 1-month anomaly [%]": {
-        "tukey": {
-            "alarm": 50.0,
-            "alert": 60.0
-        }
-    },
     "Maize": {
         "percentile": {
             "alarm": 35.0,
             "alert": 25.0
+        },
+        "zscore": {
+            "alarm": 129.1364086159182,
+            "alert": 83.43689592386558
         }
     }
 }

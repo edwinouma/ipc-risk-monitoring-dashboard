@@ -1,0 +1,32 @@
+indicator,count
+Exchange rate,750
+"Wage (non-qualified labour, non-agricultural)",750
+rainfall 3-month anomaly [%],375
+10 day NDVI anomaly,375
+Bread,375
+Fuel (diesel),375
+rainfall 1-month anomaly [%],375
+Oil (cooking),375
+Pulses,375
+Rice (low quality),375
+Rice (high quality),375
+Sugar,375
+Wheat,375
+Wheat flour (high quality),375
+Wheat flour (low quality),375
+Goat,375
+Maize,375
+Beans,375
+ToT,375
+"Fuel (diesel, parallel market)",375
+"Fuel (petrol-gasoline, parallel market)",375
+Sorghum (local),375
+"Sorghum (red, local)",375
+Sorghum flour,375
+"Beans (fava, dry)",375
+Cowpeas,375
+"Wage (non-qualified labour, agricultural)",375
+Rice,375
+ToT (Labour/Cereal),375
+conflict_events,375
+conflict_fatalities,375

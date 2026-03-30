@@ -1,4 +1,4 @@
-from src.data_loader import load_rainfall_data, load_price_data
+from src.data_loader import load_rainfall_data, load_price_data, load_conflict_data
 from src.price_monthly import compute_monthly_prices
 from src.ltm_baseline import compute_long_term_monthly_median
 from src.ltm_anomaly import compute_ltm_anomaly
@@ -17,7 +17,11 @@ from src.export_colored_matrix import export_colored_classification_matrix
 from src.unit_month import compute_unit_month_values
 from src.config import *
 from src.price_baselines import compute_price_baseline
-from src.config import BASELINE_METHODS
+from src.config import BASELINE_METHODS, INDICATOR_ALLOWED_BASELINES, EVENT_THRESHOLDS
+from src.conflict_baseline import compute_conflict_baseline
+from src.zscore_thresholds import compute_zscore_thresholds
+from src.tot_calculation import compute_tot
+from src.config import TOT_CONFIG, DERIVED_INDICATORS
 import pandas as pd
 import os
 
@@ -37,6 +41,7 @@ def main():
 
     all_rainfall = []
     all_prices = []
+    all_conflict = []
 
     for country, cfg in COUNTRY_CONFIG.items():
 
@@ -68,10 +73,62 @@ def main():
         else:
             print(f"Price file not found for {country}")
 
+        # -------------------------
+        # Conflict
+        # -------------------------
+        conflict_path = cfg.get("conflict_file")
+
+        if conflict_path and os.path.exists(conflict_path):
+
+            df_conflict = load_conflict_data(conflict_path, country=country)
+
+            # Ensure outputs folder exists
+            output_dir = "outputs"
+            os.makedirs(output_dir, exist_ok=True)
+
+            # Save file in outputs folder
+            output_path = os.path.join(output_dir, f"conflict_data_{country}.csv")
+            df_conflict.to_csv(output_path, index=False)
+
+            print(f"Conflict data for {country} saved successfully at: {output_path}")
+
+            all_conflict.append(df_conflict)
+
+        else:
+            print(f"Conflict file not found for {country}")
+
     df_rainfall = pd.concat(all_rainfall, ignore_index=True)
     df_price_raw = pd.concat(all_prices, ignore_index=True)
+    df_conflict = (
+        pd.concat(all_conflict, ignore_index=True)
+        if all_conflict else pd.DataFrame()
+    )
 
     df_price_monthly = compute_monthly_prices(df_price_raw)
+
+    # ---------------------------------------------------
+    # 🔥 Compute ToT EARLY (BEFORE BASELINES)
+    # ---------------------------------------------------
+    tot_all = []
+
+    for c in df_price_monthly["country"].unique():
+
+        df_c = df_price_monthly[df_price_monthly["country"] == c].copy()
+
+        tot_df = compute_tot(df_c, c, TOT_CONFIG)
+
+        if not tot_df.empty:
+            tot_df["country"] = c
+            tot_all.append(tot_df)
+
+    # Combine all ToT into monthly data
+    if tot_all:
+        tot_all_df = pd.concat(tot_all, ignore_index=True)
+
+        df_price_monthly = pd.concat(
+            [df_price_monthly, tot_all_df],
+            ignore_index=True
+        )
 
     baseline = compute_long_term_monthly_median(df_price_monthly)
 
@@ -121,6 +178,10 @@ def main():
     price_export = df_price_standard.copy()
     price_export["year_month"] = price_export["year_month"].astype(str)
 
+    # AFTER ToT computation
+    price_export = df_price_standard.copy()
+    price_export["year_month"] = price_export["year_month"].astype(str)
+
     price_export.to_excel(
         "outputs/price_monthly_percent_deviation.xlsx",
         index=False
@@ -138,10 +199,67 @@ def main():
         VALUE_COL: "value"
     })
 
-    df_rainfall_standard["baseline_method"] = DEFAULT_BASELINE
+    df_rainfall_standard["baseline_method"] = "none"
 
+    # ---------------------------------------------------
+    # Conflict baseline processing
+    # ---------------------------------------------------
+    conflict_datasets = []
+
+    for ind in df_conflict["indicator"].unique():
+
+        method_type = INDICATOR_METHOD.get(ind, "percentile")
+
+        df_ind = df_conflict[df_conflict["indicator"] == ind].copy()
+
+        # ---------------------------------------------------
+        # EVENT INDICATORS → NO BASELINE
+        # ---------------------------------------------------
+        if method_type == "event":
+
+            df_ind["baseline_method"] = "none"
+            conflict_datasets.append(df_ind)
+
+            print(f"Skipping baseline for {ind} (event-based)")
+
+        else:
+            methods = INDICATOR_ALLOWED_BASELINES.get(ind, [])
+
+            for method in methods:
+
+                # 🔥 FIX: skip NONE before calling function
+                if method.upper() == "NONE":
+                    df_copy = df_ind.copy()
+                    df_copy["baseline_method"] = "none"
+                    conflict_datasets.append(df_copy)
+
+                    print(f"Using raw values for {ind} (NONE)")
+                    continue
+
+                print(f"Computing {ind} baseline: {method}")
+
+                df_method = compute_conflict_baseline(method, df_ind)
+                conflict_datasets.append(df_method)
+
+    df_conflict_anom = pd.concat(conflict_datasets, ignore_index=True)
+
+    df_conflict_standard = df_conflict_anom[
+        ["country", UNIT_COL, "year_month", INDICATOR_COL, VALUE_COL, "baseline_method"]
+    ].copy()
+
+    df_conflict_standard = df_conflict_standard.rename(columns={
+        UNIT_COL: "adm1_name",
+        INDICATOR_COL: "indicator",
+        VALUE_COL: "value"
+    })
+
+    print("\n--- df_conflict_standard sample ---")
+    print(df_conflict_standard.head(5))
+    print("\nColumns:", df_conflict_standard.columns)
+    print("Shape:", df_conflict_standard.shape)
+    print("\nIndicators:", df_conflict_standard["indicator"].unique())
     df = pd.concat(
-        [df_rainfall_standard, df_price_standard],
+        [df_rainfall_standard, df_price_standard, df_conflict_standard],
         ignore_index=True
     ).sort_values(["country", "year_month", UNIT_COL])
 
@@ -162,14 +280,20 @@ def main():
 
         for ind in country_indicators:
 
-            if ind in PRICE_INDICATORS:
-                baseline_list = BASELINE_METHODS
-            else:
-                baseline_list = [DEFAULT_BASELINE]
+            baseline_list = INDICATOR_ALLOWED_BASELINES.get(
+                ind,
+                [DEFAULT_BASELINE]
+            )
 
             for baseline_method in baseline_list:
 
                 print(f"\nProcessing Indicator: {ind} | Baseline: {baseline_method}")
+
+                # -----------------------------------------
+                # 🔥 FIX: Skip raw prices for Z-score
+                # -----------------------------------------
+                if ind in PRICE_INDICATORS and baseline_method == "none":
+                    continue
 
                 df_indicator = df_country[df_country["indicator"] == ind].copy()
 
@@ -181,14 +305,26 @@ def main():
                     print(f"Skipping {ind} | {baseline_method} (no data)")
                     continue
 
-                unit_month = compute_unit_month_values(
-                    df=df_indicator,
-                    unit_col=UNIT_COL,
-                    indicator_col=INDICATOR_COL,
-                    value_col=VALUE_COL,
-                    indicator_value=ind,
-                    aggregation="mean"
-                )
+                method_type = INDICATOR_METHOD.get(ind, "percentile")
+
+                # ---------------------------------------------------
+                # 🔥 SPECIAL HANDLING FOR CONFLICT (event indicators)
+                # ---------------------------------------------------
+                if method_type in ["event", "event_combined"]:
+
+                    # Already unit-month → use directly
+                    unit_month = df_indicator.copy()
+
+                else:
+
+                    unit_month = compute_unit_month_values(
+                        df=df_indicator,
+                        unit_col=UNIT_COL,
+                        indicator_col=INDICATOR_COL,
+                        value_col=VALUE_COL,
+                        indicator_value=ind,
+                        aggregation="mean"
+                    )
 
                 unit_month["indicator"] = ind
                 unit_month["baseline_method"] = baseline_method
@@ -208,30 +344,137 @@ def main():
                 spatial["season_scope"] = "All Months"
                 all_spatial_percentiles.append(spatial)
 
-                monthly_table = compute_monthly_quartiles_with_iqr(spatial, DATE_COL)
-                all_monthly_tables.append(monthly_table)
+                method_type = INDICATOR_METHOD.get(ind, "percentile")
 
-                percentile_thresholds = compute_composite_thresholds(spatial, ind)
+                # ---------------------------------------------------
+                # SKIP THRESHOLDS FOR EVENT INDICATORS
+                # ---------------------------------------------------
+                if method_type not in ["event", "event_combined"]:
 
-                percentile_thresholds = percentile_thresholds.rename(columns={
-                    "alert_threshold": "alert_percentile",
-                    "alarm_threshold": "alarm_percentile"
-                })
+                    monthly_table = compute_monthly_quartiles_with_iqr(spatial, DATE_COL)
+                    all_monthly_tables.append(monthly_table)
 
-                tukey_thresholds = compute_tukey_thresholds(spatial, ind)
+                    percentile_thresholds = compute_composite_thresholds(spatial, ind)
 
-                merged_thresholds = percentile_thresholds.merge(
-                    tukey_thresholds,
-                    on="indicator",
-                    how="left"
-                )
+                    percentile_thresholds = percentile_thresholds.rename(columns={
+                        "alert_threshold": "alert_percentile",
+                        "alarm_threshold": "alarm_percentile"
+                    })
 
-                merged_thresholds["retention_filter"] = "none"
-                merged_thresholds["season_scope"] = "All Months"
-                merged_thresholds["baseline_method"] = baseline_method
-                merged_thresholds["country"] = country
+                    tukey_thresholds = compute_tukey_thresholds(spatial, ind)
 
-                all_thresholds.append(merged_thresholds)
+                    zscore_thresholds = compute_zscore_thresholds(df_indicator, ind)
+
+                    merged_thresholds = percentile_thresholds.merge(
+                        tukey_thresholds,
+                        on="indicator",
+                        how="left"
+                    )
+
+                    # -----------------------------------------
+                    # 🔥 PREPARE Z-SCORE (SAFE)
+                    # -----------------------------------------
+                    if zscore_thresholds is not None and not zscore_thresholds.empty:
+
+                        zscore_thresholds = zscore_thresholds.rename(columns={
+                            "alert_percentile": "alert_zscore",
+                            "alarm_percentile": "alarm_zscore"
+                        })
+
+                        zscore_thresholds = zscore_thresholds[
+                            ["indicator", "alert_zscore", "alarm_zscore"]
+                        ]
+
+                    else:
+                        zscore_thresholds = pd.DataFrame(
+                            columns=["indicator", "alert_zscore", "alarm_zscore"]
+                        )
+
+                    # 🔥 ADD Z-SCORE AS EXTRA COLUMNS
+                    merged_thresholds = merged_thresholds.merge(
+                        zscore_thresholds,
+                        on="indicator",
+                        how="left"
+                    )
+
+                    merged_thresholds["retention_filter"] = "none"
+                    merged_thresholds["season_scope"] = "All Months"
+                    merged_thresholds["baseline_method"] = baseline_method
+                    merged_thresholds["country"] = country
+
+                    all_thresholds.append(merged_thresholds)
+
+
+                else:
+
+                    print(f"Adding event-based thresholds for {ind}")
+
+                    # ---------------------------------------------------
+
+                    # conflict_events (uses EVENT_THRESHOLDS)
+
+                    # ---------------------------------------------------
+
+                    if ind in EVENT_THRESHOLDS:
+
+                        thresholds = EVENT_THRESHOLDS[ind]
+
+                        df_threshold = pd.DataFrame([{
+
+                            "indicator": ind,
+
+                            "alert_percentile": thresholds.get("alert"),
+
+                            "alarm_percentile": thresholds.get("alarm"),
+
+                            "alert_tukey": None,
+
+                            "alarm_tukey": None,
+
+                            "retention_filter": "none",
+
+                            "season_scope": "All Months",
+
+                            "baseline_method": baseline_method,
+
+                            "country": country
+
+                        }])
+
+                        all_thresholds.append(df_threshold)
+
+
+                    # ---------------------------------------------------
+
+                    # conflict_fatalities (manual thresholds or config)
+
+                    # ---------------------------------------------------
+
+                    elif ind == "conflict_fatalities":
+
+                        df_threshold = pd.DataFrame([{
+
+                            "indicator": ind,
+
+                            "alert_percentile": 1,
+
+                            "alarm_percentile": 5,
+
+                            "alert_tukey": None,
+
+                            "alarm_tukey": None,
+
+                            "retention_filter": "none",
+
+                            "season_scope": "All Months",
+
+                            "baseline_method": baseline_method,
+
+                            "country": country
+
+                        }])
+
+                        all_thresholds.append(df_threshold)
 
                 spatial_robust = compute_spatial_percentiles(
                     df_indicator,
@@ -248,7 +491,7 @@ def main():
 
                 all_spatial_percentiles.append(spatial_robust)
 
-                if not spatial_robust.empty:
+                if not spatial_robust.empty and method_type not in ["event", "event_combined"]:
 
                     pct_robust = compute_composite_thresholds(spatial_robust, ind)
 
@@ -289,7 +532,7 @@ def main():
                         season_months=season_months
                     )
 
-                    if not spatial_season.empty:
+                    if not spatial_season.empty and method_type not in ["event", "event_combined"]:
 
                         pct_season = compute_composite_thresholds(spatial_season, ind)
 
@@ -323,6 +566,13 @@ def main():
         ignore_index=True
     ) if any(not df.empty for df in all_unit_month_values) else pd.DataFrame()
 
+    final_unit_month[
+        final_unit_month["indicator"].str.contains("conflict")
+    ].to_csv(
+        "outputs/debug_unit_month_conflict.csv",
+        index=False
+    )
+
     valid_spatial = [df for df in all_spatial_percentiles if not df.empty]
 
     final_spatial_percentiles = (
@@ -338,11 +588,82 @@ def main():
     # ---------------------------------------------------
     for ind in INDICATORS:
 
+        method_type = INDICATOR_METHOD.get(ind, "percentile")
+
+        # ---------------------------------------------------
+        # EVENT INDICATORS (conflict)
+        # ---------------------------------------------------
+        if method_type == "event_combined" and ind == "conflict_events":
+            print(f"Computing event-based triggers for {ind}")
+
+            # ---------------------------------------------------
+            # 🔥 GET BOTH EVENTS + FATALITIES FROM UNIT-MONTH
+            # ---------------------------------------------------
+            df_events = final_unit_month[
+                final_unit_month["indicator"] == "conflict_events"
+                ].copy()
+
+            df_fatal = final_unit_month[
+                final_unit_month["indicator"] == "conflict_fatalities"
+                ].copy()
+
+            df_combined = df_events.merge(
+                df_fatal,
+                on=["year_month", "adm1_name"],
+                suffixes=("_events", "_fatalities")
+            )
+
+            # ---------------------------------------------------
+            # 🔥 LOAD RULES FROM CONFIG
+            # ---------------------------------------------------
+            rules = CONFLICT_COMBINED_RULES.get(ind)
+
+            if rules is None:
+                raise ValueError(f"No combined rules for {ind}")
+
+            event_alert = rules["event_alert_threshold"]
+            event_alarm = rules["event_alarm_threshold"]
+            fatal_alarm = rules["fatality_alarm_threshold"]
+
+            # ---------------------------------------------------
+            # 🔥 APPLY SAME LOGIC AS CLASSIFICATION
+            # ---------------------------------------------------
+            df_combined["alert"] = (
+                    (df_combined["value_events"] >= event_alert) &
+                    (df_combined["value_fatalities"] < fatal_alarm)
+            ).astype(int)
+
+            df_combined["alarm"] = (
+                    (df_combined["value_events"] >= event_alarm) |
+                    (df_combined["value_fatalities"] >= fatal_alarm)
+            ).astype(int)
+
+            # ---------------------------------------------------
+            # 🔥 AGGREGATE
+            # ---------------------------------------------------
+            trigger_counts = (
+                df_combined
+                .groupby("year_month")
+                .agg(
+                    alert_count=("alert", "sum"),
+                    alarm_count=("alarm", "sum")
+                )
+                .reset_index()
+            )
+
+            trigger_counts["indicator"] = ind
+
+            all_trigger_counts.append(trigger_counts)
+
+            continue
+
+        # ---------------------------------------------------
+        # NORMAL INDICATORS
+        # ---------------------------------------------------
         if final_thresholds.empty:
             print("No thresholds available. Skipping trigger counts.")
             break
 
-        # Skip indicators that have no thresholds
         if ind not in final_thresholds["indicator"].values:
             print(f"Skipping trigger counts for {ind} (no thresholds)")
             continue
@@ -366,6 +687,10 @@ def main():
         ignore_index=True
     ) if any(not df.empty for df in all_trigger_counts) else pd.DataFrame()
 
+    final_trigger_counts["indicator"].value_counts().to_csv(
+        "outputs/debug_trigger_counts_indicators.csv"
+    )
+
     # ---------------------------------------------------
     # 8. Combine Monthly Quartile Tables
     # ---------------------------------------------------
@@ -381,6 +706,7 @@ def main():
     final_monthly_table.to_csv("outputs/monthly_quartiles_iqr.csv", index=False)
     final_trigger_counts.to_csv("outputs/monthly_trigger_counts.csv", index=False)
     final_unit_month.to_parquet("outputs/unit_month_values.parquet", index=False)
+    final_unit_month.to_excel("outputs/unit_month_values.xlsx", index=False)
     final_spatial_percentiles.to_csv("outputs/spatial_percentiles_with_proportions.csv", index=False)
 
     print("\nTables saved successfully.")
@@ -431,29 +757,55 @@ def main():
 
         print(f"Generating classification matrix for: {ind}")
 
-        row = final_thresholds[
-            (final_thresholds["indicator"] == ind) &
-            (final_thresholds["retention_filter"] == "none") &
-            (final_thresholds["season_scope"] == "All Months") &
-            (final_thresholds["baseline_method"] == DEFAULT_BASELINE)
-            ]
+        method_type = INDICATOR_METHOD.get(ind, "percentile")
 
-        if row.empty:
-            print(f"No thresholds found for {ind}")
-            continue
+        # ---------------------------------------------------
+        # EVENT INDICATORS (conflict)
+        # ---------------------------------------------------
+        if method_type not in ["event", "event_combined"]:
 
-        row = row.iloc[0]
+            row = final_thresholds[
+                (final_thresholds["indicator"] == ind) &
+                (final_thresholds["retention_filter"] == "none") &
+                (final_thresholds["season_scope"] == "All Months") &
+                (
+                        (final_thresholds["baseline_method"] == DEFAULT_BASELINE)
+                        | (final_thresholds["baseline_method"] == "none")
+                )
+                ]
 
-        alarm_percentile = row["alarm_percentile"]
-        alert_percentile = row["alert_percentile"]
-        alarm_tukey = row["alarm_tukey"]
-        alert_tukey = row["alert_tukey"]
+            if row.empty:
+                print(f"No thresholds found for {ind}")
+                continue
 
-        df_matrix = df.copy()
+            # 🔥 Ensure correct baseline selection (CRITICAL FIX)
+            row = row.sort_values(by=["baseline_method"])
+
+            row = row[row["baseline_method"] == DEFAULT_BASELINE]
+
+            if row.empty:
+                print(f"No valid thresholds for {ind}")
+                continue
+
+            row = row.iloc[0]
+
+            alarm_percentile = row["alarm_percentile"]
+            alert_percentile = row["alert_percentile"]
+            alarm_tukey = row["alarm_tukey"]
+            alert_tukey = row["alert_tukey"]
+
+        else:
+            # 🔥 thresholds are NOT used for event_combined
+            alarm_percentile = None
+            alert_percentile = None
+            alarm_tukey = None
+            alert_tukey = None
+
+        df_matrix = final_unit_month.copy()
 
         # Use default baseline for pipeline outputs
         if "baseline_method" in df_matrix.columns:
-            df_matrix = df_matrix[df_matrix["baseline_method"] == DEFAULT_BASELINE]
+            df_matrix = df_matrix[df_matrix["baseline_method"] == DEFAULT_BASELINE].copy()
 
         matrix_percentile = compute_unit_month_classification_matrix(
             df=df_matrix,
@@ -477,15 +829,25 @@ def main():
 
         safe_name = ind.replace(" ", "_").replace("%", "")
 
-        export_colored_classification_matrix(
-            matrix_percentile,
-            f"outputs/{safe_name}_percentile_classification_matrix.xlsx"
-        )
+        if method_type in ["event", "event_combined"]:
 
-        export_colored_classification_matrix(
-            matrix_tukey,
-            f"outputs/{safe_name}_tukey_classification_matrix.xlsx"
-        )
+            # Only export once (same thresholds anyway)
+            export_colored_classification_matrix(
+                matrix_percentile,
+                f"outputs/{safe_name}_classification_matrix.xlsx"
+            )
+
+        else:
+
+            export_colored_classification_matrix(
+                matrix_percentile,
+                f"outputs/{safe_name}_percentile_classification_matrix.xlsx"
+            )
+
+            export_colored_classification_matrix(
+                matrix_tukey,
+                f"outputs/{safe_name}_tukey_classification_matrix.xlsx"
+            )
 
     print("\nFinal Threshold Comparison:")
     print(final_thresholds)

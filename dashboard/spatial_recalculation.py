@@ -8,23 +8,23 @@ def recalculate_thresholds(
     selected_units,
     unit_col="adm1_name",
     value_col="value",
-    min_obs=5
+    min_obs=5,
+    alarm_pct=25,
+    alert_pct=50
 ):
     """
     Dynamically recompute:
-        - Composite percentile thresholds
-        - Tukey thresholds
+        - Composite percentile thresholds (USER-CONTROLLED)
+        - Tukey thresholds (UNCHANGED)
 
     Direction-aware:
         - Lower tail (<100) for drought-style indicators
-        - Upper tail (>0) for price inflation indicators
+        - Upper tail (>0) for price indicators
     """
 
     # ---------------------------------------------------
-    # ---------------------------------------------------
     # 1. Filter indicator + selected provinces
     # ---------------------------------------------------
-
     df = df_unit_month[df_unit_month["indicator"] == indicator_value].copy()
 
     if selected_units:
@@ -32,7 +32,6 @@ def recalculate_thresholds(
 
     if df.empty:
         raise ValueError("No data available for selected provinces.")
-
 
     # ---------------------------------------------------
     # 2. Apply directional risk filter
@@ -45,16 +44,17 @@ def recalculate_thresholds(
         df = df[df[value_col] > 0]
 
     if df.empty:
-        raise ValueError("No risk-side data available after directional filtering.")
+        raise ValueError("No risk-side data available after filtering.")
 
     # ---------------------------------------------------
-    # 3. Compute spatial percentiles per month
+    # 3. Compute spatial percentiles per month (DYNAMIC)
     # ---------------------------------------------------
     spatial = (
         df.groupby("year_month")[value_col]
         .agg(
+            alarm_q=lambda x: x.quantile(alarm_pct / 100),
+            alert_q=lambda x: x.quantile(alert_pct / 100),
             q25=lambda x: x.quantile(0.25),
-            q50=lambda x: x.quantile(0.50),
             q75=lambda x: x.quantile(0.75),
             count="count"
         )
@@ -64,39 +64,37 @@ def recalculate_thresholds(
     spatial = spatial[spatial["count"] >= min_obs]
 
     if spatial.empty:
-        raise ValueError("Insufficient data after applying min_obs filter.")
+        raise ValueError("Insufficient data after min_obs filter.")
 
     spatial["iqr"] = spatial["q75"] - spatial["q25"]
 
     # ---------------------------------------------------
-    # 4. Composite thresholds (direction aware)
+    # 4. Composite thresholds (direction-aware)
     # ---------------------------------------------------
     direction = INDICATOR_DIRECTION.get(indicator_value, "lower")
 
     if direction == "lower":
+        # Lower = worse (climate)
+        composite_alarm = spatial["alarm_q"].median()
+        composite_alert = spatial["alert_q"].median()
 
-        composite_alarm = spatial["q25"].median()
-        composite_alert = spatial["q50"].median()
-
-    else:  # upper-tail indicators (prices)
-
-        composite_alert = spatial["q50"].median()
-        composite_alarm = spatial["q75"].median()
+    else:
+        # Upper = worse (prices)
+        # 🔥 Reverse interpretation
+        composite_alarm = spatial["alert_q"].median()
+        composite_alert = spatial["alarm_q"].median()
 
     # ---------------------------------------------------
-    # 5. Tukey thresholds (direction aware)
+    # 5. Tukey thresholds (UNCHANGED)
     # ---------------------------------------------------
     q1_median = spatial["q25"].median()
     q3_median = spatial["q75"].median()
     median_iqr = spatial["iqr"].median()
 
     if direction == "lower":
-
         tukey_alert = q1_median - 1.0 * median_iqr
         tukey_alarm = q1_median - 1.5 * median_iqr
-
-    else:  # upper-tail indicators
-
+    else:
         tukey_alert = q3_median + 1.0 * median_iqr
         tukey_alarm = q3_median + 1.5 * median_iqr
 

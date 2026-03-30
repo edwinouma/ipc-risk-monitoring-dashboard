@@ -1,6 +1,13 @@
 from src.unit_month import compute_unit_month_values
 import pandas as pd
-from src.config import INDICATOR_DIRECTION, CLIMATE_INDICATORS, PRICE_INDICATORS
+from src.config import (
+    INDICATOR_DIRECTION,
+    CLIMATE_INDICATORS,
+    PRICE_INDICATORS,
+    SHOCK_INDICATORS,
+    INDICATOR_METHOD
+)
+from src.utils import get_filtered_distribution
 
 def compute_spatial_percentiles(
     df,
@@ -37,12 +44,32 @@ def compute_spatial_percentiles(
         indicator_value
     )
 
+    # 🔥 DEBUG ONLY FOR ToT
+    if indicator_value == "ToT":
+        print("\n====== DEBUG ToT (UNIT-MONTH) ======")
+        print(df_unit_month[value_col].describe())
+
+        print("Negative count:", (df_unit_month[value_col] < 0).sum())
+        print("Positive count:", (df_unit_month[value_col] > 0).sum())
+        print("====================================\n")
+
     if df_unit_month.empty:
         return pd.DataFrame()
 
     if debug:
         print(f"Indicator: {indicator_value}")
         print("Rows:", len(df_unit_month))
+
+    # ---------------------------------------------------
+    # EVENT-BASED INDICATORS (conflict, flood occurrence)
+    # ---------------------------------------------------
+    method = INDICATOR_METHOD.get(indicator_value, "percentile")
+
+    if method == "event":
+        df_unit_month = df_unit_month.copy()
+        df_unit_month[date_col] = df_unit_month["year_month"].dt.to_timestamp()
+        df_unit_month["indicator"] = indicator_value
+        return df_unit_month
 
     # ---------------------------------------------------
     # 2. Seasonal filtering
@@ -103,8 +130,22 @@ def compute_spatial_percentiles(
                 df_unit_month[value_col] < 0
                 ].copy()
 
+            if indicator_value == "ToT":
+                print("---- AFTER FILTER ----")
+                print(df_filtered[value_col].describe())
+                print("Count after filter:", len(df_filtered))
+                print("----------------------")
+
         else:
             df_filtered = df_unit_month.copy()
+
+    # ---------------------------------------------------
+    # Shock indicators (conflict, floods)
+    # ---------------------------------------------------
+    elif indicator_value in SHOCK_INDICATORS:
+
+        # No directional filtering — keep all values
+        df_filtered = df_unit_month.copy()
 
     # ---------------------------------------------------
     # Fallback (future indicators)

@@ -8,6 +8,22 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+from src.config import METHOD_DESCRIPTIONS, DEFAULT_METHOD_DESCRIPTIONS
+
+def get_method_description(indicator, method):
+
+    # 1. Try indicator-specific description
+    desc = METHOD_DESCRIPTIONS.get(indicator, {}).get(method)
+
+    if desc:
+        return desc
+
+    # 2. Fallback to default method description
+    return DEFAULT_METHOD_DESCRIPTIONS.get(
+        method,
+        "No description available."
+    )
+
 from threshold_storage import (
     load_default_thresholds,
     get_active_thresholds,
@@ -24,7 +40,11 @@ from src.config import (
     CLIMATE_INDICATORS,
     BASELINE_METHODS,
     COUNTRY_CONFIG,
-    SEASONAL_DEFINITIONS
+    SEASONAL_DEFINITIONS,
+    DEFAULT_BASELINE,
+    INDICATOR_ALLOWED_BASELINES,
+    INDICATOR_ALLOWED_METHODS,   # 🔥 ADD THIS
+    EVENT_THRESHOLDS
 )
 from src.event_loader import load_reference_events, get_reference_events
 
@@ -88,7 +108,6 @@ def load_thresholds_file():
 df_unit_month = load_unit_month()
 df_thresholds_file = load_thresholds_file()
 
-
 # ---------------------------------------------------
 # Sidebar Controls
 # ---------------------------------------------------
@@ -115,9 +134,34 @@ all_units = sorted(country_df[unit_col].unique())
 
 default_thresholds_df = load_default_thresholds()
 
+from src.config import INDICATOR_GROUPS
+
+# ---------------------------------------------------
+# Indicator Group Selector
+# ---------------------------------------------------
+selected_group = st.sidebar.selectbox(
+    "Indicator Type",
+    list(INDICATOR_GROUPS.keys())
+)
+
+# ---------------------------------------------------
+# Filter indicators based on group
+# ---------------------------------------------------
+group_indicators = INDICATOR_GROUPS[selected_group]
+
+available_indicators = sorted([
+    ind for ind in country_df["indicator"].unique()
+    if ind in group_indicators
+])
+
+# Safety check
+if not available_indicators:
+    st.sidebar.warning("No indicators available for this category.")
+    st.stop()
+
 indicator = st.sidebar.selectbox(
     "Indicator",
-    sorted(country_df["indicator"].unique())
+    available_indicators
 )
 
 
@@ -125,24 +169,45 @@ indicator = st.sidebar.selectbox(
 # Price Baseline Selector (ONLY for price indicators)
 # ---------------------------------------------------
 
+from src.config import INDICATOR_ALLOWED_BASELINES
+
 baseline_method = None
 
-if indicator in PRICE_INDICATORS:
+allowed_baselines = INDICATOR_ALLOWED_BASELINES.get(
+    indicator,
+    [DEFAULT_BASELINE]
+)
+
+# Only show selector if more than one option
+if len(allowed_baselines) > 1:
 
     baseline_method = st.sidebar.selectbox(
-        "Price Baseline Method",
-        BASELINE_METHODS
+        "Baseline Method",
+        allowed_baselines
     )
+
+else:
+    baseline_method = allowed_baselines[0]
+
+# ---------------------------------------------------
+# Method Selection (Dynamic per indicator)
+# ---------------------------------------------------
+
+available_methods = INDICATOR_ALLOWED_METHODS.get(
+    indicator,
+    ["percentile"]
+)
 
 method = st.sidebar.radio(
     "Method",
-    ["percentile", "tukey"]
+    available_methods
 )
 
 # 🔹 Retention Mode Selector (ADDITIONAL ONLY)
 retention_mode = st.sidebar.radio(
-    "Retention Threshold Mode",
-    ["Baseline (All Months)", "Robust (≥40% Retention)"]
+    "Threshold sensitivity mode",
+    ["Sensitive (All Months)", "Robust (≥40% Retention)"],
+    help="ⓘ Controls how easily the system flags warnings across areas."
 )
 
 # 🔹 NEW: Season Scope Selector (ADDITIONAL ONLY)
@@ -174,8 +239,6 @@ selected_season_months = indicator_seasons.get(season_scope)
 
 if selected_season_months is None:
     selected_season_months = list(range(1, 13))
-
-
 
 
 view_mode = st.sidebar.radio(
@@ -216,6 +279,7 @@ df_filtered = country_df[
     country_df["indicator"] == indicator
 ].copy()
 
+
 # Apply baseline filter only for price indicators
 if baseline_method is not None and "baseline_method" in df_filtered.columns:
 
@@ -224,50 +288,80 @@ if baseline_method is not None and "baseline_method" in df_filtered.columns:
     ]
 
 # ---------------------------------------------------
-# Threshold Determination
+# EVENT INDICATORS → FIXED THRESHOLDS
 # ---------------------------------------------------
-if df_thresholds_file is not None and "retention_filter" in df_thresholds_file.columns:
+if method == "categorical":
 
-    retention_key = "none" if retention_mode == "Baseline (All Months)" else ">=40%"
+    thresholds = EVENT_THRESHOLDS.get(indicator)
 
-    if "season_scope" in df_thresholds_file.columns:
-        threshold_row = df_thresholds_file[
-            (df_thresholds_file["indicator"] == indicator) &
-            (df_thresholds_file["retention_filter"] == retention_key) &
-            (df_thresholds_file["season_scope"] == season_scope)
-            ]
+    if thresholds is None:
+        st.error(f"No event thresholds configured for {indicator}")
+        st.stop()
 
-        # Filter by country if column exists
-        if "country" in df_thresholds_file.columns:
-            threshold_row = threshold_row[
-                threshold_row["country"] == selected_country
+    alert_threshold = thresholds["alert"]
+    alarm_threshold = thresholds["alarm"]
+
+# ---------------------------------------------------
+# NORMAL INDICATORS → EXISTING LOGIC
+# ---------------------------------------------------
+else:
+
+    if df_thresholds_file is not None and "retention_filter" in df_thresholds_file.columns:
+
+        retention_key = "none" if retention_mode == "Sensitive (All Months)" else ">=40%"
+
+        if "season_scope" in df_thresholds_file.columns:
+            threshold_row = df_thresholds_file[
+                (df_thresholds_file["indicator"] == indicator) &
+                (df_thresholds_file["country"] == selected_country) &  # 🔥 ADD
+                (df_thresholds_file["retention_filter"] == retention_key) &
+                (df_thresholds_file["season_scope"] == season_scope) &
+                (df_thresholds_file["baseline_method"] == baseline_method)  # 🔥 FORCE
                 ]
 
-        # 🔴 IMPORTANT: Filter by baseline for price indicators
-        if baseline_method is not None and "baseline_method" in df_thresholds_file.columns:
-            threshold_row = threshold_row[
-                threshold_row["baseline_method"] == baseline_method
+            # Filter by country if column exists
+            if "country" in df_thresholds_file.columns:
+                threshold_row = threshold_row[
+                    threshold_row["country"] == selected_country
                 ]
-    else:
-        threshold_row = df_thresholds_file[
-            (df_thresholds_file["indicator"] == indicator) &
-            (df_thresholds_file["retention_filter"] == retention_key)
-            ]
 
-    if not threshold_row.empty:
-        row = threshold_row.iloc[0]
-
-        if method == "percentile":
-            alarm_threshold = row["alarm_percentile"]
-            alert_threshold = row["alert_percentile"]
+            # 🔴 IMPORTANT: Filter by baseline for price indicators
+            if baseline_method is not None and "baseline_method" in df_thresholds_file.columns:
+                threshold_row = threshold_row[
+                    threshold_row["baseline_method"] == baseline_method
+                ]
         else:
-            alarm_threshold = row["alarm_tukey"]
-            alert_threshold = row["alert_tukey"]
+            threshold_row = df_thresholds_file[
+                (df_thresholds_file["indicator"] == indicator) &
+                (df_thresholds_file["retention_filter"] == retention_key)
+            ]
+
+        if not threshold_row.empty:
+            row = threshold_row.iloc[0]
+
+            if method == "percentile":
+                alarm_threshold = row["alarm_percentile"]
+                alert_threshold = row["alert_percentile"]
+
+            elif method == "tukey":
+                alarm_threshold = row["alarm_tukey"]
+                alert_threshold = row["alert_tukey"]
+
+            elif method == "zscore":
+                alarm_threshold = row["alarm_zscore"]
+                alert_threshold = row["alert_zscore"]
+
+            # 🔥 ADD THIS RIGHT HERE
+            if method == "zscore":
+                if pd.isna(alarm_threshold) or pd.isna(alert_threshold):
+                    st.warning("Z-score thresholds not available for this configuration.")
+                    st.stop()
+
+        else:
+            alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
+
     else:
         alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
-
-else:
-    alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
 
 # ---------------------------------------------------
 # Dynamic Threshold Recalculation (Selected Provinces)
@@ -287,7 +381,6 @@ if baseline_mode == "Dynamic (Selected Provinces)" and len(selected_units) > 0:
             )
 
             if method in recalculated:
-
                 alarm_threshold = recalculated[method]["alarm"]
                 alert_threshold = recalculated[method]["alert"]
 
@@ -297,6 +390,7 @@ if baseline_mode == "Dynamic (Selected Provinces)" and len(selected_units) > 0:
 
             st.warning(f"Dynamic threshold computation failed: {e}")
 
+
 # ---------------------------------------------------
 # Extract BOTH Seasonal Thresholds (for display merge)
 # ---------------------------------------------------
@@ -305,7 +399,7 @@ def get_season_thresholds(season_name):
     if df_thresholds_file is None:
         return alarm_threshold, alert_threshold
 
-    retention_key = "none" if retention_mode == "Baseline (All Months)" else ">=40%"
+    retention_key = "none" if retention_mode == "Sensitive (All Months)" else ">=40%"
 
     row = df_thresholds_file[
         (df_thresholds_file["indicator"] == indicator) &
@@ -324,27 +418,109 @@ def get_season_thresholds(season_name):
 
 
 # ---------------------------------------------------
-# Editable Threshold Inputs
+# Threshold Settings
 # ---------------------------------------------------
 st.subheader("Threshold Settings")
 
+description = get_method_description(indicator, method)
+
+if description:
+    st.info(description)
+
 col1, col2, col3 = st.columns(3)
 
-with col1:
-    alarm_threshold = st.number_input("Alarm Threshold", value=float(alarm_threshold))
+# controls continue ALWAYS
 
-with col2:
-    alert_threshold = st.number_input("Alert Threshold", value=float(alert_threshold))
+# -----------------------------------------
+# NEW: Percentile inputs (direction-aware defaults)
+# -----------------------------------------
+if method == "percentile":
 
-with col3:
-    if st.button("Reset to Default"):
-        reset_override(indicator, method)
-        st.rerun()
+    direction = INDICATOR_DIRECTION.get(indicator, "lower")
 
-if st.button("Apply & Save Threshold"):
-    save_override(indicator, method, alarm_threshold, alert_threshold)
-    st.success("Threshold saved.")
+    # 🔥 Smart defaults based on direction
+    if direction == "lower":
+        default_alarm_pct = 25
+        default_alert_pct = 50
+    else:
+        default_alarm_pct = 75
+        default_alert_pct = 50
 
+    with col1:
+        alarm_pct = st.number_input(
+            "Alarm Percentile",
+            min_value=1,
+            max_value=99,
+            value=default_alarm_pct,
+            step=1
+        )
+
+    with col2:
+        alert_pct = st.number_input(
+            "Alert Percentile",
+            min_value=1,
+            max_value=99,
+            value=default_alert_pct,
+            step=1
+        )
+
+    # # ---------------------------------------------------
+    # # 🔥 NEW: Use spatial pipeline recalculation
+    # # ---------------------------------------------------
+    # try:
+    #
+    #     recalculated = recalculate_thresholds(
+    #         df_filtered,
+    #         indicator,
+    #         selected_units if baseline_mode == "Dynamic (Selected Provinces)" else None,
+    #         alarm_pct=alarm_pct,
+    #         alert_pct=alert_pct
+    #     )
+    #
+    #     direction = INDICATOR_DIRECTION.get(indicator, "lower")
+    #
+    #     alarm_threshold = recalculated["percentile"]["alarm"]
+    #     alert_threshold = recalculated["percentile"]["alert"]
+    #
+    #     # 🔥 Ensure correct display ordering for upper-tail
+    #     if direction == "upper":
+    #         # Swap for display only
+    #         alarm_threshold, alert_threshold = max(alarm_threshold, alert_threshold), min(alarm_threshold,
+    #                                                                                       alert_threshold)
+    #
+    # except Exception as e:
+    #     st.warning(f"Percentile threshold computation failed: {e}")
+    #     st.stop()
+
+    with col3:
+        st.metric("Alarm Threshold", f"{round(alarm_threshold, 2)}")
+        st.metric("Alert Threshold", f"{round(alert_threshold, 2)}")
+
+# -----------------------------------------
+# EXISTING: Tukey / Z-score / Override
+# -----------------------------------------
+else:
+
+    with col1:
+        alarm_threshold = st.number_input(
+            "Alarm Threshold",
+            value=float(alarm_threshold)
+        )
+
+    with col2:
+        alert_threshold = st.number_input(
+            "Alert Threshold",
+            value=float(alert_threshold)
+        )
+
+    with col3:
+        if st.button("Reset to Default"):
+            reset_override(indicator, method)
+            st.rerun()
+
+    if st.button("Apply & Save Threshold"):
+        save_override(indicator, method, alarm_threshold, alert_threshold)
+        st.success("Threshold saved.")
 
 # ---------------------------------------------------
 # Apply Classification (Season-Aware Only When Needed)
@@ -431,7 +607,6 @@ counts = counts[
     (counts["date"] >= start_date) &
     (counts["date"] <= end_date)
 ]
-
 
 # ---------------------------------------------------
 # Structural Summary Panel (FULLY PRESERVED)
@@ -645,6 +820,11 @@ else:
 # ---------------------------------------------------
 st.subheader("Aggregated Trigger Chart")
 
+# 🔥 ADD THIS HERE
+if indicator.startswith("conflict"):
+    st.caption("Note: Missing unit-months are treated as Minimal (0 conflict).")
+
+# Existing caption
 st.caption(
     "Highlighted months reflect the selected seasonal scope. "
     "Other months remain visible but are visually softened."

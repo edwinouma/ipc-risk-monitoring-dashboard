@@ -606,3 +606,48 @@ src\
 df_unit_month   →  country_df  →  df_filtered
 (all data)         (country)      (indicator)
 
+## Adding other indicators sch as conflict
+
+| Indicator Type               | Example Indicators             | Threshold Logic                              |
+| ---------------------------- | ------------------------------ | -------------------------------------------- |
+| Continuous climate anomalies | Rainfall anomaly, NDVI anomaly | Statistical distribution (quartiles / Tukey) |
+| Price anomalies              | Maize price YoY, LTM deviation | Seasonal baseline + percentile thresholds    |
+| Event frequency indicators   | Conflict events                | Percentile thresholds                        |
+| Binary hazard indicators     | Flood occurrence               | Event trigger thresholds                     |
+| Accumulated shock indicators | Flooded area, displacement     | Severity scale thresholds                    |
+
+
+2. Conflict indicators (best approach)
+
+Conflict data usually comes from ACLED or similar datasets.
+
+Examples:
+
+Number of conflict events
+
+Number of fatalities
+
+Conflict events per population
+
+These behave like count data, so thresholds should be based on historical distribution.
+
+Recommended threshold method
+
+Use percentiles.
+
+Example
+
+| Percentile | Meaning |
+| ---------- | ------- |
+| 50th       | Normal  |
+| 75th       | Alert   |
+| 90th       | Alarm   |
+
+
+example
+
+| Conflict events/month | Classification |
+| --------------------- | -------------- |
+| 0–2                   | Normal         |
+| 3–5                   | Alert          |
+| >5                    | Alarm          |

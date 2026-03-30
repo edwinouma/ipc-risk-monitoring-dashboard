@@ -28,7 +28,23 @@ PRICE_INDICATORS = [
     "Goat",
     "Maize",
     "Beans",
-    "ToT"
+    "ToT",
+    # South Sudan
+    "Fuel (diesel, parallel market)",
+    "Fuel (petrol-gasoline, parallel market)",
+    "Wage (non-qualified labour, non-agricultural)",
+    "Sorghum (local)",
+    "Sorghum (red, local)",
+    "Sorghum flour",
+    "Oil (vegetable, fortified, food aid)",
+    "Beans (fava, dry)",
+    "Cowpeas",
+    "Wage (non-qualified labour, agricultural)",
+    "Sorghum (brown)",
+    "Exchange rate",
+    "Rice",
+    "ToT (Labour/Cereal)",
+    "ToT (Goat/Cereal)"
 ]
 
 # ---------------------------------------------------
@@ -37,15 +53,19 @@ PRICE_INDICATORS = [
 
 SHOCK_INDICATORS = [
     "conflict_events",
-    "flood_occurrence",
-    "flood_area"
+    "conflict_fatalities",
+]
+
+SHOCK_MANMADE = [
+    "conflict_events",
+    "conflict_fatalities"
 ]
 
 # ---------------------------------------------------
 # All Indicators
 # ---------------------------------------------------
 
-INDICATORS = CLIMATE_INDICATORS + PRICE_INDICATORS
+INDICATORS = CLIMATE_INDICATORS + PRICE_INDICATORS + SHOCK_INDICATORS
 
 
 # ---------------------------------------------------
@@ -61,23 +81,38 @@ INDICATOR_COUNTRY_MAP = {
 
     # Afghanistan price indicators
     "Bread": ["Afghanistan"],
-    "Exchange rate": ["Afghanistan"],
-    "Fuel (diesel)": ["Afghanistan"],
+    "Exchange rate": ["Afghanistan", "South Sudan"],
+    "Fuel (diesel)": ["Afghanistan", "South Sudan"],
     "Oil (cooking)": ["Afghanistan"],
     "Pulses": ["Afghanistan"],
     "Rice (high quality)": ["Afghanistan"],
     "Rice (low quality)": ["Afghanistan"],
     "Sugar": ["Afghanistan"],
-    "Wage (non-qualified labour, non-agricultural)": ["Afghanistan"],
+    "Wage (non-qualified labour, non-agricultural)": ["Afghanistan", "South Sudan"],
     "Wheat": ["Afghanistan"],
     "Wheat flour (high quality)": ["Afghanistan"],
     "Wheat flour (low quality)": ["Afghanistan"],
+    "ToT (Labour/Cereal)":  ["Afghanistan"],
 
     # Kenya indicators
     "Goat": ["Kenya"],
     "Maize": ["Kenya"],
     "Beans": ["Kenya"],
-    "ToT": ["Kenya"]
+    "ToT": ["Kenya"],
+    # South Sudan price indicators
+    "Fuel (diesel, parallel market)": ["South Sudan"],
+    "Fuel (petrol-gasoline, parallel market)": ["South Sudan"],
+    "Sorghum (local)": ["South Sudan"],
+    "Sorghum (red, local)": ["South Sudan"],
+    "Sorghum flour": ["South Sudan"],
+    "Oil (vegetable, fortified, food aid)": ["South Sudan"],
+    "Beans (fava, dry)": ["South Sudan"],
+    "Cowpeas": ["South Sudan"],
+    "Wage (non-qualified labour, agricultural)": ["South Sudan"],
+    "Sorghum (brown)": ["South Sudan"],
+    "Rice": ["South Sudan"],
+    "conflict_events": ["South Sudan"],
+    "conflict_fatalities": ["South Sudan"],
 }
 
 
@@ -118,6 +153,8 @@ INDICATOR_DIRECTION = {
     "10 day NDVI": "lower",
     "NDVI long term average": "lower",
     "ToT": "lower",
+    "ToT (Labour/Cereal)": "lower",
+    "ToT (Goat/Cereal)": "lower",
 
     # Afghanistan prices
     "Bread": "upper",
@@ -135,13 +172,26 @@ INDICATOR_DIRECTION = {
 
     # Kenya prices
     "Goat": "lower",
+    "ToT": "lower",
     "Maize": "upper",
     "Beans": "upper",
+
+    # South Sudan
+    "Fuel (diesel, parallel market)": "upper",
+    "Fuel (petrol-gasoline, parallel market)": "upper",
+    "Sorghum (local)": "upper",
+    "Sorghum (red, local)": "upper",
+    "Sorghum flour": "upper",
+    "Oil (vegetable, fortified, food aid)": "upper",
+    "Beans (fava, dry)": "upper",
+    "Cowpeas": "upper",
+    "Wage (non-qualified labour, agricultural)": "upper",
+    "Sorghum (brown)": "upper",
+    "Rice": "upper",
 
     # Shock indicators
     "conflict_events": "upper",
     "conflict_fatalities": "upper",
-    "flood_area": "upper"
 }
 
 
@@ -174,6 +224,8 @@ INDICATOR_METHOD = {
     "Wheat": "percentile",
     "Wheat flour (high quality)": "percentile",
     "Wheat flour (low quality)": "percentile",
+    "ToT (Labour/Cereal)": "percentile",
+    "ToT (Goat/Cereal)": "percentile",
 
     # Kenya indicators
     "Goat": "percentile",
@@ -181,11 +233,22 @@ INDICATOR_METHOD = {
     "Beans": "percentile",
     "ToT": "percentile",
 
+    # South Sudan
+    "Fuel (diesel, parallel market)": "percentile",
+    "Fuel (petrol-gasoline, parallel market)": "percentile",
+    "Sorghum (local)": "percentile",
+    "Sorghum (red, local)": "percentile",
+    "Sorghum flour": "percentile",
+    "Oil (vegetable, fortified, food aid)": "percentile",
+    "Beans (fava, dry)": "percentile",
+    "Cowpeas": "percentile",
+    "Wage (non-qualified labour, agricultural)": "percentile",
+    "Sorghum (brown)": "percentile",
+    "Rice": "percentile",
+
     # Shock indicators
-    "conflict_events": "percentile",
-    "conflict_fatalities": "percentile",
-    "flood_occurrence": "event",
-    "flood_area": "percentile"
+    "conflict_events": "categorical",
+    "conflict_fatalities": "categorical",
 }
 
 
@@ -213,18 +276,30 @@ INDICATOR_TYPE = {
     "Wheat": "market",
     "Wheat flour (high quality)": "market",
     "Wheat flour (low quality)": "market",
+    "ToT (Labour/Cereal)": "market",
+    "ToT (Goat/Cereal)": "market",
 
     "Goat": "market",
     "Maize": "market",
     "Beans": "market",
     "ToT": "market",
 
+    "Fuel (diesel, parallel market)": "market",
+    "Fuel (petrol-gasoline, parallel market)": "market",
+    "Sorghum (local)": "market",
+    "Sorghum (red, local)": "market",
+    "Sorghum flour": "market",
+    "Oil (vegetable, fortified, food aid)": "market",
+    "Beans (fava, dry)": "market",
+    "Cowpeas": "market",
+    "Wage (non-qualified labour, agricultural)": "market",
+    "Sorghum (brown)": "market",
+    "Rice":"market",
+
     # Shock indicators
 
     "conflict_events": "shock",
     "conflict_fatalities": "shock",
-    "flood_occurrence": "hazard",
-    "flood_area": "hazard"
 }
 
 
@@ -267,6 +342,8 @@ SEASONAL_DEFINITIONS = {
     "Wheat": {"All Months": None},
     "Wheat flour (high quality)": {"All Months": None},
     "Wheat flour (low quality)": {"All Months": None},
+    "ToT (Labour/Cereal)": {"All Months": None},
+    "ToT (Goat/Cereal)": {"All Months": None},
 
     # Kenya indicators
     "Goat": {"All Months": None},
@@ -274,13 +351,23 @@ SEASONAL_DEFINITIONS = {
     "Beans": {"All Months": None},
     "ToT": {"All Months": None},
 
+    # South Sudan
+    "Fuel (diesel, parallel market)": {"All Months": None},
+    "Fuel (petrol-gasoline, parallel market)": {"All Months": None},
+    "Sorghum (local)": {"All Months": None},
+    "Sorghum (red, local)": {"All Months": None},
+    "Sorghum flour": {"All Months": None},
+    "Oil (vegetable, fortified, food aid)": {"All Months": None},
+    "Beans (fava, dry)": {"All Months": None},
+    "Cowpeas": {"All Months": None},
+    "Wage (non-qualified labour, agricultural)": {"All Months": None},
+    "Sorghum (brown)": {"All Months": None},
+    "Rice": {"All Months": None},
+
     # Shock indicators
     "conflict_events": {"All Months": None},
-    "conflict_fatalities": {"All Months": None},
-    "flood_occurrence": {"All Months": None},
-    "flood_area": {"All Months": None}
+    "conflict_fatalities": {"All Months": None}
 }
-
 
 # ---------------------------------------------------
 # Country Configurations
@@ -291,20 +378,23 @@ COUNTRY_CONFIG = {
     "Afghanistan": {
         "unit_col": "adm1_name",
         "price_file": "data/price_data.xlsx",
-        "rainfall_file": "data/rainfall_ndvi.xlsx"
+        "rainfall_file": "data/rainfall_ndvi.xlsx",
+        "conflict_file": "data/acled_afghanistan.xlsx"
     },
 
     "South Sudan": {
-        "unit_col": "admin1",
+        "unit_col": "adm1_name",
         "price_file": "data/price_data_south sudan.xlsx",
-        "rainfall_file": "data/rainfall_ndvi_South Sudan.xlsx"
+        "rainfall_file": "data/rainfall_ndvi_South Sudan.xlsx",
+        "conflict_file": "data/acled_south_sudan.xlsx"
     },
 
     # Temporarily using adm1_name until dataset changes to county
     "Kenya": {
         "unit_col": "adm1_name",
         "price_file": "data/price_data_kenya.xlsx",
-        "rainfall_file": "data/rainfall_ndvi_kenya.xlsx"
+        "rainfall_file": "data/rainfall_ndvi_kenya.xlsx",
+        "conflict_file": "data/acled_kenya.xlsx"
     }
 }
 
@@ -339,9 +429,7 @@ INDICATOR_LABELS = {
 
     # Shock indicators
     "conflict_events": "Conflict Events",
-    "conflict_fatalities":"Conflict Fatalities",
-    "flood_occurrence": "Flood Occurrence",
-    "flood_area": "Flooded Area"
+    "conflict_fatalities":"Conflict Fatalities"
 }
 
 # ---------------------------------------------------
@@ -357,4 +445,337 @@ REFERENCE_EVENTS_COLUMNS = {
     "event": "event",
     "type": "type",
     "show_for": "show_for"
+}
+
+INDICATOR_TRANSFORM = {
+    "conflict_events": "none",
+    "conflict_fatalities": "log"
+}
+
+MIN_OBSERVATIONS = {
+    "conflict_events": 5,
+    "conflict_fatalities": 5
+}
+
+# ---------------------------------------------------
+# Indicator Allowed Baseline Methods (FLEXIBLE)
+# ---------------------------------------------------
+
+INDICATOR_ALLOWED_BASELINES = {
+
+    # Climate (already anomaly-based → no baseline needed)
+    "rainfall 1-month anomaly [%]": ["none"],
+    "rainfall 3-month anomaly [%]": ["none"],
+    "10 day NDVI anomaly": ["none"],
+
+    # Prices → allow full flexibility
+    "Bread": ["YOY", "LTM", "FIVE_YEAR"],
+    "Exchange rate": ["YOY", "LTM", "FIVE_YEAR"],
+    "Fuel (diesel)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Oil (cooking)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Pulses": ["YOY", "LTM", "FIVE_YEAR"],
+    "Rice (high quality)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Rice (low quality)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Sugar": ["YOY", "LTM", "FIVE_YEAR"],
+    "Wage (non-qualified labour, non-agricultural)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Wheat": ["YOY", "LTM", "FIVE_YEAR"],
+    "Wheat flour (high quality)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Wheat flour (low quality)": ["YOY", "LTM", "FIVE_YEAR"],
+
+    "Goat": ["YOY", "LTM", "FIVE_YEAR"],
+    "Maize": ["YOY", "LTM", "FIVE_YEAR"],
+    "Beans": ["YOY", "LTM", "FIVE_YEAR"],
+    "ToT": ["YOY", "LTM", "FIVE_YEAR"],
+
+    "Fuel (diesel, parallel market)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Fuel (petrol-gasoline, parallel market)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Sorghum (local)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Sorghum (red, local)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Sorghum flour": ["YOY", "LTM", "FIVE_YEAR"],
+    "Oil (vegetable, fortified, food aid)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Beans (fava, dry)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Cowpeas": ["YOY", "LTM", "FIVE_YEAR"],
+    "Wage (non-qualified labour, agricultural)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Sorghum (brown)": ["YOY", "LTM", "FIVE_YEAR"],
+    "Rice": ["YOY", "LTM", "FIVE_YEAR"],
+    "ToT (Labour/Cereal)": ["YOY", "LTM", "FIVE_YEAR"],
+    "ToT (Goat/Cereal)": ["YOY", "LTM", "FIVE_YEAR"],
+
+    # 🔥 CONFLICT (KEY PART)
+    "conflict_events": ["none"],
+    "conflict_fatalities": ["none"],
+}
+
+# ---------------------------------------------------
+# Indicator Threshold Override (ADVANCED)
+# ---------------------------------------------------
+
+INDICATOR_THRESHOLD_OVERRIDE = {
+
+    "conflict_fatalities": "anomaly_zscore"
+}
+
+# ---------------------------------------------------
+# Conflict Threshold Rules
+# ---------------------------------------------------
+
+CONFLICT_ZSCORE_THRESHOLDS = {
+
+    "conflict_events": {
+        "alert": 1.0,
+        "alarm": 2.0
+    },
+
+    "conflict_fatalities": {
+        "alert": 1.0,
+        "alarm": 2.5
+    }
+}
+
+INDICATOR_GROUPS = {
+    "Climate": CLIMATE_INDICATORS,
+    "Price / Economic": PRICE_INDICATORS,
+    "Shock (Man-made)": SHOCK_MANMADE
+}
+
+
+# ---------------------------------------------------
+# Conflict Combined Rules (Events + Fatalities)
+# ---------------------------------------------------
+
+CONFLICT_USE_COMBINED = True   # 🔥 master switch
+
+CONFLICT_COMBINED_RULES = {
+    "conflict_events": {
+        "event_alert_threshold": 1,
+        "event_alarm_threshold": 2,
+        "fatality_alarm_threshold": 5
+    }
+}
+
+EVENT_THRESHOLDS = {
+    "conflict_events": {
+        "alert": 1,
+        "alarm": 2
+    },
+
+    # 🔥 ADD THIS BLOCK
+    "conflict_fatalities": {
+        "alert": 5,
+        "alarm": 20
+    }
+}
+
+# ---------------------------------------------------
+# Combined Indicator Definitions (GENERIC)
+# ---------------------------------------------------
+
+COMBINED_INDICATORS = {
+    "conflict_events": {
+        "components": ["conflict_events", "conflict_fatalities"],
+        "suffixes": ["events", "fatalities"]
+    }
+}
+
+# ---------------------------------------------------
+# Z-SCORE THRESHOLDS (GLOBAL DEFAULT)
+# ---------------------------------------------------
+
+ZSCORE_THRESHOLDS = {
+    "default": {
+        "alert": 1.0,
+        "alarm": 2.0
+    }
+}
+
+# ---------------------------------------------------
+# Indicator Allowed Threshold Methods (CLEAN & SCALABLE)
+# ---------------------------------------------------
+
+INDICATOR_ALLOWED_METHODS = {}
+
+# Climate → full methods
+for ind in CLIMATE_INDICATORS:
+    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore"]
+
+# Prices → percentile + tukey
+for ind in PRICE_INDICATORS:
+    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore"]
+
+# Shock indicators → special handling
+INDICATOR_ALLOWED_METHODS["conflict_events"] = ["categorical", "percentile"]
+INDICATOR_ALLOWED_METHODS["conflict_fatalities"] = ["categorical", "percentile"]
+
+# ---------------------------------------------------
+# Z-score Aggregation Method (Monthly Level)
+# ---------------------------------------------------
+
+Z_AGGREGATION_METHOD = {
+
+    # -----------------------------------------
+    # Climate Indicators → mean
+    # -----------------------------------------
+    "rainfall 1-month anomaly [%]": "mean",
+    "rainfall 3-month anomaly [%]": "mean",
+    "10 day NDVI anomaly": "mean",
+
+    # -----------------------------------------
+    # Price Indicators → mean
+    # -----------------------------------------
+
+    # Afghanistan
+    "Bread": "mean",
+    "Exchange rate": "mean",
+    "Fuel (diesel)": "mean",
+    "Oil (cooking)": "mean",
+    "Pulses": "mean",
+    "Rice (high quality)": "mean",
+    "Rice (low quality)": "mean",
+    "Sugar": "mean",
+    "Wage (non-qualified labour, non-agricultural)": "mean",
+    "Wheat": "mean",
+    "Wheat flour (high quality)": "mean",
+    "Wheat flour (low quality)": "mean",
+
+    # Kenya
+    "Goat": "mean",
+    "Maize": "mean",
+    "Beans": "mean",
+    "ToT": "mean",
+
+    # South Sudan
+    "Fuel (diesel, parallel market)": "mean",
+    "Fuel (petrol-gasoline, parallel market)": "mean",
+    "Wage (non-qualified labour, non-agricultural)": "mean",
+    "Sorghum (local)": "mean",
+    "Sorghum (red, local)": "mean",
+    "Sorghum flour": "mean",
+    "Oil (vegetable, fortified, food aid)": "mean",
+    "Beans (fava, dry)": "mean",
+    "Cowpeas": "mean",
+    "Wage (non-qualified labour, agricultural)": "mean",
+    "Sorghum (brown)": "mean",
+    "Rice": "mean",
+
+    # -----------------------------------------
+    # Shock Indicators (NOT USED for Z-score)
+    # Included for completeness / future-proofing
+    # -----------------------------------------
+    "conflict_events": "sum",
+    "conflict_fatalities": "sum"
+}
+
+
+# ---------------------------------------------------
+# Terms of Trade (ToT) Configuration
+# ---------------------------------------------------
+
+TOT_CONFIG = {
+    "Afghanistan": {
+        "enabled": True,
+        "definitions": [
+            {
+                "name": "ToT (Labour/Cereal)",
+                "numerator": "Wage (non-qualified labour, non-agricultural)",
+                "denominator": "Wheat"
+            },
+            {
+                "name": "ToT (Goat/Cereal)",
+                "numerator": "Goat",
+                "denominator": "Wheat"
+            }
+        ]
+    },
+
+    "Kenya": {
+        "enabled": False  # Already exists in data
+    },
+
+    "South Sudan": {
+        "enabled": False
+    }
+}
+
+DERIVED_INDICATORS = [
+    "ToT (Labour/Cereal)",
+    "ToT (Goat/Cereal)"
+]
+
+DEFAULT_METHOD_DESCRIPTIONS = {
+
+    "percentile": (
+        "Using percentile-based thresholds computed from spatial distributions.\n\n"
+        "• Alert = moderate deviation from normal\n"
+        "• Alarm = extreme deviation from normal\n\n"
+        "Useful for detecting relative anomalies across areas."
+    ),
+
+    "tukey": (
+        "Using Tukey IQR method:\n\n"
+        "• Alert = Q1 - 1.0 × IQR\n"
+        "• Alarm = Q1 - 1.5 × IQR\n\n"
+        "Robust method for detecting extreme deviations."
+    ),
+
+    "zscore": (
+        "Using Z-score standardization:\n\n"
+        "• Alert ≈ 1 standard deviation\n"
+        "• Alarm ≈ 2 standard deviations\n\n"
+        "Measures how far values deviate from the mean."
+    ),
+
+    "categorical": (
+        "Using fixed rule-based thresholds defined in configuration.\n\n"
+        "Useful for event-based indicators."
+    )
+}
+
+
+# ----------------------------------------------------------------------
+# Method Descriptions (UI messaging – FULLY CONTROLLABLE) - special cases
+# ----------------------------------------------------------------------
+
+METHOD_DESCRIPTIONS = {
+
+    "conflict_events": {
+        "categorical": (
+            "Using categorical rule:\n\n"
+            "• Alert ≥ 1 event\n"
+            "• Alarm ≥ 2 events\n\n"
+            "Switch to 'percentile' method for spatial thresholding."
+        ),
+        "percentile": (
+            "Using percentile-based thresholds computed from spatial distributions.\n\n"
+            "Allows detection of relative anomalies across areas."
+        )
+    },
+
+    "conflict_fatalities": {
+        "categorical": (
+            "Using categorical rule:\n\n"
+            "• Alert ≥ 5 fatalities\n"
+            "• Alarm ≥ 20 fatalities\n\n"
+            "Switch to 'percentile' for anomaly-based detection."
+        ),
+        "percentile": (
+            "Using percentile-based thresholds computed from spatial distributions.\n\n"
+            "Allows detection of relative anomalies across areas."
+        )
+    },
+
+    "ToT (Labour/Cereal)": {
+        "percentile": (
+            "Using percentile thresholds on Terms of Trade (Wage / Cereal).\n\n"
+            "Indicates purchasing power of households.\n\n"
+            "Lower values indicate reduced access to food."
+        )
+    },
+
+    "ToT": {
+            "percentile": (
+                "Using percentile thresholds on Terms of Trade (Goat / Cereal).\n\n"
+                "Indicates purchasing power of households.\n\n"
+                "Lower values indicate reduced access to food."
+            )
+        }
 }
