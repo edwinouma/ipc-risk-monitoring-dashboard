@@ -68,7 +68,7 @@ def cached_classification_matrix(df, indicator, alarm, alert, units, start, end,
 # Page Config
 # ---------------------------------------------------
 st.set_page_config(layout="wide")
-st.title("IPC Risk Analysis Approach Threshold Setting & Testing Dashboard")
+st.title("Risk Analysis Approach Threshold Setting & Testing Dashboard")
 
 
 # ---------------------------------------------------
