@@ -6,7 +6,9 @@ DEFAULT_THRESHOLD_METHOD = "percentile"
 CLIMATE_INDICATORS = [
     "rainfall 1-month anomaly [%]",
     "rainfall 3-month anomaly [%]",
-    "10 day NDVI anomaly"
+    "10 day NDVI anomaly",
+    "rainfall-mm",
+    "ndvi_absolute"
 ]
 
 PRICE_INDICATORS = [
@@ -78,6 +80,8 @@ INDICATOR_COUNTRY_MAP = {
     "rainfall 1-month anomaly [%]": ["Afghanistan", "South Sudan", "Kenya"],
     "rainfall 3-month anomaly [%]": ["Afghanistan", "South Sudan", "Kenya"],
     "10 day NDVI anomaly": ["Afghanistan", "South Sudan", "Kenya"],
+    "rainfall-mm": ["Afghanistan", "South Sudan", "Kenya"],
+    "ndvi_absolute": ["Afghanistan", "South Sudan", "Kenya"],
 
     # Afghanistan price indicators
     "Bread": ["Afghanistan"],
@@ -151,6 +155,9 @@ INDICATOR_DIRECTION = {
     "rainfall 3-month anomaly [%]": "lower",
     "10 day NDVI anomaly": "lower",
     "10 day NDVI": "lower",
+    # RAW climate indicators
+    "rainfall-mm": "lower",
+    "ndvi_absolute": "lower",
     "NDVI long term average": "lower",
     "ToT": "lower",
     "ToT (Labour/Cereal)": "lower",
@@ -262,6 +269,8 @@ INDICATOR_TYPE = {
     "rainfall 1-month anomaly [%]": "climate",
     "rainfall 3-month anomaly [%]": "climate",
     "10 day NDVI anomaly": "climate",
+    "rainfall-mm": "climate",
+    "ndvi_absolute": "climate",
 
     # Market indicators
     "Bread": "market",
@@ -378,7 +387,7 @@ COUNTRY_CONFIG = {
     "Afghanistan": {
         "unit_col": "adm1_name",
         "price_file": "data/price_data.xlsx",
-        "rainfall_file": "data/rainfall_ndvi.xlsx",
+        "rainfall_file": "data/rainfall_ndvi_afghanistan.xlsx",
         "conflict_file": "data/acled_afghanistan.xlsx"
     },
 
@@ -408,6 +417,8 @@ INDICATOR_LABELS = {
     "rainfall 1-month anomaly [%]": "Rainfall Anomaly (1-month)",
     "rainfall 3-month anomaly [%]": "Rainfall Anomaly (3-month)",
     "10 day NDVI anomaly": "NDVI Anomaly",
+    "rainfall-mm": "Rainfall (mm)",
+    "ndvi_absolute": "NDVI (Absolute)",
 
     "Bread": "Bread Price",
     "Exchange rate": "Exchange Rate",
@@ -467,6 +478,8 @@ INDICATOR_ALLOWED_BASELINES = {
     "rainfall 1-month anomaly [%]": ["none"],
     "rainfall 3-month anomaly [%]": ["none"],
     "10 day NDVI anomaly": ["none"],
+    "rainfall-mm": ["none"],
+    "ndvi_absolute": ["none"],
 
     # Prices → allow full flexibility
     "Bread": ["YOY", "LTM", "FIVE_YEAR"],
@@ -596,11 +609,11 @@ INDICATOR_ALLOWED_METHODS = {}
 
 # Climate → full methods
 for ind in CLIMATE_INDICATORS:
-    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore"]
+    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore", "spi_zscore"]
 
 # Prices → percentile + tukey
 for ind in PRICE_INDICATORS:
-    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore"]
+    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore", "spi_zscore"]
 
 # Shock indicators → special handling
 INDICATOR_ALLOWED_METHODS["conflict_events"] = ["categorical", "percentile"]
@@ -618,6 +631,8 @@ Z_AGGREGATION_METHOD = {
     "rainfall 1-month anomaly [%]": "mean",
     "rainfall 3-month anomaly [%]": "mean",
     "10 day NDVI anomaly": "mean",
+    "rainfall-mm": "mean",
+    "ndvi_absolute": "mean",
 
     # -----------------------------------------
     # Price Indicators → mean
@@ -727,6 +742,14 @@ DEFAULT_METHOD_DESCRIPTIONS = {
     "categorical": (
         "Using fixed rule-based thresholds defined in configuration.\n\n"
         "Useful for event-based indicators."
+    ),
+
+    "spi_zscore": (
+        "Using seasonally standardized Z-score (SPI-style):\n\n"
+        "• Alert ≈ 1 standard deviation from normal\n"
+        "• Alarm ≈ 2 standard deviations from normal\n\n"
+        "Compares each value to historical conditions for the same month.\n"
+        "Removes seasonality and detects unusual deviations."
     )
 }
 
@@ -779,3 +802,29 @@ METHOD_DESCRIPTIONS = {
             )
         }
 }
+
+# ---------------------------------------------------
+# SPI-STYLE Z-SCORE THRESHOLDS (SEASONALLY ADJUSTED)
+# ---------------------------------------------------
+
+SPI_ZSCORE_THRESHOLDS = {
+    "default": {
+        "alert": 1.0,
+        "alarm": 2.0
+    }
+}
+
+# ---------------------------------------------------
+# METHODS THAT REQUIRE SEASONAL STANDARDIZATION
+# ---------------------------------------------------
+
+SEASONAL_STANDARDIZATION_METHODS = ["spi_zscore"]
+
+# ---------------------------------------------------
+# SPI REQUIRES RAW CLIMATE DATA (CRITICAL CONTROL)
+# ---------------------------------------------------
+
+SPI_REQUIRES_RAW = [
+    "rainfall-mm",
+    "ndvi_absolute"
+]

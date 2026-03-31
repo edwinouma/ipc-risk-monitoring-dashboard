@@ -12,6 +12,7 @@ from src.plot_triggers import (
     plot_monthly_trigger_counts,
     plot_monthly_trigger_counts_interactive
 )
+from src.spi_zscore import compute_spi_zscore_thresholds
 from src.classification_matrix import compute_unit_month_classification_matrix
 from src.export_colored_matrix import export_colored_classification_matrix
 from src.unit_month import compute_unit_month_values
@@ -297,9 +298,20 @@ def main():
 
                 df_indicator = df_country[df_country["indicator"] == ind].copy()
 
-                df_indicator = df_indicator[
-                    (df_indicator["baseline_method"] == baseline_method)
-                ] if "baseline_method" in df_indicator.columns else df_indicator
+                # -----------------------------------------
+                # 🔥 FIX: Handle RAW indicators correctly
+                # -----------------------------------------
+                if "baseline_method" in df_indicator.columns:
+
+                    if ind in SPI_REQUIRES_RAW:
+                        # RAW indicators → always use "none"
+                        df_indicator = df_indicator[
+                            df_indicator["baseline_method"] == "none"
+                            ]
+                    else:
+                        df_indicator = df_indicator[
+                            df_indicator["baseline_method"] == baseline_method
+                            ]
 
                 if df_indicator.empty:
                     print(f"Skipping {ind} | {baseline_method} (no data)")
@@ -397,6 +409,38 @@ def main():
                         how="left"
                     )
 
+                    # -----------------------------------------
+                    # 🔥 SPI Z-SCORE (NEW) — ADD ONLY (DO NOT MODIFY EXISTING)
+                    # -----------------------------------------
+                    spi_thresholds = pd.DataFrame(
+                        columns=["indicator", "alert_spi_zscore", "alarm_spi_zscore"]
+                    )
+
+                    if ind in SPI_REQUIRES_RAW:
+
+                        try:
+                            spi_raw = compute_spi_zscore_thresholds(df_indicator, ind)
+
+                            if spi_raw is not None and not spi_raw.empty:
+                                spi_thresholds = spi_raw.rename(columns={
+                                    "alert_percentile": "alert_spi_zscore",
+                                    "alarm_percentile": "alarm_spi_zscore"
+                                })
+
+                                spi_thresholds = spi_thresholds[
+                                    ["indicator", "alert_spi_zscore", "alarm_spi_zscore"]
+                                ]
+
+                        except Exception as e:
+                            print(f"SPI-Z failed for {ind}: {e}")
+
+                    # 🔥 MERGE SPI (AFTER Z-SCORE MERGE)
+                    merged_thresholds = merged_thresholds.merge(
+                        spi_thresholds,
+                        on="indicator",
+                        how="left"
+                    )
+
                     merged_thresholds["retention_filter"] = "none"
                     merged_thresholds["season_scope"] = "All Months"
                     merged_thresholds["baseline_method"] = baseline_method
@@ -442,7 +486,6 @@ def main():
                         }])
 
                         all_thresholds.append(df_threshold)
-
 
                     # ---------------------------------------------------
 

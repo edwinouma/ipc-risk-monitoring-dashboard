@@ -241,8 +241,9 @@ if selected_season_months is None:
 
 
 view_mode = st.sidebar.radio(
-    "Aggregation View",
-    ["Selected Provinces", "National (All Provinces)"]
+    "Geographical Scope",
+    ["Selected Units", "National (all units)"],
+    index=1   # 🔥 THIS LINE FIXES IT
 )
 
 default_units = all_units if len(all_units) <= 20 else all_units[:20]
@@ -258,7 +259,7 @@ if len(selected_units) == 0:
 
 baseline_mode = st.sidebar.radio(
     "Baseline Mode",
-    ["Fixed National", "Dynamic (Selected Provinces)"]
+    ["Fixed National", "Dynamic (Selected Units)"]
 )
 
 display_mode = st.sidebar.radio(
@@ -350,10 +351,19 @@ else:
                 alarm_threshold = row["alarm_zscore"]
                 alert_threshold = row["alert_zscore"]
 
+            elif method == "spi_zscore":
+                alarm_threshold = row["alarm_spi_zscore"]
+                alert_threshold = row["alert_spi_zscore"]
+
             # 🔥 ADD THIS RIGHT HERE
             if method == "zscore":
                 if pd.isna(alarm_threshold) or pd.isna(alert_threshold):
                     st.warning("Z-score thresholds not available for this configuration.")
+                    st.stop()
+
+            if method == "spi_zscore":
+                if pd.isna(alarm_threshold) or pd.isna(alert_threshold):
+                    st.warning("SPI Z-score thresholds not available for this configuration.")
                     st.stop()
 
         else:
@@ -363,10 +373,10 @@ else:
         alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
 
 # ---------------------------------------------------
-# Dynamic Threshold Recalculation (Selected Provinces)
+# Dynamic Threshold Recalculation (Selected Units)
 # ---------------------------------------------------
 
-if baseline_mode == "Dynamic (Selected Provinces)" and len(selected_units) > 0:
+if baseline_mode == "Dynamic (Selected Units)" and len(selected_units) > 0:
 
     # Only recompute if subset of provinces selected
     if len(selected_units) < len(all_units):
@@ -383,7 +393,7 @@ if baseline_mode == "Dynamic (Selected Provinces)" and len(selected_units) > 0:
                 alarm_threshold = recalculated[method]["alarm"]
                 alert_threshold = recalculated[method]["alert"]
 
-                st.info("Dynamic thresholds recomputed using selected provinces.")
+                st.info("Dynamic thresholds recomputed using Selected Units.")
 
         except Exception as e:
 
@@ -471,7 +481,7 @@ if method == "percentile":
     #     recalculated = recalculate_thresholds(
     #         df_filtered,
     #         indicator,
-    #         selected_units if baseline_mode == "Dynamic (Selected Provinces)" else None,
+    #         selected_units if baseline_mode == "Dynamic (Selected Units)" else None,
     #         alarm_pct=alarm_pct,
     #         alert_pct=alert_pct
     #     )
@@ -490,6 +500,44 @@ if method == "percentile":
     # except Exception as e:
     #     st.warning(f"Percentile threshold computation failed: {e}")
     #     st.stop()
+
+    # ---------------------------------------------------
+    # 🔥 SAFE RECALCULATION (ONLY WHEN USER CHANGES INPUT)
+    # ---------------------------------------------------
+
+    user_changed = (
+            alarm_pct != default_alarm_pct or
+            alert_pct != default_alert_pct
+    )
+
+    if user_changed:
+
+        try:
+            recalculated = recalculate_thresholds(
+                df_filtered,
+                indicator,
+                selected_units if baseline_mode == "Dynamic (Selected Units)" else None,
+                alarm_pct=alarm_pct,
+                alert_pct=alert_pct
+            )
+
+            direction = INDICATOR_DIRECTION.get(indicator, "lower")
+
+            alarm_threshold = recalculated["percentile"]["alarm"]
+            alert_threshold = recalculated["percentile"]["alert"]
+
+            # 🔥 Fix ordering for upper-tail indicators
+            if direction == "upper":
+                alarm_threshold, alert_threshold = (
+                    max(alarm_threshold, alert_threshold),
+                    min(alarm_threshold, alert_threshold)
+                )
+
+            st.info("Thresholds dynamically recalculated.")
+
+        except Exception as e:
+            st.warning(f"Recalculation failed: {e}")
+            st.stop()
 
     with col3:
         st.metric("Alarm Threshold", f"{round(alarm_threshold, 2)}")
@@ -525,7 +573,7 @@ else:
 # Apply Classification (Season-Aware Only When Needed)
 # ---------------------------------------------------
 
-units_for_calc = all_units if view_mode == "National (All Provinces)" else selected_units
+units_for_calc = all_units if view_mode == "National (all units)" else selected_units
 
 if season_scope == "All Months":
 
@@ -616,7 +664,7 @@ st.subheader("Trigger Structural Summary")
 st.info(
     f"ℹ️ **Interpretation Note:** Thresholds reflect "
     f"**{season_scope}** | Retention Mode: **{retention_mode}**. "
-    "Structural summary below reflects the actual selected provinces "
+    "Structural summary below reflects the actual Selected Units "
     "and time window."
 )
 
@@ -1096,7 +1144,7 @@ if st.checkbox("Show Province Classification Matrix") and len(units_for_calc) > 
 # ---------------------------------------------------
 # National Seasonal Charts (Season-Aware Display)
 # ---------------------------------------------------
-if view_mode == "National (All Provinces)":
+if view_mode == "National (all units)":
 
     st.markdown("---")
     st.subheader("National Seasonal Analysis (Last 6 Years)")
