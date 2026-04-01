@@ -68,7 +68,7 @@ def cached_classification_matrix(df, indicator, alarm, alert, units, start, end,
 # Page Config
 # ---------------------------------------------------
 st.set_page_config(layout="wide")
-st.title("Risk Analysis Approach Threshold Setting & Testing Dashboard")
+st.title("RAAP Threshold Setting dashboard")
 
 
 # ---------------------------------------------------
@@ -181,7 +181,7 @@ allowed_baselines = INDICATOR_ALLOWED_BASELINES.get(
 if len(allowed_baselines) > 1:
 
     baseline_method = st.sidebar.selectbox(
-        "Baseline Method",
+        "Measure",
         allowed_baselines
     )
 
@@ -197,19 +197,19 @@ available_methods = INDICATOR_ALLOWED_METHODS.get(
     ["percentile"]
 )
 
-method = st.sidebar.radio(
+method = st.sidebar.selectbox(
     "Method",
     available_methods
 )
 
 # 🔹 Retention Mode Selector (ADDITIONAL ONLY)
-retention_mode = st.sidebar.radio(
+retention_mode = st.sidebar.selectbox(
     "Threshold sensitivity mode",
     ["Sensitive (All Months)", "Robust (≥40% Retention)"],
     help="ⓘ Controls how easily the system flags warnings across areas."
 )
 
-# 🔹 NEW: Season Scope Selector (ADDITIONAL ONLY)
+# 🔹 NEW: Time Frame Selector (ADDITIONAL ONLY)
 season_scope = "All Months"
 
 if df_thresholds_file is not None and "season_scope" in df_thresholds_file.columns:
@@ -225,7 +225,7 @@ if df_thresholds_file is not None and "season_scope" in df_thresholds_file.colum
 
     if available_seasons:
         season_scope = st.sidebar.selectbox(
-            "Season Scope",
+            "Time Frame",
             available_seasons
         )
 
@@ -240,16 +240,17 @@ if selected_season_months is None:
     selected_season_months = list(range(1, 13))
 
 
-view_mode = st.sidebar.radio(
-    "Geographical Scope",
-    ["Selected Units", "National (all units)"],
-    index=1   # 🔥 THIS LINE FIXES IT
+view_mode = st.sidebar.selectbox(
+    "Geographical Scope (View)",
+    ["National (all units)", "Selected Units"],
+    index=0,   # 🔥 THIS LINE FIXES IT
+    help = "ⓘ Select which units are shown for review in the dashboard."
 )
 
 default_units = all_units if len(all_units) <= 20 else all_units[:20]
 
 selected_units = st.sidebar.multiselect(
-    "Select Provinces",
+    "Selected Units",
     all_units,
     default=default_units
 )
@@ -258,13 +259,16 @@ if len(selected_units) == 0:
     st.sidebar.warning("Select at least one province.")
 
 baseline_mode = st.sidebar.radio(
-    "Baseline Mode",
-    ["Fixed National", "Dynamic (Selected Units)"]
+    "Geographical Scope (threshold)",
+    ["Fixed National", "Dynamic (Selected Units)"],
+    help = "ⓘ Recalculate thresholds for selected units, otherwise, use the fixed national threshold."
+
 )
 
 display_mode = st.sidebar.radio(
     "Display Mode",
-    ["Count", "Percentage"]
+    ["Count", "Percentage"],
+    help = "ⓘ Change how warnings are presented in the charts"
 )
 
 show_events = st.sidebar.checkbox(
@@ -427,16 +431,18 @@ def get_season_thresholds(season_name):
 
 
 # ---------------------------------------------------
-# Threshold Settings
+# Method Description
 # ---------------------------------------------------
-st.subheader("Threshold Settings")
+st.subheader("Method Description")
 
 description = get_method_description(indicator, method)
 
 if description:
     st.info(description)
 
-col1, col2, col3 = st.columns(3)
+st.markdown(f"### Suggested Thresholds ({method.lower()})")
+row1_col1, row1_col2 = st.columns(2)
+row2_col1, row2_col2 = st.columns(2)
 
 # controls continue ALWAYS
 
@@ -455,7 +461,7 @@ if method == "percentile":
         default_alarm_pct = 75
         default_alert_pct = 50
 
-    with col1:
+    with row1_col1:
         alarm_pct = st.number_input(
             "Alarm Percentile",
             min_value=1,
@@ -464,7 +470,7 @@ if method == "percentile":
             step=1
         )
 
-    with col2:
+    with row2_col1:
         alert_pct = st.number_input(
             "Alert Percentile",
             min_value=1,
@@ -472,38 +478,6 @@ if method == "percentile":
             value=default_alert_pct,
             step=1
         )
-
-    # # ---------------------------------------------------
-    # # 🔥 NEW: Use spatial pipeline recalculation
-    # # ---------------------------------------------------
-    # try:
-    #
-    #     recalculated = recalculate_thresholds(
-    #         df_filtered,
-    #         indicator,
-    #         selected_units if baseline_mode == "Dynamic (Selected Units)" else None,
-    #         alarm_pct=alarm_pct,
-    #         alert_pct=alert_pct
-    #     )
-    #
-    #     direction = INDICATOR_DIRECTION.get(indicator, "lower")
-    #
-    #     alarm_threshold = recalculated["percentile"]["alarm"]
-    #     alert_threshold = recalculated["percentile"]["alert"]
-    #
-    #     # 🔥 Ensure correct display ordering for upper-tail
-    #     if direction == "upper":
-    #         # Swap for display only
-    #         alarm_threshold, alert_threshold = max(alarm_threshold, alert_threshold), min(alarm_threshold,
-    #                                                                                       alert_threshold)
-    #
-    # except Exception as e:
-    #     st.warning(f"Percentile threshold computation failed: {e}")
-    #     st.stop()
-
-    # ---------------------------------------------------
-    # 🔥 SAFE RECALCULATION (ONLY WHEN USER CHANGES INPUT)
-    # ---------------------------------------------------
 
     user_changed = (
             alarm_pct != default_alarm_pct or
@@ -539,35 +513,46 @@ if method == "percentile":
             st.warning(f"Recalculation failed: {e}")
             st.stop()
 
-    with col3:
-        st.metric("Alarm Threshold", f"{round(alarm_threshold, 2)}")
-        st.metric("Alert Threshold", f"{round(alert_threshold, 2)}")
+    with row1_col2:
+        st.metric(
+            "Alarm Threshold",
+            f"{round(alarm_threshold, 2)}"
+        )
+
+    with row2_col2:
+        st.metric(
+            "Alert Threshold",
+            f"{round(alert_threshold, 2)}"
+        )
 
 # -----------------------------------------
 # EXISTING: Tukey / Z-score / Override
 # -----------------------------------------
 else:
 
-    with col1:
+    # 🔥 Row 1 → Alarm
+    with row1_col1:
         alarm_threshold = st.number_input(
             "Alarm Threshold",
             value=float(alarm_threshold)
         )
 
-    with col2:
+    with row1_col2:
+        if st.button("Reset to Default"):
+            reset_override(indicator, method)
+            st.rerun()
+
+    # 🔥 Row 2 → Alert
+    with row2_col1:
         alert_threshold = st.number_input(
             "Alert Threshold",
             value=float(alert_threshold)
         )
 
-    with col3:
-        if st.button("Reset to Default"):
-            reset_override(indicator, method)
-            st.rerun()
-
-    if st.button("Apply & Save Threshold"):
-        save_override(indicator, method, alarm_threshold, alert_threshold)
-        st.success("Threshold saved.")
+    with row2_col2:
+        if st.button("Apply & Save Threshold"):
+            save_override(indicator, method, alarm_threshold, alert_threshold)
+            st.success("Threshold saved.")
 
 # ---------------------------------------------------
 # Apply Classification (Season-Aware Only When Needed)
@@ -658,7 +643,7 @@ counts = counts[
 # ---------------------------------------------------
 # Structural Summary Panel (FULLY PRESERVED)
 # ---------------------------------------------------
-st.subheader("Trigger Structural Summary")
+st.subheader("Warning Summary")
 
 # 🔹 TWG Explanatory Info Box
 st.info(
@@ -812,7 +797,7 @@ else:
                 "Threshold",
                 "Data Points Used (Filtered)",
                 "Monthly % Retained Range",
-                "Trigger Frequency (proportion)"
+                "Warning Frequency (range across all units)"
             ],
             "Alarm": [
                 f"{round(alarm_threshold, 2)}",
@@ -865,7 +850,7 @@ else:
 # ---------------------------------------------------
 # Aggregated Stacked Chart (Season-Aware Display)
 # ---------------------------------------------------
-st.subheader("Aggregated Trigger Chart")
+st.subheader("Warnings for all selected units (over time)")
 
 # 🔥 ADD THIS HERE
 if indicator.startswith("conflict"):
@@ -974,7 +959,7 @@ st.plotly_chart(fig, width="stretch")
 # ---------------------------------------------------
 # Province Classification Matrix (Season-Aware – Chart-Matched)
 # ---------------------------------------------------
-if st.checkbox("Show Province Classification Matrix") and len(units_for_calc) > 0:
+if st.checkbox("Warnings for each unit over time") and len(units_for_calc) > 0:
 
     matrix = matrix_summary.copy()
 
