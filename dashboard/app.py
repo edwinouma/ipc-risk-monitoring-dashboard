@@ -43,7 +43,8 @@ from src.config import (
     INDICATOR_ALLOWED_METHODS,   # 🔥 ADD THIS
     EVENT_THRESHOLDS,
     METHOD_DESCRIPTIONS,
-    DEFAULT_METHOD_DESCRIPTIONS
+    DEFAULT_METHOD_DESCRIPTIONS,
+    SPI_TRUE_THRESHOLDS
 )
 from src.event_loader import load_reference_events, get_reference_events
 
@@ -192,10 +193,15 @@ else:
 # Method Selection (Dynamic per indicator)
 # ---------------------------------------------------
 
-available_methods = INDICATOR_ALLOWED_METHODS.get(
-    indicator,
-    ["percentile"]
-)
+from src.config import SPI_TRUE_INDICATORS
+
+if indicator in SPI_TRUE_INDICATORS:
+    available_methods = ["spi_true"]
+else:
+    available_methods = INDICATOR_ALLOWED_METHODS.get(
+        indicator,
+        ["percentile"]
+    )
 
 method = st.sidebar.selectbox(
     "Method",
@@ -310,7 +316,20 @@ if method == "categorical":
 # ---------------------------------------------------
 else:
 
-    if df_thresholds_file is not None and "retention_filter" in df_thresholds_file.columns:
+    # -----------------------------------------
+    # 🔥 TRUE SPI THRESHOLDS (CONFIG-DRIVEN)
+    # -----------------------------------------
+    if method == "spi_true":
+
+        thresholds = SPI_TRUE_THRESHOLDS.get(
+            indicator,
+            SPI_TRUE_THRESHOLDS["default"]
+        )
+
+        alert_threshold = thresholds["alert"]
+        alarm_threshold = thresholds["alarm"]
+
+    elif df_thresholds_file is not None and "retention_filter" in df_thresholds_file.columns:
 
         retention_key = "none" if retention_mode == "Sensitive (All Months)" else ">=40%"
 
@@ -355,19 +374,10 @@ else:
                 alarm_threshold = row["alarm_zscore"]
                 alert_threshold = row["alert_zscore"]
 
-            elif method == "spi_zscore":
-                alarm_threshold = row["alarm_spi_zscore"]
-                alert_threshold = row["alert_spi_zscore"]
-
             # 🔥 ADD THIS RIGHT HERE
             if method == "zscore":
                 if pd.isna(alarm_threshold) or pd.isna(alert_threshold):
                     st.warning("Z-score thresholds not available for this configuration.")
-                    st.stop()
-
-            if method == "spi_zscore":
-                if pd.isna(alarm_threshold) or pd.isna(alert_threshold):
-                    st.warning("SPI Z-score thresholds not available for this configuration.")
                     st.stop()
 
         else:
@@ -441,15 +451,15 @@ if description:
     st.info(description)
 
 st.markdown(f"### Suggested Thresholds ({method.lower()})")
-row1_col1, row1_col2 = st.columns(2)
-row2_col1, row2_col2 = st.columns(2)
+row1_col1, row1_col2 = st.columns([1, 1])
+row2_col1, row2_col2 = st.columns([1, 1])
 
 # controls continue ALWAYS
 
 # -----------------------------------------
 # NEW: Percentile inputs (direction-aware defaults)
 # -----------------------------------------
-if method == "percentile":
+if method in ["percentile", "tukey"]:
 
     direction = INDICATOR_DIRECTION.get(indicator, "lower")
 
@@ -462,27 +472,45 @@ if method == "percentile":
         default_alert_pct = 50
 
     with row1_col1:
-        alarm_pct = st.number_input(
-            "Alarm Percentile",
-            min_value=1,
-            max_value=99,
-            value=default_alarm_pct,
-            step=1
+        sub_col1, _ = st.columns([1, 2])  # 🔥 shrink input
+        with sub_col1:
+            alarm_pct = st.number_input(
+                "Alarm Percentile",
+                min_value=1,
+                max_value=99,
+                value=default_alarm_pct,
+                step=1
+            )
+
+    if method == "percentile":
+        with row2_col1:
+            sub_col2, _ = st.columns([1, 2])  # Adjust ratio if you want smaller/larger input
+            with sub_col2:
+                alert_pct = st.number_input(
+                    "Alert Percentile",
+                    min_value=1,
+                    max_value=99,
+                    value=default_alert_pct,
+                    step=1
+                )
+    else:
+        # Tukey → no alert input
+        alert_pct = default_alert_pct  # keep for backend consistency
+
+    if method == "tukey":
+        st.caption(
+            "ⓘ Tukey thresholds are driven by the Alarm Percentile only "
+            "(it defines both Q1 and Q3 through the distribution spread)."
         )
 
-    with row2_col1:
-        alert_pct = st.number_input(
-            "Alert Percentile",
-            min_value=1,
-            max_value=99,
-            value=default_alert_pct,
-            step=1
+    if method == "percentile":
+        user_changed = (
+                alarm_pct != default_alarm_pct or
+                alert_pct != default_alert_pct
         )
-
-    user_changed = (
-            alarm_pct != default_alarm_pct or
-            alert_pct != default_alert_pct
-    )
+    else:
+        # Tukey → only alarm matters
+        user_changed = alarm_pct != default_alarm_pct
 
     if user_changed:
 
@@ -497,8 +525,13 @@ if method == "percentile":
 
             direction = INDICATOR_DIRECTION.get(indicator, "lower")
 
-            alarm_threshold = recalculated["percentile"]["alarm"]
-            alert_threshold = recalculated["percentile"]["alert"]
+            if method == "percentile":
+                alarm_threshold = recalculated["percentile"]["alarm"]
+                alert_threshold = recalculated["percentile"]["alert"]
+
+            elif method == "tukey":
+                alarm_threshold = recalculated["tukey"]["alarm"]
+                alert_threshold = recalculated["tukey"]["alert"]
 
             # 🔥 Fix ordering for upper-tail indicators
             if direction == "upper":

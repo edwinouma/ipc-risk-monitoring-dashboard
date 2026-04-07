@@ -107,8 +107,10 @@ def compute_zscore_thresholds(df, indicator):
     # -----------------------------------------
     return pd.DataFrame([{
         "indicator": indicator,
-        "alert_percentile": alert,   # keep naming for compatibility
-        "alarm_percentile": alarm,
+        "alert_zscore": alert,
+        "alarm_zscore": alarm,
+        "alert_percentile": None,
+        "alarm_percentile": None,
         "alert_tukey": None,
         "alarm_tukey": None
     }])

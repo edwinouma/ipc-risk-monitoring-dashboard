@@ -12,7 +12,6 @@ from src.plot_triggers import (
     plot_monthly_trigger_counts,
     plot_monthly_trigger_counts_interactive
 )
-from src.spi_zscore import compute_spi_zscore_thresholds
 from src.classification_matrix import compute_unit_month_classification_matrix
 from src.export_colored_matrix import export_colored_classification_matrix
 from src.unit_month import compute_unit_month_values
@@ -20,12 +19,11 @@ from src.config import *
 from src.price_baselines import compute_price_baseline
 from src.config import BASELINE_METHODS, INDICATOR_ALLOWED_BASELINES, EVENT_THRESHOLDS
 from src.conflict_baseline import compute_conflict_baseline
-from src.zscore_thresholds import compute_zscore_thresholds
 from src.tot_calculation import compute_tot
 from src.config import TOT_CONFIG, DERIVED_INDICATORS
+from src.spi_true import compute_true_spi
 import pandas as pd
 import os
-
 
 ROBUST_MIN_RETENTION = 40
 
@@ -290,21 +288,52 @@ def main():
 
                 print(f"\nProcessing Indicator: {ind} | Baseline: {baseline_method}")
 
-                # -----------------------------------------
-                # 🔥 FIX: Skip raw prices for Z-score
-                # -----------------------------------------
                 if ind in PRICE_INDICATORS and baseline_method == "none":
                     continue
 
                 df_indicator = df_country[df_country["indicator"] == ind].copy()
+
+                method_type = INDICATOR_METHOD.get(ind, "percentile")
+
+                # -----------------------------------------
+                # 🔥 TRUE SPI (Gamma-based)
+                # -----------------------------------------
+                if method_type == "spi_true" and ind in SPI_TRUE_INDICATORS:
+
+                    try:
+                        df_spi_source = df_rainfall[
+                            (df_rainfall["country"] == country) &
+                            (df_rainfall[INDICATOR_COL] == ind)
+                            ].copy()
+
+                        df_spi = compute_true_spi(df_spi_source)
+
+                        df_spi["indicator"] = ind
+                        df_spi["baseline_method"] = "none"
+
+                        df_indicator = df_spi.copy()
+
+                        print(f"✅ TRUE SPI applied for {ind}")
+
+                    except Exception as e:
+                        print(f"SPI-TRUE failed for {ind}: {e}")
+                        continue
+
+                # 🔥 SPI requires full time series (date)
+                if "date" not in df_indicator.columns and DATE_COL in df_country.columns:
+                    df_indicator = df_indicator.merge(
+                        df_country[[UNIT_COL, "year_month", DATE_COL]],
+                        on=[UNIT_COL, "year_month"],
+                        how="left"
+                    )
 
                 # -----------------------------------------
                 # 🔥 FIX: Handle RAW indicators correctly
                 # -----------------------------------------
                 if "baseline_method" in df_indicator.columns:
 
-                    if ind in SPI_REQUIRES_RAW:
-                        # RAW indicators → always use "none"
+                    if method_type == "spi_true":
+                        # SPI always uses raw values
                         df_indicator = df_indicator[
                             df_indicator["baseline_method"] == "none"
                             ]
@@ -317,8 +346,6 @@ def main():
                     print(f"Skipping {ind} | {baseline_method} (no data)")
                     continue
 
-                method_type = INDICATOR_METHOD.get(ind, "percentile")
-
                 # ---------------------------------------------------
                 # 🔥 SPECIAL HANDLING FOR CONFLICT (event indicators)
                 # ---------------------------------------------------
@@ -329,11 +356,16 @@ def main():
 
                 else:
 
+                    # -----------------------------------------
+                    # 🔥 SELECT VALUE COLUMN (FIXED LOGIC)
+                    # -----------------------------------------
+                    value_col = VALUE_COL
+
                     unit_month = compute_unit_month_values(
                         df=df_indicator,
                         unit_col=UNIT_COL,
                         indicator_col=INDICATOR_COL,
-                        value_col=VALUE_COL,
+                        value_col=value_col,
                         indicator_value=ind,
                         aggregation="mean"
                     )
@@ -343,12 +375,17 @@ def main():
 
                 all_unit_month_values.append(unit_month)
 
+                # -----------------------------------------
+                # 🔥 SPATIAL VALUE COLUMN (FIXED)
+                # -----------------------------------------
+                value_col_spatial = VALUE_COL
+
                 spatial = compute_spatial_percentiles(
                     df_indicator,
                     UNIT_COL,
                     DATE_COL,
                     INDICATOR_COL,
-                    VALUE_COL,
+                    value_col_spatial,
                     ind
                 )
 
@@ -356,7 +393,30 @@ def main():
                 spatial["season_scope"] = "All Months"
                 all_spatial_percentiles.append(spatial)
 
-                method_type = INDICATOR_METHOD.get(ind, "percentile")
+                # -----------------------------------------
+                # 🔥 TRUE SPI THRESHOLDS (FIXED)
+                # -----------------------------------------
+                if method_type == "spi_true":
+                    thresholds = SPI_TRUE_THRESHOLDS.get(
+                        ind,
+                        SPI_TRUE_THRESHOLDS["default"]
+                    )
+
+                    df_threshold = pd.DataFrame([{
+                        "indicator": ind,
+                        "alert_percentile": thresholds["alert"],
+                        "alarm_percentile": thresholds["alarm"],
+                        "alert_tukey": None,
+                        "alarm_tukey": None,
+                        "retention_filter": "none",
+                        "season_scope": "All Months",
+                        "baseline_method": baseline_method,
+                        "country": country
+                    }])
+
+                    all_thresholds.append(df_threshold)
+
+                    continue
 
                 # ---------------------------------------------------
                 # SKIP THRESHOLDS FOR EVENT INDICATORS
@@ -366,6 +426,9 @@ def main():
                     monthly_table = compute_monthly_quartiles_with_iqr(spatial, DATE_COL)
                     all_monthly_tables.append(monthly_table)
 
+                    # -----------------------------------------
+                    # Percentile
+                    # -----------------------------------------
                     percentile_thresholds = compute_composite_thresholds(spatial, ind)
 
                     percentile_thresholds = percentile_thresholds.rename(columns={
@@ -373,73 +436,36 @@ def main():
                         "alarm_threshold": "alarm_percentile"
                     })
 
+                    # -----------------------------------------
+                    # Tukey
+                    # -----------------------------------------
                     tukey_thresholds = compute_tukey_thresholds(spatial, ind)
+
+                    # -----------------------------------------
+                    # 🔥 NEW: Z-score
+                    # -----------------------------------------
+                    from src.zscore_thresholds import compute_zscore_thresholds
 
                     zscore_thresholds = compute_zscore_thresholds(df_indicator, ind)
 
+                    # -----------------------------------------
+                    # Merge ALL
+                    # -----------------------------------------
                     merged_thresholds = percentile_thresholds.merge(
                         tukey_thresholds,
                         on="indicator",
                         how="left"
                     )
 
-                    # -----------------------------------------
-                    # 🔥 PREPARE Z-SCORE (SAFE)
-                    # -----------------------------------------
-                    if zscore_thresholds is not None and not zscore_thresholds.empty:
-
-                        zscore_thresholds = zscore_thresholds.rename(columns={
-                            "alert_percentile": "alert_zscore",
-                            "alarm_percentile": "alarm_zscore"
-                        })
-
-                        zscore_thresholds = zscore_thresholds[
-                            ["indicator", "alert_zscore", "alarm_zscore"]
-                        ]
-
-                    else:
-                        zscore_thresholds = pd.DataFrame(
-                            columns=["indicator", "alert_zscore", "alarm_zscore"]
+                    if not zscore_thresholds.empty:
+                        merged_thresholds = merged_thresholds.merge(
+                            zscore_thresholds[["indicator", "alert_zscore", "alarm_zscore"]],
+                            on="indicator",
+                            how="left"
                         )
-
-                    # 🔥 ADD Z-SCORE AS EXTRA COLUMNS
-                    merged_thresholds = merged_thresholds.merge(
-                        zscore_thresholds,
-                        on="indicator",
-                        how="left"
-                    )
-
-                    # -----------------------------------------
-                    # 🔥 SPI Z-SCORE (NEW) — ADD ONLY (DO NOT MODIFY EXISTING)
-                    # -----------------------------------------
-                    spi_thresholds = pd.DataFrame(
-                        columns=["indicator", "alert_spi_zscore", "alarm_spi_zscore"]
-                    )
-
-                    if ind in SPI_REQUIRES_RAW:
-
-                        try:
-                            spi_raw = compute_spi_zscore_thresholds(df_indicator, ind)
-
-                            if spi_raw is not None and not spi_raw.empty:
-                                spi_thresholds = spi_raw.rename(columns={
-                                    "alert_percentile": "alert_spi_zscore",
-                                    "alarm_percentile": "alarm_spi_zscore"
-                                })
-
-                                spi_thresholds = spi_thresholds[
-                                    ["indicator", "alert_spi_zscore", "alarm_spi_zscore"]
-                                ]
-
-                        except Exception as e:
-                            print(f"SPI-Z failed for {ind}: {e}")
-
-                    # 🔥 MERGE SPI (AFTER Z-SCORE MERGE)
-                    merged_thresholds = merged_thresholds.merge(
-                        spi_thresholds,
-                        on="indicator",
-                        how="left"
-                    )
+                    else:
+                        merged_thresholds["alert_zscore"] = None
+                        merged_thresholds["alarm_zscore"] = None
 
                     merged_thresholds["retention_filter"] = "none"
                     merged_thresholds["season_scope"] = "All Months"
@@ -447,7 +473,6 @@ def main():
                     merged_thresholds["country"] = country
 
                     all_thresholds.append(merged_thresholds)
-
 
                 else:
 
@@ -545,11 +570,25 @@ def main():
 
                     tukey_robust = compute_tukey_thresholds(spatial_robust, ind)
 
+                    from src.zscore_thresholds import compute_zscore_thresholds
+
+                    zscore_thresholds = compute_zscore_thresholds(df_indicator, ind)
+
                     merged_robust = pct_robust.merge(
                         tukey_robust,
                         on="indicator",
                         how="left"
                     )
+
+                    if not zscore_thresholds.empty:
+                        merged_robust = merged_robust.merge(
+                            zscore_thresholds[["indicator", "alert_zscore", "alarm_zscore"]],
+                            on="indicator",
+                            how="left"
+                        )
+                    else:
+                        merged_robust["alert_zscore"] = None
+                        merged_robust["alarm_zscore"] = None
 
                     merged_robust["retention_filter"] = f">={ROBUST_MIN_RETENTION}%"
                     merged_robust["season_scope"] = "All Months"
@@ -586,11 +625,25 @@ def main():
 
                         tukey_season = compute_tukey_thresholds(spatial_season, ind)
 
+                        from src.zscore_thresholds import compute_zscore_thresholds
+
+                        zscore_thresholds = compute_zscore_thresholds(df_indicator, ind)
+
                         merged_season = pct_season.merge(
                             tukey_season,
                             on="indicator",
                             how="left"
                         )
+
+                        if not zscore_thresholds.empty:
+                            merged_season = merged_season.merge(
+                                zscore_thresholds[["indicator", "alert_zscore", "alarm_zscore"]],
+                                on="indicator",
+                                how="left"
+                            )
+                        else:
+                            merged_season["alert_zscore"] = None
+                            merged_season["alarm_zscore"] = None
 
                         merged_season["retention_filter"] = "none"
                         merged_season["season_scope"] = season_name

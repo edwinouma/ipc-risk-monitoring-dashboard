@@ -217,6 +217,9 @@ INDICATOR_METHOD = {
     "rainfall 1-month anomaly [%]": "tukey",
     "rainfall 3-month anomaly [%]": "tukey",
     "10 day NDVI anomaly": "tukey",
+    # 🔥 ADD THESE
+    "rainfall-mm": "spi_true",
+    "ndvi_absolute": "spi_true",
 
     # Afghanistan price indicators
     "Bread": "percentile",
@@ -609,15 +612,15 @@ INDICATOR_ALLOWED_METHODS = {}
 
 # Climate → full methods
 for ind in CLIMATE_INDICATORS:
-    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore", "spi_zscore"]
+    INDICATOR_ALLOWED_METHODS[ind] = ["tukey", "percentile", "zscore"]
 
 # Prices → percentile + tukey
 for ind in PRICE_INDICATORS:
-    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore", "spi_zscore"]
+    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore"]
 
 # Shock indicators → special handling
-INDICATOR_ALLOWED_METHODS["conflict_events"] = ["categorical", "percentile"]
-INDICATOR_ALLOWED_METHODS["conflict_fatalities"] = ["categorical", "percentile"]
+INDICATOR_ALLOWED_METHODS["conflict_events"] = ["percentile", "categorical"]
+INDICATOR_ALLOWED_METHODS["conflict_fatalities"] = ["percentile", "categorical"]
 
 # ---------------------------------------------------
 # Z-score Aggregation Method (Monthly Level)
@@ -744,12 +747,14 @@ DEFAULT_METHOD_DESCRIPTIONS = {
         "Useful for event-based indicators."
     ),
 
-    "spi_zscore": (
-        "Using seasonally standardized Z-score (SPI-style):\n\n"
-        "• Alert ≈ 1 standard deviation from normal\n"
-        "• Alarm ≈ 2 standard deviations from normal\n\n"
-        "Compares each value to historical conditions for the same month.\n"
-        "Removes seasonality and detects unusual deviations."
+    "spi_true": (
+        "Using Standardized Precipitation Index (SPI - Gamma distribution):\n\n"
+        "• Fits rainfall distribution using Gamma model\n"
+        "• Converts rainfall to probability\n"
+        "• Transforms to standard normal scale\n\n"
+        "• Alert ≈ -1 (moderate drought)\n"
+        "• Alarm ≈ -2 (severe drought)\n\n"
+        "Scientifically robust method for drought detection."
     )
 }
 
@@ -807,24 +812,78 @@ METHOD_DESCRIPTIONS = {
 # SPI-STYLE Z-SCORE THRESHOLDS (SEASONALLY ADJUSTED)
 # ---------------------------------------------------
 
-SPI_ZSCORE_THRESHOLDS = {
-    "default": {
-        "alert": 1.0,
-        "alarm": 2.0
-    }
+
+SPI_TRUE_THRESHOLDS = {
+    "default": {"alert": -1.0, "alarm": -2.0},
+    "rainfall-mm": {"alert": -1.0, "alarm": -2.0},
+    "ndvi_absolute": {"alert": -1.0, "alarm": -2.0}
 }
 
 # ---------------------------------------------------
 # METHODS THAT REQUIRE SEASONAL STANDARDIZATION
 # ---------------------------------------------------
 
-SEASONAL_STANDARDIZATION_METHODS = ["spi_zscore"]
+SEASONAL_STANDARDIZATION_METHODS = ["spi_true"]
 
 # ---------------------------------------------------
 # SPI REQUIRES RAW CLIMATE DATA (CRITICAL CONTROL)
 # ---------------------------------------------------
 
-SPI_REQUIRES_RAW = [
+SPI_TRUE_INDICATORS = [
     "rainfall-mm",
     "ndvi_absolute"
 ]
+
+# ---------------------------------------------------
+# 🌍 STANDARD ADMIN UNITS (MASTER LIST)
+# ---------------------------------------------------
+
+STANDARD_ADM1 = {
+    "South Sudan": [
+        "Abyei", "Juba", "Kajo-keji", "Lainya", "Morobo", "Terekeka", "Yei",
+        "Budi", "Ikotos", "Kapoeta East", "Kapoeta North", "Kapoeta South",
+        "Lafon", "Magwi", "Torit", "Akobo", "Ayod", "Bor South", "Canal/Pigi",
+        "Duk", "Fangak", "Nyirol", "Pibor", "Pochalla", "Twic East", "Uror",
+        "Awerial", "Cueibet", "Rumbek Centre", "Rumbek East", "Rumbek North",
+        "Wulu", "Yirol East", "Yirol West", "Aweil Centre", "Aweil East",
+        "Aweil North", "Aweil South", "Aweil West", "Abiemnhom", "Guit",
+        "Koch", "Leer", "Mayendit", "Mayom", "Panyijiar", "Pariang",
+        "Rubkona", "Baliet", "Fashoda", "Longochuk", "Luakpiny/Nasir",
+        "Maban", "Maiwut", "Malakal", "Manyo", "Melut", "Panyikang",
+        "Renk", "Ulang", "Gogrial East", "Gogrial West", "Tonj East",
+        "Tonj North", "Tonj South", "Twic", "Jur River", "Raja", "Wau",
+        "Ezo", "Ibba", "Maridi", "Mundri East", "Mundri West", "Mvolo",
+        "Nagero", "Nzara", "Tambura", "Yambio", "Akoka"
+    ],
+
+    "Kenya": [
+        "Baringo", "Embu", "Garissa", "Isiolo", "Kajiado", "Kilifi", "Kitui",
+        "Kwale", "Laikipia", "Lamu", "Makueni", "Mandera", "Marsabit",
+        "Meru", "Narok", "Nyeri", "Samburu", "Taita Taveta", "Tana River",
+        "Tharaka Nithi", "Turkana", "Wajir", "West Pokot"
+    ],
+
+    "Afghanistan": [
+        "Badakhshan", "Badghis", "Baghlan", "Balkh", "Bamyan", "Daykundi",
+        "Farah", "Faryab", "Ghazni", "Ghor", "Hilmand", "Hirat",
+        "Jawzjan", "Kabul", "Kandahar", "Kapisa", "Khost", "Kunar",
+        "Kunduz", "Laghman", "Logar", "Maidan Wardak", "Nangarhar",
+        "Nimroz", "Nuristan", "Paktika", "Paktya", "Panjsher",
+        "Parwan", "Samangan", "Sar-e-Pul", "Takhar", "Uruzgan", "Zabul"
+    ]
+}
+
+
+ADMIN_REPLACEMENTS = {
+    "Kenya": {
+        "Nairob": "Nairobi",
+        "Mombassa": "Mombasa",
+        "Kisum": "Kisumu"
+    },
+    "Afghanistan": {
+        "Wardak": "Maidan Wardak",
+        "Sar-e-pul": "Sar-e-Pul",
+        "Sar-E Pol": "Sar-e-Pul"
+
+}
+}

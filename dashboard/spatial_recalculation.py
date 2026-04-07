@@ -54,8 +54,8 @@ def recalculate_thresholds(
         .agg(
             alarm_q=lambda x: x.quantile(alarm_pct / 100),
             alert_q=lambda x: x.quantile(alert_pct / 100),
-            q25=lambda x: x.quantile(0.25),
-            q75=lambda x: x.quantile(0.75),
+            q25=lambda x: x.quantile(alarm_pct / 100),
+            q75=lambda x: x.quantile((100 - alarm_pct) / 100),
             count="count"
         )
         .reset_index()

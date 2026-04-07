@@ -26,7 +26,7 @@ def compute_spi_zscore_thresholds(df, indicator):
     # 0. Exclude conflict indicators ❌
     # -----------------------------------------
     if indicator in SHOCK_MANMADE:
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
     direction = INDICATOR_DIRECTION.get(indicator, "upper")
 
@@ -46,15 +46,18 @@ def compute_spi_zscore_thresholds(df, indicator):
     df = df.dropna(subset=["value"])
 
     if df.empty:
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
     # -----------------------------------------
     # 🔥 SAFETY: Prevent accidental use of anomaly data
     # -----------------------------------------
     if "baseline_method" in df.columns and indicator not in PRICE_INDICATORS:
-        raise ValueError(
-            f"{indicator}: SPI-Z should NOT be applied to anomaly-based data."
-        )
+
+        # Only block TRUE anomaly methods (not "none")
+        if df["baseline_method"].nunique() > 1 or df["baseline_method"].iloc[0] != "none":
+            raise ValueError(
+                f"{indicator}: SPI-Z should NOT be applied to anomaly-based data."
+            )
 
     # -----------------------------------------
     # 2. Ensure DATE exists
@@ -66,7 +69,7 @@ def compute_spi_zscore_thresholds(df, indicator):
     df = df.dropna(subset=["date"])
 
     if df.empty:
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
     # -----------------------------------------
     # 3. Extract MONTH (CRITICAL for SPI logic)
@@ -86,20 +89,23 @@ def compute_spi_zscore_thresholds(df, indicator):
             .agg({"value": agg_method})
         )
 
-        df["year_month"] = pd.to_datetime(df["year_month"])
+        if isinstance(df["year_month"].dtype, pd.PeriodDtype):
+            df["year_month"] = df["year_month"].dt.to_timestamp()
+        else:
+            df["year_month"] = pd.to_datetime(df["year_month"], errors="coerce")
         df["month"] = df["year_month"].dt.month
 
     # -----------------------------------------
     # 🔥 Minimum observations safeguard
     # -----------------------------------------
     if len(df) < 12:
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
     # -----------------------------------------
     # 4. Compute MONTHLY climatology
     # -----------------------------------------
     monthly_stats = (
-        df.groupby("month")["value"]
+        df.groupby(["adm1_name", "month"])["value"]
         .agg(["mean", "std"])
         .reset_index()
     )
@@ -109,11 +115,15 @@ def compute_spi_zscore_thresholds(df, indicator):
     # -----------------------------------------
     # 5. Merge back
     # -----------------------------------------
-    df = df.merge(monthly_stats, on="month", how="left")
+    df = df.merge(
+        monthly_stats,
+        on=["adm1_name", "month"],
+        how="left"
+    )
     df = df.dropna(subset=["std"])
 
     if df.empty:
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
     # -----------------------------------------
     # 6. Compute SPI-style Z-score
@@ -122,7 +132,7 @@ def compute_spi_zscore_thresholds(df, indicator):
     df = df.dropna(subset=["spi_z"])
 
     if df.empty:
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
     # -----------------------------------------
     # 7. Get thresholds from config
@@ -135,28 +145,17 @@ def compute_spi_zscore_thresholds(df, indicator):
     alert_z = th_cfg.get("alert", 1.0)
     alarm_z = th_cfg.get("alarm", 2.0)
 
-    # -----------------------------------------
-    # 8. Convert Z → threshold space
-    # -----------------------------------------
-    # NOTE: SPI distribution is ~standard normal
-
-    spi_mean = df["spi_z"].mean()
-    spi_std = df["spi_z"].std()
-
-    if spi_std == 0 or np.isnan(spi_std):
-        return pd.DataFrame()
-
-    if direction == "upper":
-        alert = spi_mean + alert_z * spi_std
-        alarm = spi_mean + alarm_z * spi_std
+    if direction == "lower":
+        alert = -alert_z
+        alarm = -alarm_z
     else:
-        alert = spi_mean - alert_z * spi_std
-        alarm = spi_mean - alarm_z * spi_std
+        alert = alert_z
+        alarm = alarm_z
 
     # -----------------------------------------
     # 9. Output (PIPELINE-COMPATIBLE ✅)
     # -----------------------------------------
-    return pd.DataFrame([{
+    return df, pd.DataFrame([{
         "indicator": indicator,
         "alert_percentile": alert,
         "alarm_percentile": alarm,

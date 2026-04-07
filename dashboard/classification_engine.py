@@ -29,11 +29,20 @@ def apply_thresholds(
     else:
         df = df_unit_month.copy()
 
+    # -----------------------------------------
+    # ✅ CORRECT TOTAL UNITS (BEFORE GRID)
+    # -----------------------------------------
+    TOTAL_UNITS = len(selected_units) if selected_units else df[unit_col].nunique()
+
     # ---------------------------------------------------
     # 2. Create complete unit-month grid
     # ---------------------------------------------------
     all_months = df["year_month"].unique()
-    all_units = selected_units if selected_units else df[unit_col].unique()
+    all_units = (
+        selected_units
+        if selected_units
+        else df.dropna(subset=["value"])[unit_col].unique()
+    )
 
     full_grid = pd.MultiIndex.from_product(
         [all_months, all_units],
@@ -45,11 +54,6 @@ def apply_thresholds(
         on=["year_month", unit_col],
         how="left"
     )
-
-    # -----------------------------------------
-    # 🔥 CORRECT TOTAL UNITS (AFTER FULL GRID)
-    # -----------------------------------------
-    TOTAL_UNITS = df[unit_col].nunique()
 
     # ---------------------------------------------------
     # 3. Classification using shared engine
@@ -141,18 +145,6 @@ def apply_thresholds(
     )
 
     # Ensure columns exist
-    for col in ["Alarm", "Alert", "Minimal"]:
-        if col not in counts.columns:
-            counts[col] = 0
-
-    # 🔥 FORCE CONSISTENT TOTAL
-    counts["Minimal"] = (
-            TOTAL_UNITS - (counts["Alarm"] + counts["Alert"])
-    )
-    counts["Minimal"] = counts["Minimal"].clip(lower=0)
-
-    # FIXED TOTAL LOGIC
-    # Ensure all classes exist
     for col in ["Alarm", "Alert", "Minimal"]:
         if col not in counts.columns:
             counts[col] = 0

@@ -1,5 +1,5 @@
 import pandas as pd
-
+from src.config import INDICATOR_METHOD
 
 def compute_unit_month_values(
     df,
@@ -33,6 +33,18 @@ def compute_unit_month_values(
 
     if df_indicator.empty:
         return pd.DataFrame()
+
+    # -----------------------------------------
+    # 🔥 SPI: switch to spi_z values
+    # -----------------------------------------
+    method = INDICATOR_METHOD.get(indicator_value, "percentile")
+
+    if method == "spi_zscore":
+        if "spi_z" not in df_indicator.columns:
+            raise ValueError(
+                f"{indicator_value}: SPI values not found. Ensure SPI is computed before aggregation."
+            )
+        value_col = "spi_z"
 
     # ---------------------------------------------------
     # 3. Aggregation method
