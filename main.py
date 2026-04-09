@@ -1,8 +1,8 @@
-from src.data_loader import load_rainfall_data, load_price_data, load_conflict_data
+from src.data_loader import load_rainfall_data, load_price_data, load_conflict_data, load_flood_data
+from src.preprocessing import preprocess_data, process_flood_data
 from src.price_monthly import compute_monthly_prices
 from src.ltm_baseline import compute_long_term_monthly_median
 from src.ltm_anomaly import compute_ltm_anomaly
-from src.preprocessing import preprocess_data
 from src.spatial_percentiles import compute_spatial_percentiles
 from src.composite_thresholds import compute_composite_thresholds
 from src.thresholds_tukey import compute_tukey_thresholds
@@ -41,6 +41,7 @@ def main():
     all_rainfall = []
     all_prices = []
     all_conflict = []
+    all_flood = []
 
     for country, cfg in COUNTRY_CONFIG.items():
 
@@ -96,11 +97,39 @@ def main():
         else:
             print(f"Conflict file not found for {country}")
 
+        # -------------------------
+        # Flood
+        # -------------------------
+        flood_path = cfg.get("flood_file")
+
+        if flood_path and os.path.exists(flood_path):
+
+            df_flood = load_flood_data(flood_path)
+            df_flood = process_flood_data(df_flood, country=country)
+
+            output_dir = "outputs"
+            os.makedirs(output_dir, exist_ok=True)
+
+            output_path = os.path.join(output_dir, f"flood_data_{country}.csv")
+            df_flood.to_csv(output_path, index=False)
+
+            print(f"Flood data for {country} saved successfully at: {output_path}")
+
+            all_flood.append(df_flood)
+
+        else:
+            print(f"Flood file not found for {country}")
+
     df_rainfall = pd.concat(all_rainfall, ignore_index=True)
     df_price_raw = pd.concat(all_prices, ignore_index=True)
     df_conflict = (
         pd.concat(all_conflict, ignore_index=True)
         if all_conflict else pd.DataFrame()
+    )
+
+    df_flood = (
+        pd.concat(all_flood, ignore_index=True)
+        if all_flood else pd.DataFrame()
     )
 
     df_price_monthly = compute_monthly_prices(df_price_raw)
@@ -201,6 +230,26 @@ def main():
     df_rainfall_standard["baseline_method"] = "none"
 
     # ---------------------------------------------------
+    # Flood standardization
+    # ---------------------------------------------------
+    if not df_flood.empty:
+
+        df_flood_standard = df_flood[
+            ["country", UNIT_COL, "year_month", INDICATOR_COL, VALUE_COL]
+        ].copy()
+
+        df_flood_standard = df_flood_standard.rename(columns={
+            UNIT_COL: "adm1_name",
+            INDICATOR_COL: "indicator",
+            VALUE_COL: "value"
+        })
+
+        df_flood_standard["baseline_method"] = "none"
+
+    else:
+        df_flood_standard = pd.DataFrame()
+
+    # ---------------------------------------------------
     # Conflict baseline processing
     # ---------------------------------------------------
     conflict_datasets = []
@@ -258,7 +307,12 @@ def main():
     print("Shape:", df_conflict_standard.shape)
     print("\nIndicators:", df_conflict_standard["indicator"].unique())
     df = pd.concat(
-        [df_rainfall_standard, df_price_standard, df_conflict_standard],
+        [
+            df_rainfall_standard,
+            df_price_standard,
+            df_conflict_standard,
+            df_flood_standard
+        ],
         ignore_index=True
     ).sort_values(["country", "year_month", UNIT_COL])
 

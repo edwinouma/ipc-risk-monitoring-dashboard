@@ -158,3 +158,67 @@ def process_conflict_data(df, country=None):
     df_final = df_final.dropna(subset=["adm1_name"])
 
     return df_final
+
+# ---------------------------------------------------
+# 🔥 FLOOD PROCESSING (NEW)
+# ---------------------------------------------------
+def process_flood_data(df, country=None):
+    """
+    Standardizes flood data into pipeline format.
+
+    Expected columns:
+    - adm1_name
+    - date
+    - value (percent flooded)
+    """
+
+    df = df.copy()
+
+    # -------------------------
+    # Ensure datetime
+    # -------------------------
+    df[DATE_COL] = pd.to_datetime(df[DATE_COL], errors="coerce")
+    df = df.dropna(subset=[DATE_COL]).copy()
+
+    # -------------------------
+    # Standard indicator name
+    # -------------------------
+    df["indicator"] = "percent_area_flooded"
+
+    # -------------------------
+    # Ensure numeric
+    # -------------------------
+    df["value"] = pd.to_numeric(df["value"], errors="coerce")
+    df = df.dropna(subset=["value"])
+    df["value"] = df["value"].clip(lower=0, upper=100)
+
+    # -------------------------
+    # Add country
+    # -------------------------
+    if country is not None:
+        df["country"] = country
+
+    # -------------------------
+    # Admin validation
+    # -------------------------
+    df, invalid_tracker = enforce_admin_standard(df)
+    export_invalid_names(invalid_tracker, "outputs/invalid_admin_names_flood.xlsx")
+
+    df = df.dropna(subset=["adm1_name"])
+
+    # -------------------------
+    # Time features
+    # -------------------------
+    df["year"] = df[DATE_COL].dt.year
+    df["month"] = df[DATE_COL].dt.month
+    df["month_name"] = df[DATE_COL].dt.strftime("%b")
+
+    df["year_month"] = df[DATE_COL].dt.to_period("M")
+    df["year_month_str"] = df["year_month"].astype(str)
+
+    # -------------------------
+    # Sort
+    # -------------------------
+    df = df.sort_values(DATE_COL)
+
+    return df

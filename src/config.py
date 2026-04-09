@@ -31,6 +31,7 @@ PRICE_INDICATORS = [
     "Maize",
     "Beans",
     "ToT",
+
     # South Sudan
     "Fuel (diesel, parallel market)",
     "Fuel (petrol-gasoline, parallel market)",
@@ -63,12 +64,20 @@ SHOCK_MANMADE = [
     "conflict_fatalities"
 ]
 
+FLOOD_INDICATORS = [
+    "percent_area_flooded"
+]
+
 # ---------------------------------------------------
 # All Indicators
 # ---------------------------------------------------
 
-INDICATORS = CLIMATE_INDICATORS + PRICE_INDICATORS + SHOCK_INDICATORS
-
+INDICATORS = (
+    CLIMATE_INDICATORS
+    + PRICE_INDICATORS
+    + SHOCK_INDICATORS
+    + FLOOD_INDICATORS
+)
 
 # ---------------------------------------------------
 # Indicator Country Mapping
@@ -117,6 +126,9 @@ INDICATOR_COUNTRY_MAP = {
     "Rice": ["South Sudan"],
     "conflict_events": ["South Sudan"],
     "conflict_fatalities": ["South Sudan"],
+
+    # Flood Indicators by country
+    "percent_area_flooded": ["South Sudan","Afghanistan"],
 }
 
 
@@ -199,6 +211,8 @@ INDICATOR_DIRECTION = {
     # Shock indicators
     "conflict_events": "upper",
     "conflict_fatalities": "upper",
+
+    "percent_area_flooded": "upper"
 }
 
 
@@ -259,6 +273,7 @@ INDICATOR_METHOD = {
     # Shock indicators
     "conflict_events": "categorical",
     "conflict_fatalities": "categorical",
+    "percent_area_flooded": "percentile"
 }
 
 
@@ -274,6 +289,7 @@ INDICATOR_TYPE = {
     "10 day NDVI anomaly": "climate",
     "rainfall-mm": "climate",
     "ndvi_absolute": "climate",
+    "percent_area_flooded": "climate",
 
     # Market indicators
     "Bread": "market",
@@ -312,6 +328,7 @@ INDICATOR_TYPE = {
 
     "conflict_events": "shock",
     "conflict_fatalities": "shock",
+
 }
 
 
@@ -391,14 +408,16 @@ COUNTRY_CONFIG = {
         "unit_col": "adm1_name",
         "price_file": "data/price_data.xlsx",
         "rainfall_file": "data/rainfall_ndvi_afghanistan.xlsx",
-        "conflict_file": "data/acled_afghanistan.xlsx"
+        "conflict_file": "data/acled_afghanistan.xlsx",
+        "flood_file": "data/flood_afghanistan.xlsx",
     },
 
     "South Sudan": {
         "unit_col": "adm1_name",
         "price_file": "data/price_data_south sudan.xlsx",
         "rainfall_file": "data/rainfall_ndvi_South Sudan.xlsx",
-        "conflict_file": "data/acled_south_sudan.xlsx"
+        "conflict_file": "data/acled_south_sudan.xlsx",
+        "flood_file": "data/flood_south_sudan.xlsx",
     },
 
     # Temporarily using adm1_name until dataset changes to county
@@ -520,6 +539,9 @@ INDICATOR_ALLOWED_BASELINES = {
     # 🔥 CONFLICT (KEY PART)
     "conflict_events": ["none"],
     "conflict_fatalities": ["none"],
+
+    # FLOOD INDICATORS
+    "percent_area_flooded": ["none"]
 }
 
 # ---------------------------------------------------
@@ -550,8 +572,9 @@ CONFLICT_ZSCORE_THRESHOLDS = {
 
 INDICATOR_GROUPS = {
     "Climate": CLIMATE_INDICATORS,
+    "Flood": FLOOD_INDICATORS,
     "Price / Economic": PRICE_INDICATORS,
-    "Shock (Man-made)": SHOCK_MANMADE
+    "Shock (Man-made)": SHOCK_MANMADE,
 }
 
 
@@ -621,6 +644,9 @@ for ind in PRICE_INDICATORS:
 # Shock indicators → special handling
 INDICATOR_ALLOWED_METHODS["conflict_events"] = ["percentile", "categorical"]
 INDICATOR_ALLOWED_METHODS["conflict_fatalities"] = ["percentile", "categorical"]
+
+
+INDICATOR_ALLOWED_METHODS["percent_area_flooded"] = ["percentile"]
 
 # ---------------------------------------------------
 # Z-score Aggregation Method (Monthly Level)

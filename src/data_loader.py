@@ -2,7 +2,6 @@ import pandas as pd
 from src.config import COUNTRY_CONFIG
 from src.preprocessing import process_conflict_data
 
-
 # ---------------------------------------------------
 # Rainfall Data
 # ---------------------------------------------------
@@ -40,6 +39,18 @@ def load_conflict_data(filepath, country=None):
 
 
 # ---------------------------------------------------
+# Flood Data (NEW)
+# ---------------------------------------------------
+
+def load_flood_data(filepath):
+    """
+    Loads flood data (already expected in standard format or near-standard).
+    """
+    df_flood = pd.read_excel(filepath)
+    return df_flood
+
+
+# ---------------------------------------------------
 # Country Loader (UPDATED - RETURNS SEPARATE DATASETS)
 # ---------------------------------------------------
 
@@ -48,7 +59,7 @@ def load_country_data(country):
     Loads datasets separately for a given country.
 
     Returns:
-        df_rainfall, df_price, df_conflict
+        df_rainfall, df_price, df_conflict, df_flood
     """
 
     config = COUNTRY_CONFIG[country]
@@ -56,6 +67,7 @@ def load_country_data(country):
     df_rainfall = None
     df_price = None
     df_conflict = None
+    df_flood = None
 
     # -------------------------
     # Rainfall
@@ -79,4 +91,12 @@ def load_country_data(country):
             config["conflict_file"],
             country=country
         )
-    return df_rainfall, df_price, df_conflict
+
+    # -------------------------
+    # Flood (NEW)
+    # -------------------------
+    if "flood_file" in config:
+        df_flood = load_flood_data(config["flood_file"])
+        df_flood["country"] = country
+
+    return df_rainfall, df_price, df_conflict, df_flood

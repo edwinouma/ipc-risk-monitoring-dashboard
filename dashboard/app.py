@@ -1,6 +1,5 @@
 import sys
 import os
-
 # Ensure project root is accessible (so src imports work)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -44,7 +43,8 @@ from src.config import (
     EVENT_THRESHOLDS,
     METHOD_DESCRIPTIONS,
     DEFAULT_METHOD_DESCRIPTIONS,
-    SPI_TRUE_THRESHOLDS
+    SPI_TRUE_THRESHOLDS,
+    FLOOD_INDICATORS
 )
 from src.event_loader import load_reference_events, get_reference_events
 
@@ -732,6 +732,10 @@ else:
         if indicator in CLIMATE_INDICATORS:
             filtered_count = df_retention[df_retention["value"] < 100]["value"].count()
 
+        # Flood indicators → NO FILTERING BUT EXPLICIT
+        elif indicator in FLOOD_INDICATORS:
+            filtered_count = total_count
+
         # Market indicators
         elif indicator in PRICE_INDICATORS:
 
@@ -952,8 +956,10 @@ if show_events:
         indicator_type = "price"
     elif indicator in CLIMATE_INDICATORS:
         indicator_type = "climate"
+    elif indicator in FLOOD_INDICATORS:
+        indicator_type = "climate"  # treat flood as climate hazard
     else:
-        indicator_type = "price"  # safe fallback
+        indicator_type = "price"
 
     events = get_reference_events(
         events_df,
