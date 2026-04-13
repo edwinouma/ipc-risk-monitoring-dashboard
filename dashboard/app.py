@@ -6,6 +6,37 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+
+def get_percentile_explanation(indicator, alert_pct, alarm_pct):
+    direction = INDICATOR_DIRECTION.get(indicator, "lower")
+
+    if direction == "upper":
+        return f"""
+**Percentile method — Upper-tail (high values = risk)**  
+
+Ranks all monthly values from lowest to highest.  
+
+- **Alert**: triggered when values exceed the **{alert_pct}th percentile**  
+- **Alarm**: triggered when values exceed the **{alarm_pct}th percentile**  
+
+👉 Interpretation: unusually **high values** indicate worsening conditions.  
+
+**Example:** If alarm = {alarm_pct}, a month is flagged only if it is higher than {alarm_pct}% of historical observations.
+"""
+
+    else:
+        return f"""
+**Percentile method — Lower-tail (low values = risk)**  
+
+Ranks all monthly values from lowest to highest.  
+
+- **Alert**: triggered when values are among the lowest **{alert_pct}%**  
+- **Alarm**: triggered when values are among the lowest **{alarm_pct}%**  
+
+👉 Interpretation: unusually **low values** indicate worsening conditions.  
+
+**Example:** If alarm = {alarm_pct}, a month is flagged only if it is lower than {alarm_pct}% of historical observations.
+"""
 def get_method_description(indicator, method):
 
     # 1. Try indicator-specific description
@@ -140,7 +171,7 @@ from src.config import INDICATOR_GROUPS
 # Indicator Group Selector
 # ---------------------------------------------------
 selected_group = st.sidebar.selectbox(
-    "Indicator Type",
+    "Risk factor",
     list(INDICATOR_GROUPS.keys())
 )
 
@@ -160,10 +191,9 @@ if not available_indicators:
     st.stop()
 
 indicator = st.sidebar.selectbox(
-    "Indicator",
+    "Risk indicator",
     available_indicators
 )
-
 
 # ---------------------------------------------------
 # Price Baseline Selector (ONLY for price indicators)
@@ -203,10 +233,54 @@ else:
         ["percentile"]
     )
 
-method = st.sidebar.selectbox(
-    "Method",
-    available_methods
+# Label
+st.sidebar.markdown("**Method**")
+
+# Caption
+st.sidebar.caption(
+    "Choose how alert and alarm levels are calculated. "
+    "Each method has different assumptions."
 )
+
+# Dropdown
+method = st.sidebar.selectbox(
+    "",
+    available_methods,
+    label_visibility="collapsed"
+)
+
+# 🔹 spacing
+st.sidebar.markdown("---")
+
+# 🔹 explanation RIGHT BELOW method
+with st.sidebar.expander("ℹ️ About this method", expanded=False):
+    if method == "percentile":
+        direction = INDICATOR_DIRECTION.get(indicator, "lower")
+
+        default_alert = 50
+        default_alarm = 25 if direction == "lower" else 75
+
+        explanation = get_percentile_explanation(
+            indicator,
+            alert_pct if "alert_pct" in locals() else default_alert,
+            alarm_pct if "alarm_pct" in locals() else default_alarm
+        )
+    else:
+        explanation = get_method_description(indicator, method)
+
+    st.markdown(explanation)
+
+# ---------------------------------------------------
+# SPI SIGNAL TOGGLE (ONLY FOR SPI)
+# ---------------------------------------------------
+spi_mode = "Both"
+
+if method == "spi_true":
+    spi_mode = st.sidebar.radio(
+        "SPI Signal Type",
+        ["Both", "Drought", "Flood"],
+        help="Filter SPI signals into drought (negative) or flood (positive)."
+    )
 
 # 🔹 Retention Mode Selector (ADDITIONAL ONLY)
 retention_mode = st.sidebar.selectbox(
@@ -326,6 +400,9 @@ else:
             SPI_TRUE_THRESHOLDS["default"]
         )
 
+        # -----------------------------
+        # Drought (default)
+        # -----------------------------
         alert_threshold = thresholds["alert"]
         alarm_threshold = thresholds["alarm"]
 
@@ -443,12 +520,14 @@ def get_season_thresholds(season_name):
 # ---------------------------------------------------
 # Method Description
 # ---------------------------------------------------
-st.subheader("Method Description")
+#st.subheader("Method Description")
 
-description = get_method_description(indicator, method)
+#description = get_method_description(indicator, method)
 
-if description:
-    st.info(description)
+#if description:
+#    st.info(description)
+st.subheader("Interpretation Note")
+st.info("Thresholds reflect how unusual current conditions are compared to historical patterns.")
 
 st.markdown(f"### Suggested Thresholds ({method.lower()})")
 row1_col1, row1_col2 = st.columns([1, 1])
@@ -644,6 +723,32 @@ else:
 
     classified_df = classified_planting
 
+# ---------------------------------------------------
+# APPLY SPI FILTER (DROUGHT / FLOOD)
+# ---------------------------------------------------
+if method == "spi_true" and spi_mode != "Both":
+
+    classified_df = classified_df[
+        classified_df["signal_type"] == spi_mode
+        ].copy()
+
+    counts = (
+        classified_df.groupby(["year_month", "classification"], dropna=False)
+        .size()
+        .unstack(fill_value=0)
+        .reset_index()
+    )
+
+    for col in ["Alarm", "Alert", "Minimal", "No data"]:
+        if col not in counts.columns:
+            counts[col] = 0
+
+    counts["Alarm_pct"] = counts["Alarm"] / len(units_for_calc) * 100
+    counts["Alert_pct"] = counts["Alert"] / len(units_for_calc) * 100
+    counts["Minimal_pct"] = counts["Minimal"] / len(units_for_calc) * 100
+    counts["No data_pct"] = counts["No data"] / len(units_for_calc) * 100
+
+    counts["date"] = counts["year_month"].dt.to_timestamp()
 
 # ---------------------------------------------------
 # Time Slider
@@ -690,8 +795,28 @@ if len(units_for_calc) == 0:
     st.warning("Please select at least one province.")
 else:
 
+    # ---------------------------------------------------
+    # 🔥 SPI-AWARE MATRIX INPUT (SAFE FIX)
+    # ---------------------------------------------------
+    matrix_input_df = df_filtered.copy()
+
+    # Only apply for SPI
+    if method == "spi_true" and spi_mode != "Both":
+
+        # Ensure signal_type exists
+        if "signal_type" in classified_df.columns:
+            # Get valid unit-month combinations from filtered classified_df
+            valid_keys = classified_df[[unit_col, "year_month"]].drop_duplicates()
+
+            matrix_input_df = matrix_input_df.merge(
+                valid_keys,
+                on=[unit_col, "year_month"],
+                how="inner"
+            )
+
+    # Use matrix_input_df instead of df_filtered
     matrix_summary = cached_classification_matrix(
-        df_filtered,
+        matrix_input_df,
         indicator,
         alarm_threshold,
         alert_threshold,
@@ -891,7 +1016,7 @@ st.subheader("Warnings for all selected units (over time)")
 
 # 🔥 ADD THIS HERE
 if indicator.startswith("conflict"):
-    st.caption("Note: Missing unit-months are treated as Minimal (0 conflict).")
+    st.caption("Note: Missing unit-months are classified as 'No data' and shown in gray.")
 
 # Existing caption
 st.caption(
@@ -899,46 +1024,163 @@ st.caption(
     "Other months remain visible but are visually softened."
 )
 
+# SPI-specific explanation
+if method == "spi_true":
+
+    if spi_mode == "Both":
+        st.caption(
+            "All SPI signals are shown (both drought and flood conditions)."
+        )
+
+    else:
+        st.caption(
+            "Gray = No data or opposite signal "
+            "(e.g. drought periods excluded in flood view, or flood periods excluded in drought view)."
+        )
+
+if method == "spi_true" and spi_mode == "Both":
+
+    # Split data
+    drought_df = classified_df[classified_df["signal_type"] == "Drought"]
+    flood_df = classified_df[classified_df["signal_type"] == "Flood"]
+
+    # Recompute counts separately
+    def compute_counts(df_sub):
+        c = (
+            df_sub.groupby(["year_month", "classification"])
+            .size()
+            .unstack(fill_value=0)
+            .reset_index()
+        )
+        for col in ["Alarm", "Alert", "Minimal", "No data"]:
+            if col not in c.columns:
+                c[col] = 0
+        c["date"] = c["year_month"].dt.to_timestamp()
+        return c
+
+
+    counts_drought = compute_counts(drought_df)
+    counts_flood = compute_counts(flood_df)
+
+    # Apply time filter (no nested condition needed)
+    counts_drought = counts_drought[
+        (counts_drought["date"] >= start_date) &
+        (counts_drought["date"] <= end_date)
+        ]
+
+    counts_flood = counts_flood[
+        (counts_flood["date"] >= start_date) &
+        (counts_flood["date"] <= end_date)
+        ]
+
 fig = go.Figure()
 
-# Add month column for season awareness
-counts["Month"] = counts["date"].dt.month
+# ---------------------------------------------------
+# SPECIAL CASE: SPI BOTH → split drought vs flood
+# ---------------------------------------------------
+if method == "spi_true" and spi_mode == "Both":
 
-if display_mode == "Count":
-    alarm_y = counts["Alarm"]
-    alert_y = counts["Alert"]
-    minimal_y = counts["Minimal"]
+    # Month + opacity
+    counts_drought["Month"] = counts_drought["date"].dt.month
+    counts_flood["Month"] = counts_flood["date"].dt.month
+
+    opacity_drought = [
+        1 if m in selected_season_months else 0.25
+        for m in counts_drought["Month"]
+    ]
+
+    opacity_flood = [
+        1 if m in selected_season_months else 0.25
+        for m in counts_flood["Month"]
+    ]
+
+    # Display mode
+    def get_y(df, col):
+        return df[col] if display_mode == "Count" else df[f"{col}_pct"]
+
+    # 🔴 Drought
+    fig.add_bar(
+        x=counts_drought["date"],
+        y=get_y(counts_drought, "Alarm"),
+        name="Drought Alarm",
+        marker=dict(color="red", opacity=opacity_drought)
+    )
+
+    fig.add_bar(
+        x=counts_drought["date"],
+        y=get_y(counts_drought, "Alert"),
+        name="Drought Alert",
+        marker=dict(color="orange", opacity=opacity_drought)
+    )
+
+    # 🔵 Flood
+    fig.add_bar(
+        x=counts_flood["date"],
+        y=get_y(counts_flood, "Alarm"),
+        name="Flood Alarm",
+        marker=dict(color="blue", opacity=opacity_flood)
+    )
+
+    fig.add_bar(
+        x=counts_flood["date"],
+        y=get_y(counts_flood, "Alert"),
+        name="Flood Alert",
+        marker=dict(color="lightblue", opacity=opacity_flood)
+    )
+
+# ---------------------------------------------------
+# DEFAULT (existing logic)
+# ---------------------------------------------------
 else:
-    alarm_y = counts["Alarm_pct"]
-    alert_y = counts["Alert_pct"]
-    minimal_y = counts["Minimal_pct"]
 
-# Opacity logic
-opacity_values = [
-    1 if m in selected_season_months else 0.25
-    for m in counts["Month"]
-]
+    counts["Month"] = counts["date"].dt.month
 
-fig.add_bar(
-    x=counts["date"],
-    y=alarm_y,
-    name="Alarm",
-    marker=dict(color="red", opacity=opacity_values)
-)
+    if display_mode == "Count":
+        alarm_y = counts["Alarm"]
+        alert_y = counts["Alert"]
+        minimal_y = counts["Minimal"]
+    else:
+        alarm_y = counts["Alarm_pct"]
+        alert_y = counts["Alert_pct"]
+        minimal_y = counts["Minimal_pct"]
 
-fig.add_bar(
-    x=counts["date"],
-    y=alert_y,
-    name="Alert",
-    marker=dict(color="orange", opacity=opacity_values)
-)
+    opacity_values = [
+        1 if m in selected_season_months else 0.25
+        for m in counts["Month"]
+    ]
 
-fig.add_bar(
-    x=counts["date"],
-    y=minimal_y,
-    name="Minimal",
-    marker=dict(color="green", opacity=opacity_values)
-)
+    if display_mode == "Count":
+        no_data_y = counts["No data"]
+    else:
+        no_data_y = counts["No data_pct"]
+
+    fig.add_bar(
+        x=counts["date"],
+        y=alarm_y,
+        name="Alarm",
+        marker=dict(color="red", opacity=opacity_values)
+    )
+
+    fig.add_bar(
+        x=counts["date"],
+        y=alert_y,
+        name="Alert",
+        marker=dict(color="orange", opacity=opacity_values)
+    )
+
+    fig.add_bar(
+        x=counts["date"],
+        y=minimal_y,
+        name="Minimal",
+        marker=dict(color="green", opacity=opacity_values)
+    )
+
+    fig.add_bar(
+        x=counts["date"],
+        y=no_data_y,
+        name="No data",
+        marker=dict(color="gray", opacity=opacity_values)
+    )
 
 fig.update_layout(
     barmode="stack",
@@ -966,6 +1208,19 @@ if show_events:
         selected_country,
         indicator_type
     )
+
+    # ---------------------------------------------------
+    # 🔥 SPI EVENT FILTERING (MAIN CHART)
+    # ---------------------------------------------------
+    if method == "spi_true":
+
+        if "type" in events.columns:
+
+            if spi_mode == "Drought":
+                events = events[events["type"] == "drought"]
+
+            elif spi_mode == "Flood":
+                events = events[events["type"] == "flood"]
 
     # Convert event dates to datetime
     events["start"] = pd.to_datetime(events["start"])
@@ -998,7 +1253,12 @@ st.plotly_chart(fig, width="stretch")
 # ---------------------------------------------------
 # Province Classification Matrix (Season-Aware – Chart-Matched)
 # ---------------------------------------------------
-if st.checkbox("Warnings for each unit over time") and len(units_for_calc) > 0:
+show_matrix = st.checkbox(
+    "Warnings for each unit over time",
+    value=True   # 🔥 default checked
+)
+
+if show_matrix and len(units_for_calc) > 0:
 
     matrix = matrix_summary.copy()
 
@@ -1147,6 +1407,9 @@ if st.checkbox("Warnings for each unit over time") and len(units_for_calc) > 0:
                     styled_col.append("background-color: orange; color: black")
                 else:
                     styled_col.append("background-color: #ffd699; color: black")
+
+            elif val == "No data":
+                styled_col.append("background-color: gray; color: white")
 
             # Minimal
             elif val == "Minimal":

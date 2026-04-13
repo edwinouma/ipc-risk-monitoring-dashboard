@@ -116,7 +116,7 @@ def apply_thresholds(
             on=["year_month", unit_col],
             how="left"
         )
-        df["classification"] = df["classification"].fillna("Minimal")
+        df["classification"] = df["classification"].fillna("No data")
 
         df["indicator"] = "conflict_events"
 
@@ -125,12 +125,37 @@ def apply_thresholds(
     # ---------------------------------------------------
     else:
 
-        df["classification"] = classify_series(
-            df[value_col],
+        # -----------------------------------------
+        # Apply classification ONLY on valid values
+        # -----------------------------------------
+        valid_mask = df[value_col].notna()
+
+        df["classification"] = "No data"  # default
+
+        df.loc[valid_mask, "classification"] = classify_series(
+            df.loc[valid_mask, value_col],
             indicator_value,
             alarm_threshold,
             alert_threshold
         )
+
+    # ---------------------------------------------------
+    # 3C. SPI SIGNAL TYPE (DROUGHT / FLOOD)
+    # ---------------------------------------------------
+    method = INDICATOR_METHOD.get(indicator_value, "percentile")
+
+    if method == "spi_true":
+        df["signal_type"] = np.where(
+            df[value_col].isna(),
+            "Missing",
+            np.where(
+                df[value_col] <= 0,
+                "Drought",
+                "Flood"
+            )
+        )
+    else:
+        df["signal_type"] = "Not Applicable"
 
     # ---------------------------------------------------
     # 4. Monthly counts (fixed 34 logic)
@@ -145,7 +170,7 @@ def apply_thresholds(
     )
 
     # Ensure columns exist
-    for col in ["Alarm", "Alert", "Minimal"]:
+    for col in ["Alarm", "Alert", "Minimal", "No data"]:
         if col not in counts.columns:
             counts[col] = 0
 
@@ -155,6 +180,7 @@ def apply_thresholds(
     counts["Alarm_pct"] = counts["Alarm"] / TOTAL_UNITS * 100
     counts["Alert_pct"] = counts["Alert"] / TOTAL_UNITS * 100
     counts["Minimal_pct"] = counts["Minimal"] / TOTAL_UNITS * 100
+    counts["No data_pct"] = counts["No data"] / TOTAL_UNITS * 100
 
     # Convert for plotting
     counts["date"] = counts["year_month"].dt.to_timestamp()

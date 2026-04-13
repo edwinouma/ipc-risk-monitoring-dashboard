@@ -87,6 +87,60 @@ def classify_series(values, indicator_value, alarm_threshold, alert_threshold):
         )
 
     # ---------------------------------------------------
+    # 1B. SPI LOGIC (DUAL TAIL: DROUGHT + FLOOD)
+    # ---------------------------------------------------
+    if method == "spi_true":
+        # -----------------------------
+        # Drought thresholds (from inputs)
+        # -----------------------------
+        drought_alarm = alarm_threshold
+        drought_alert = alert_threshold
+
+        # -----------------------------
+        # Flood thresholds (standard SPI)
+        # -----------------------------
+        from src.config import SPI_TRUE_THRESHOLDS
+
+        flood_cfg = SPI_TRUE_THRESHOLDS.get(
+            indicator_value,
+            SPI_TRUE_THRESHOLDS.get("default", {})
+        )
+
+        # Convert drought thresholds to positive side for flood
+        flood_alert = abs(flood_cfg.get("alert", -1.0))
+        flood_alarm = abs(flood_cfg.get("alarm", -2.0))
+
+        return np.where(
+            pd.isna(values),
+            "Minimal",
+
+            # -----------------------------
+            # DROUGHT (lower tail)
+            # -----------------------------
+            np.where(
+                values <= drought_alarm,
+                "Alarm",
+                np.where(
+                    values <= drought_alert,
+                    "Alert",
+
+                    # -----------------------------
+                    # FLOOD (upper tail)
+                    # -----------------------------
+                    np.where(
+                        values >= flood_alarm,
+                        "Alarm",
+                        np.where(
+                            values >= flood_alert,
+                            "Alert",
+                            "Minimal"
+                        )
+                    )
+                )
+            )
+        )
+
+    # ---------------------------------------------------
     # 2. DEFAULT DIRECTIONAL LOGIC
     # ---------------------------------------------------
     direction = validate_thresholds(

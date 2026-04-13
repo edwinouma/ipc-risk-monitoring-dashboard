@@ -755,32 +755,57 @@ DEFAULT_METHOD_DESCRIPTIONS = {
     ),
 
     "tukey": (
-        "Using Tukey IQR method:\n\n"
-        "• Alert = Q1 - 1.0 × IQR\n"
-        "• Alarm = Q1 - 1.5 × IQR\n\n"
-        "Robust method for detecting extreme deviations."
+        "**Tukey method — Detects unusually extreme values**\n\n"
+        "Uses the typical range of values to identify outliers.\n\n"
+        "- **Lower-tail (low values = risk)**\n\n"
+        "  • Alert: values below Q1 − 1.0 × IQR\n"
+        "  • Alarm: values far below Q1 − 1.5 × IQR\n\n"
+        "- **Upper-tail (high values = risk)**\n\n"
+        "  • Alert: values above Q3 + 1.0 × IQR\n"
+        "  • Alarm: values far above Q3 + 1.5 × IQR\n\n"
+        "👉 Interpretation: flags conditions that are unusually low or high compared to what is typically observed.\n\n"
+        "Example: a month is flagged when it falls outside the usual range seen in most years.\n\n"
+        "Works well for detecting sudden spikes or unusual events."
     ),
 
     "zscore": (
-        "Using Z-score standardization:\n\n"
-        "• Alert ≈ 1 standard deviation\n"
-        "• Alarm ≈ 2 standard deviations\n\n"
-        "Measures how far values deviate from the mean."
+        "**Z-score method — Measures how unusual values are**\n\n"
+        "Compares each value to the average and shows how far it deviates.\n\n"
+        "- **Lower-tail (low values = risk)**\n\n"
+        "  • Alert: moderately below average (≈ -1 standard deviation)\n"
+        "  • Alarm: far below average (≈ -2 standard deviations)\n\n"
+        "- **Upper-tail (high values = risk)**\n\n"
+        "  • Alert: moderately above average (≈ +1 standard deviation)\n"
+        "  • Alarm: far above average (≈ +2 standard deviations)\n\n"
+        "👉 Interpretation: values further from the average indicate more unusual conditions.\n\n"
+        "Example: a month is flagged when it is much higher or lower than what is typically observed.\n\n"
+        "Works well for comparing how extreme conditions are across different areas."
     ),
 
     "categorical": (
-        "Using fixed rule-based thresholds defined in configuration.\n\n"
-        "Useful for event-based indicators."
+        "**Categorical method — Based on number of events**\n\n"
+        "Classifies risk based on how many events occur within a given period.\n\n"
+        "- **Alert**: at least one event observed\n\n"
+        "- **Alarm**: multiple events observed (increased intensity or frequency)\n\n"
+        "👉 Interpretation: more frequent events indicate higher levels of stress.\n\n"
+        "This approach is used when data are sparse or irregular, "
+        "and relative statistical thresholds (e.g. percentiles) are less reliable."
     ),
 
     "spi_true": (
-        "Using Standardized Precipitation Index (SPI - Gamma distribution):\n\n"
-        "• Fits rainfall distribution using Gamma model\n"
-        "• Converts rainfall to probability\n"
-        "• Transforms to standard normal scale\n\n"
-        "• Alert ≈ -1 (moderate drought)\n"
-        "• Alarm ≈ -2 (severe drought)\n\n"
-        "Scientifically robust method for drought detection."
+        "**SPI method — Detects unusually dry or wet conditions**\n\n"
+        "Compares current rainfall to what is normally expected for that time of year.\n\n"
+        "- **Drought (dry conditions)**\n"
+        "  • Alert: moderately drier than normal\n"
+        "  • Alarm: severely drier than normal\n\n"
+        "- **Flood (wet conditions)**\n"
+        "  • Alert: moderately wetter than normal\n"
+        "  • Alarm: extremely wetter than normal\n\n"
+        "👉 Interpretation: values show how unusual current conditions are compared to typical seasons.\n\n"
+        "Typical thresholds:\n\n"
+        "• Drought: Alert ≈ -1 | Alarm ≈ -2\n\n"
+        "• Flood: Alert ≈ +1 | Alarm ≈ +2\n\n"
+        "Works for both drought and flood monitoring."
     )
 }
 
@@ -790,33 +815,6 @@ DEFAULT_METHOD_DESCRIPTIONS = {
 # ----------------------------------------------------------------------
 
 METHOD_DESCRIPTIONS = {
-
-    "conflict_events": {
-        "categorical": (
-            "Using categorical rule:\n\n"
-            "• Alert ≥ 1 event\n"
-            "• Alarm ≥ 2 events\n\n"
-            "Switch to 'percentile' method for spatial thresholding."
-        ),
-        "percentile": (
-            "Using percentile-based thresholds computed from spatial distributions.\n\n"
-            "Allows detection of relative anomalies across areas."
-        )
-    },
-
-    "conflict_fatalities": {
-        "categorical": (
-            "Using categorical rule:\n\n"
-            "• Alert ≥ 5 fatalities\n"
-            "• Alarm ≥ 20 fatalities\n\n"
-            "Switch to 'percentile' for anomaly-based detection."
-        ),
-        "percentile": (
-            "Using percentile-based thresholds computed from spatial distributions.\n\n"
-            "Allows detection of relative anomalies across areas."
-        )
-    },
-
     "ToT (Labour/Cereal)": {
         "percentile": (
             "Using percentile thresholds on Terms of Trade (Wage / Cereal).\n\n"
@@ -845,6 +843,17 @@ SPI_TRUE_THRESHOLDS = {
     "ndvi_absolute": {"alert": -1.0, "alarm": -2.0}
 }
 
+
+# ---------------------------------------------------
+# SPI FLOOD THRESHOLDS (UPPER TAIL)
+# ---------------------------------------------------
+
+SPI_TRUE_FLOOD_THRESHOLDS = {
+    "default": {"alert": 1.0, "alarm": 2.0},
+    "rainfall-mm": {"alert": 1.0, "alarm": 2.0},
+    "ndvi_absolute": {"alert": 1.0, "alarm": 2.0}
+}
+
 # ---------------------------------------------------
 # METHODS THAT REQUIRE SEASONAL STANDARDIZATION
 # ---------------------------------------------------
@@ -859,6 +868,15 @@ SPI_TRUE_INDICATORS = [
     "rainfall-mm",
     "ndvi_absolute"
 ]
+
+# ---------------------------------------------------
+# SPI SIGNAL TYPE (DROUGHT / FLOOD / BOTH)
+# ---------------------------------------------------
+
+SPI_SIGNAL_TYPE = {
+    "rainfall-mm": "both",        # allows drought + flood
+    "ndvi_absolute": "both"
+}
 
 # ---------------------------------------------------
 # 🌍 STANDARD ADMIN UNITS (MASTER LIST)

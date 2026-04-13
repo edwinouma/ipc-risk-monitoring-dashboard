@@ -70,13 +70,16 @@ def compute_unit_month_classification_matrix(
     if df_unit_month.empty:
         return pd.DataFrame()
 
-
     # ---------------------------------------------------
     # 5. Classification using shared engine
     # ---------------------------------------------------
 
-    df_unit_month["classification"] = classify_series(
-        df_unit_month[value_col],
+    valid_mask = df_unit_month[value_col].notna()
+
+    df_unit_month["classification"] = "No data"
+
+    df_unit_month.loc[valid_mask, "classification"] = classify_series(
+        df_unit_month.loc[valid_mask, value_col],
         indicator_value,
         alarm_threshold,
         alert_threshold
@@ -111,7 +114,7 @@ def compute_unit_month_classification_matrix(
     # ---------------------------------------------------
     # 9. Replace NaNs
     # ---------------------------------------------------
-    matrix = matrix.fillna("Minimal")
+    matrix = matrix.fillna("No data")
 
     # ---------------------------------------------------
     # 10. Structural proportions (based ONLY on visible months)
