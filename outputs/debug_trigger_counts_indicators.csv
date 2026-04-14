@@ -1,14 +1,14 @@
 indicator,count
-"Wage (non-qualified labour, non-agricultural)",870
 Exchange rate,870
-rainfall 3-month anomaly [%],435
+rainfall-mm,870
+"Wage (non-qualified labour, non-agricultural)",870
 rainfall 1-month anomaly [%],435
+rainfall 3-month anomaly [%],435
 ndvi_absolute,435
-10 day NDVI anomaly,435
 Bread,435
 Fuel (diesel),435
 Oil (cooking),435
-rainfall-mm,435
+10 day NDVI anomaly,435
 Pulses,435
 Rice (high quality),435
 Rice (low quality),435

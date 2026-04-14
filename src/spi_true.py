@@ -61,7 +61,13 @@ def compute_true_spi(df):
         non_zero = series[series > 0]
 
         if len(non_zero) < 10:
-            return pd.Series([np.nan] * len(series), index=series.index)
+            # Fallback: use empirical distribution (no gamma fit)
+            ranks = series.rank(method="average", pct=True)
+
+            # Avoid 0/1 issues
+            ranks = np.clip(ranks, 1e-6, 1 - 1e-6)
+
+            return norm.ppf(ranks)
 
         shape, loc, scale = gamma.fit(non_zero, floc=0)
 

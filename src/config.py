@@ -65,7 +65,8 @@ SHOCK_MANMADE = [
 ]
 
 FLOOD_INDICATORS = [
-    "percent_area_flooded"
+    "percent_area_flooded",
+    "rainfall-mm"
 ]
 
 # ---------------------------------------------------

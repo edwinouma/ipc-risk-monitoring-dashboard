@@ -270,17 +270,16 @@ with st.sidebar.expander("ℹ️ About this method", expanded=False):
 
     st.markdown(explanation)
 
-# ---------------------------------------------------
-# SPI SIGNAL TOGGLE (ONLY FOR SPI)
-# ---------------------------------------------------
-spi_mode = "Both"
-
 if method == "spi_true":
-    spi_mode = st.sidebar.radio(
-        "SPI Signal Type",
-        ["Both", "Drought", "Flood"],
-        help="Filter SPI signals into drought (negative) or flood (positive)."
-    )
+
+    if selected_group == "Flood":
+        spi_mode = "Flood"
+
+    elif selected_group == "Climate":
+        spi_mode = "Drought"
+
+    else:
+        spi_mode = "Both"
 
 # 🔹 Retention Mode Selector (ADDITIONAL ONLY)
 retention_mode = st.sidebar.selectbox(
@@ -400,11 +399,16 @@ else:
             SPI_TRUE_THRESHOLDS["default"]
         )
 
-        # -----------------------------
-        # Drought (default)
-        # -----------------------------
-        alert_threshold = thresholds["alert"]
-        alarm_threshold = thresholds["alarm"]
+        # -----------------------------------------
+        # 🔥 APPLY SPI MODE (DIRECTION FIX)
+        # -----------------------------------------
+        if spi_mode == "Flood":
+            alert_threshold = abs(thresholds["alert"])
+            alarm_threshold = abs(thresholds["alarm"])
+        else:
+            # Drought (default)
+            alert_threshold = thresholds["alert"]
+            alarm_threshold = thresholds["alarm"]
 
     elif df_thresholds_file is not None and "retention_filter" in df_thresholds_file.columns:
 
@@ -724,16 +728,53 @@ else:
     classified_df = classified_planting
 
 # ---------------------------------------------------
-# APPLY SPI FILTER (DROUGHT / FLOOD)
+# APPLY SPI DISPLAY LOGIC (SAFE FIX)
 # ---------------------------------------------------
 if method == "spi_true" and spi_mode != "Both":
 
-    classified_df = classified_df[
-        classified_df["signal_type"] == spi_mode
-        ].copy()
+    classified_df = classified_df.copy()
 
+    if spi_mode == "Drought":
+        classified_df.loc[
+            classified_df["signal_type"] == "Flood",
+            "classification"
+        ] = "Minimal"
+
+    elif spi_mode == "Flood":
+        classified_df.loc[
+            classified_df["signal_type"] == "Drought",
+            "classification"
+        ] = "Minimal"
+
+    # ---------------------------------------------------
+    # 🔥 FULL GRID COUNTS (FIX FOR NO DATA)
+    # ---------------------------------------------------
+
+    # Create full grid of units × months
+    all_months = pd.period_range(
+        classified_df["year_month"].min(),
+        classified_df["year_month"].max(),
+        freq="M"
+    )
+
+    full_index = pd.MultiIndex.from_product(
+        [units_for_calc, all_months],
+        names=[unit_col, "year_month"]
+    )
+
+    full_df = (
+        classified_df
+        .set_index([unit_col, "year_month"])
+        .reindex(full_index)
+        .reset_index()
+    )
+
+    # Fill missing classifications as "No data"
+    full_df["classification"] = full_df["classification"].fillna("No data")
+
+    # Now compute counts
     counts = (
-        classified_df.groupby(["year_month", "classification"], dropna=False)
+        full_df.groupby(["year_month", "classification"])
         .size()
         .unstack(fill_value=0)
         .reset_index()
@@ -795,24 +836,32 @@ if len(units_for_calc) == 0:
     st.warning("Please select at least one province.")
 else:
 
-    # ---------------------------------------------------
-    # 🔥 SPI-AWARE MATRIX INPUT (SAFE FIX)
-    # ---------------------------------------------------
+    # Only apply for SPI
+    # 🔥 SPI-AWARE MATRIX INPUT (FINAL CLEAN)
     matrix_input_df = df_filtered.copy()
 
-    # Only apply for SPI
+    # 🔥 Apply SPI interpretation BEFORE matrix classification
     if method == "spi_true" and spi_mode != "Both":
 
-        # Ensure signal_type exists
-        if "signal_type" in classified_df.columns:
-            # Get valid unit-month combinations from filtered classified_df
-            valid_keys = classified_df[[unit_col, "year_month"]].drop_duplicates()
+        matrix_input_df = matrix_input_df.copy()
 
-            matrix_input_df = matrix_input_df.merge(
-                valid_keys,
-                on=[unit_col, "year_month"],
-                how="inner"
-            )
+        # Create signal_type (same logic as classified_df)
+        matrix_input_df["signal_type"] = matrix_input_df["value"].apply(
+            lambda x: "Drought" if x <= 0 else "Flood"
+        )
+
+        if spi_mode == "Drought":
+            # Opposite signal → force Minimal
+            matrix_input_df.loc[
+                matrix_input_df["signal_type"] == "Flood",
+                "value"
+            ] = 0  # will become Minimal
+
+        elif spi_mode == "Flood":
+            matrix_input_df.loc[
+                matrix_input_df["signal_type"] == "Drought",
+                "value"
+            ] = 0
 
     # Use matrix_input_df instead of df_filtered
     matrix_summary = cached_classification_matrix(
@@ -1034,8 +1083,8 @@ if method == "spi_true":
 
     else:
         st.caption(
-            "Gray = No data or opposite signal "
-            "(e.g. drought periods excluded in flood view, or flood periods excluded in drought view)."
+            "Gray = Opposite signal is treated as Minimal "
+            "(e.g. drought periods appear as Minimal in flood view, and vice versa)."
         )
 
 if method == "spi_true" and spi_mode == "Both":
@@ -1255,7 +1304,7 @@ st.plotly_chart(fig, width="stretch")
 # ---------------------------------------------------
 show_matrix = st.checkbox(
     "Warnings for each unit over time",
-    value=True   # 🔥 default checked
+    value=False   # 🔥 default checked
 )
 
 if show_matrix and len(units_for_calc) > 0:
