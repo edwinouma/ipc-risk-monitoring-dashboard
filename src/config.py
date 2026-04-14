@@ -561,13 +561,13 @@ INDICATOR_THRESHOLD_OVERRIDE = {
 CONFLICT_ZSCORE_THRESHOLDS = {
 
     "conflict_events": {
-        "alert": 1.0,
-        "alarm": 2.0
+        "alert": 2.0,
+        "alarm": 5.0
     },
 
     "conflict_fatalities": {
-        "alert": 1.0,
-        "alarm": 2.5
+        "alert": 5,
+        "alarm": 20
     }
 }
 
@@ -595,8 +595,8 @@ CONFLICT_COMBINED_RULES = {
 
 EVENT_THRESHOLDS = {
     "conflict_events": {
-        "alert": 1,
-        "alarm": 2
+        "alert": 2,
+        "alarm": 5
     },
 
     # 🔥 ADD THIS BLOCK

@@ -75,7 +75,8 @@ from src.config import (
     METHOD_DESCRIPTIONS,
     DEFAULT_METHOD_DESCRIPTIONS,
     SPI_TRUE_THRESHOLDS,
-    FLOOD_INDICATORS
+    FLOOD_INDICATORS,
+    SHOCK_INDICATORS
 )
 from src.event_loader import load_reference_events, get_reference_events
 
@@ -1245,10 +1246,17 @@ if show_events:
 
     if indicator in PRICE_INDICATORS:
         indicator_type = "price"
+
     elif indicator in CLIMATE_INDICATORS:
         indicator_type = "climate"
+
     elif indicator in FLOOD_INDICATORS:
-        indicator_type = "climate"  # treat flood as climate hazard
+        indicator_type = "climate"
+
+
+    elif indicator in SHOCK_INDICATORS:
+        indicator_type = "shock"
+
     else:
         indicator_type = "price"
 

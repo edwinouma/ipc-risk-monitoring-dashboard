@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from src.unit_month import compute_unit_month_values
 from src.classification_utils import classify_series
@@ -79,32 +78,12 @@ def compute_unit_month_classification_matrix(
 
     df_unit_month["classification"] = "No data"
 
-    values = df_unit_month.loc[valid_mask, value_col]
-
-    # -----------------------------------------
-    # 🔥 ONLY FIX SPI FLOOD (SAFE PATCH)
-    # -----------------------------------------
-    if indicator_value == "rainfall-mm" and alarm_threshold > 0:
-
-        # Flood case → HIGH values = risk
-        df_unit_month.loc[valid_mask, "classification"] = np.where(
-            values >= alarm_threshold,
-            "Alarm",
-            np.where(
-                values >= alert_threshold,
-                "Alert",
-                "Minimal"
-            )
-        )
-
-    else:
-        # All other cases (UNCHANGED)
-        df_unit_month.loc[valid_mask, "classification"] = classify_series(
-            values,
-            indicator_value,
-            alarm_threshold,
-            alert_threshold
-        )
+    df_unit_month.loc[valid_mask, "classification"] = classify_series(
+        df_unit_month.loc[valid_mask, value_col],
+        indicator_value,
+        alarm_threshold,
+        alert_threshold
+    )
 
     # ---------------------------------------------------
     # 6. Convert to month string
