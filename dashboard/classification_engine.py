@@ -132,46 +132,12 @@ def apply_thresholds(
 
         df["classification"] = "No data"  # default
 
-        # -----------------------------------------
-        # 🔥 SPI-SPECIFIC CLASSIFICATION FIX
-        # -----------------------------------------
-        method = INDICATOR_METHOD.get(indicator_value, "percentile")
-
-        if method == "spi_true":
-
-            values = df.loc[valid_mask, value_col]
-
-            if alarm_threshold > alert_threshold:
-                # Flood case (positive thresholds)
-                df.loc[valid_mask, "classification"] = np.where(
-                    values >= alarm_threshold,
-                    "Alarm",
-                    np.where(
-                        values >= alert_threshold,
-                        "Alert",
-                        "Minimal"
-                    )
-                )
-            else:
-                # Drought case (negative thresholds)
-                df.loc[valid_mask, "classification"] = np.where(
-                    values <= alarm_threshold,
-                    "Alarm",
-                    np.where(
-                        values <= alert_threshold,
-                        "Alert",
-                        "Minimal"
-                    )
-                )
-
-        else:
-            # Default behavior (unchanged)
-            df.loc[valid_mask, "classification"] = classify_series(
-                df.loc[valid_mask, value_col],
-                indicator_value,
-                alarm_threshold,
-                alert_threshold
-            )
+        df.loc[valid_mask, "classification"] = classify_series(
+            df.loc[valid_mask, value_col],
+            indicator_value,
+            alarm_threshold,
+            alert_threshold
+        )
 
     # ---------------------------------------------------
     # 3C. SPI SIGNAL TYPE (DROUGHT / FLOOD)

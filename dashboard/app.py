@@ -400,17 +400,30 @@ else:
             SPI_TRUE_THRESHOLDS["default"]
         )
 
-        # -----------------------------------------
-        # 🔥 APPLY SPI MODE (DIRECTION FIX)
-        # -----------------------------------------
-        if spi_mode == "Flood":
-            alert_threshold = abs(thresholds["alert"])
-            alarm_threshold = abs(thresholds["alarm"])
-        else:
-            # Drought (default)
-            alert_threshold = thresholds["alert"]
-            alarm_threshold = thresholds["alarm"]
+        # -----------------------------
+        # Drought (default)
+        # -----------------------------
+        alert_threshold = thresholds["alert"]
+        alarm_threshold = thresholds["alarm"]
 
+    # 👇👇👇 ADD HERE 👇👇👇
+    # -----------------------------------------
+    # 🔥 TRUE Z-SCORE THRESHOLDS
+    # -----------------------------------------
+    elif method == "zscore_true":
+
+        from src.config import ZSCORE_TRUE_THRESHOLDS
+
+        thresholds = ZSCORE_TRUE_THRESHOLDS.get(
+            indicator,
+            ZSCORE_TRUE_THRESHOLDS["default"]
+        )
+
+        # 🔥 ALWAYS use raw thresholds (like SPI)
+        alert_threshold = thresholds["alert"]
+        alarm_threshold = thresholds["alarm"]
+
+    # 👇 EXISTING BLOCK CONTINUES 👇
     elif df_thresholds_file is not None and "retention_filter" in df_thresholds_file.columns:
 
         retention_key = "none" if retention_mode == "Sensitive (All Months)" else ">=40%"
@@ -538,6 +551,16 @@ st.markdown(f"### Suggested Thresholds ({method.lower()})")
 row1_col1, row1_col2 = st.columns([1, 1])
 row2_col1, row2_col2 = st.columns([1, 1])
 
+# -----------------------------------------
+# SPI DISPLAY FIX (UI ONLY)
+# -----------------------------------------
+display_alarm = alarm_threshold
+display_alert = alert_threshold
+
+if method == "spi_true" and spi_mode == "Flood":
+    display_alarm = abs(alarm_threshold)
+    display_alert = abs(alert_threshold)
+
 # controls continue ALWAYS
 
 # -----------------------------------------
@@ -633,13 +656,13 @@ if method in ["percentile", "tukey"]:
     with row1_col2:
         st.metric(
             "Alarm Threshold",
-            f"{round(alarm_threshold, 2)}"
+            f"{round(display_alarm, 2)}"
         )
 
     with row2_col2:
         st.metric(
             "Alert Threshold",
-            f"{round(alert_threshold, 2)}"
+            f"{round(display_alert, 2)}"
         )
 
 # -----------------------------------------
@@ -647,11 +670,11 @@ if method in ["percentile", "tukey"]:
 # -----------------------------------------
 else:
 
-    # 🔥 Row 1 → Alarm
+    # 🔥 Row 1 → Alarm (UI input)
     with row1_col1:
-        alarm_threshold = st.number_input(
+        user_alarm = st.number_input(
             "Alarm Threshold",
-            value=float(alarm_threshold)
+            value=float(display_alarm)
         )
 
     with row1_col2:
@@ -659,17 +682,43 @@ else:
             reset_override(indicator, method)
             st.rerun()
 
-    # 🔥 Row 2 → Alert
+    # 🔥 Row 2 → Alert (UI input)
     with row2_col1:
-        alert_threshold = st.number_input(
+        user_alert = st.number_input(
             "Alert Threshold",
-            value=float(alert_threshold)
+            value=float(display_alert)
         )
 
     with row2_col2:
         if st.button("Apply & Save Threshold"):
-            save_override(indicator, method, alarm_threshold, alert_threshold)
+
+            # 🔥 Convert back to internal SPI logic BEFORE saving
+            if method == "spi_true" and spi_mode == "Flood":
+                save_override(
+                    indicator,
+                    method,
+                    -abs(user_alarm),
+                    -abs(user_alert)
+                )
+            else:
+                save_override(
+                    indicator,
+                    method,
+                    user_alarm,
+                    user_alert
+                )
+
             st.success("Threshold saved.")
+
+    # -----------------------------------------
+    # 🔥 Convert BACK to internal thresholds (for use downstream)
+    # -----------------------------------------
+    if method == "spi_true" and spi_mode == "Flood":
+        alarm_threshold = -abs(user_alarm)
+        alert_threshold = -abs(user_alert)
+    else:
+        alarm_threshold = user_alarm
+        alert_threshold = user_alert
 
 # ---------------------------------------------------
 # Apply Classification (Season-Aware Only When Needed)
@@ -1012,13 +1061,13 @@ else:
                 "Warning Frequency (range across all units)"
             ],
             "Alarm": [
-                f"{round(alarm_threshold, 2)}",
+                f"{round(display_alarm, 2)}",
                 overall_display,
                 proportion_range,
                 f"{int(alarm_min)}% - {int(alarm_max)}%"
             ],
             "Alert": [
-                f"{round(alert_threshold, 2)}",
+                f"{round(display_alert, 2)}",
                 overall_display,
                 proportion_range,
                 f"{int(alert_min)}% - {int(alert_max)}%"

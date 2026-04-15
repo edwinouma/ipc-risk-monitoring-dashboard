@@ -1,3 +1,4 @@
+from src.zscore_true import compute_true_zscore
 from src.data_loader import load_rainfall_data, load_price_data, load_conflict_data, load_flood_data
 from src.preprocessing import preprocess_data, process_flood_data
 from src.price_monthly import compute_monthly_prices
@@ -373,7 +374,34 @@ def main():
                         print(f"SPI-TRUE failed for {ind}: {e}")
                         continue
 
-                # 🔥 SPI requires full time series (date)
+
+                # -----------------------------------------
+                # 🔥 TRUE Z-SCORE (Seasonal standardized)
+                # -----------------------------------------
+                elif method_type == "zscore_true" and ind in ZSCORE_TRUE_INDICATORS:
+
+                    try:
+                        df_z_source = df_rainfall[
+                            (df_rainfall["country"] == country) &
+                            (df_rainfall[INDICATOR_COL] == ind)
+                            ].copy()
+
+                        df_z = compute_true_zscore(df_z_source)
+
+                        df_z["indicator"] = ind
+                        df_z["baseline_method"] = "none"
+
+                        df_indicator = df_z.copy()
+
+                        print(f"✅ TRUE Z-SCORE applied for {ind}")
+
+                    except Exception as e:
+                        print(f"Z-SCORE-TRUE failed for {ind}: {e}")
+                        continue
+
+                # -----------------------------------------
+                # 🔥 Ensure date exists (AFTER transformations)
+                # -----------------------------------------
                 if "date" not in df_indicator.columns and DATE_COL in df_country.columns:
                     df_indicator = df_indicator.merge(
                         df_country[[UNIT_COL, "year_month", DATE_COL]],

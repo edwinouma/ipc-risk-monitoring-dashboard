@@ -5919,7 +5919,7 @@ Kabul,2011-10,Afghanistan,none,0.13424111,ndvi_absolute
 Kabul,2011-11,Afghanistan,none,0.12912301,ndvi_absolute
 Kabul,2011-12,Afghanistan,none,0.11608604833333332,ndvi_absolute
 Kabul,2012-01,Afghanistan,none,0.068628802,ndvi_absolute
-Kabul,2012-02,Afghanistan,none,0.03921431,ndvi_absolute
+Kabul,2012-02,Afghanistan,none,0.039214309999999995,ndvi_absolute
 Kabul,2012-03,Afghanistan,none,0.08371286166666665,ndvi_absolute
 Kabul,2012-04,Afghanistan,none,0.15966195,ndvi_absolute
 Kabul,2012-05,Afghanistan,none,0.19651938000000002,ndvi_absolute
@@ -9794,7 +9794,7 @@ Nangarhar,2008-06,Afghanistan,none,0.17914987999999998,ndvi_absolute
 Nangarhar,2008-07,Afghanistan,none,0.18538459666666665,ndvi_absolute
 Nangarhar,2008-08,Afghanistan,none,0.19755275333333333,ndvi_absolute
 Nangarhar,2008-09,Afghanistan,none,0.19031735333333333,ndvi_absolute
-Nangarhar,2008-10,Afghanistan,none,0.17150827,ndvi_absolute
+Nangarhar,2008-10,Afghanistan,none,0.17150827000000002,ndvi_absolute
 Nangarhar,2008-11,Afghanistan,none,0.15190839,ndvi_absolute
 Nangarhar,2008-12,Afghanistan,none,0.14080079666666667,ndvi_absolute
 Nangarhar,2009-01,Afghanistan,none,0.14173149666666665,ndvi_absolute
@@ -11079,7 +11079,7 @@ Paktika,2006-10,Afghanistan,none,0.11545199166666668,ndvi_absolute
 Paktika,2006-11,Afghanistan,none,0.11904456000000001,ndvi_absolute
 Paktika,2006-12,Afghanistan,none,0.11003315000000001,ndvi_absolute
 Paktika,2007-01,Afghanistan,none,0.10030661133333334,ndvi_absolute
-Paktika,2007-02,Afghanistan,none,0.102280478,ndvi_absolute
+Paktika,2007-02,Afghanistan,none,0.10228047800000001,ndvi_absolute
 Paktika,2007-03,Afghanistan,none,0.11677540333333332,ndvi_absolute
 Paktika,2007-04,Afghanistan,none,0.14665172,ndvi_absolute
 Paktika,2007-05,Afghanistan,none,0.15493704333333333,ndvi_absolute
@@ -15021,14 +15021,14 @@ Baringo,2009-01,Kenya,none,0.44485410499999994,ndvi_absolute
 Baringo,2009-02,Kenya,none,0.39277202,ndvi_absolute
 Baringo,2009-03,Kenya,none,0.36642332166666663,ndvi_absolute
 Baringo,2009-04,Kenya,none,0.40637748999999995,ndvi_absolute
-Baringo,2009-05,Kenya,none,0.4969026433333334,ndvi_absolute
+Baringo,2009-05,Kenya,none,0.4969026433333333,ndvi_absolute
 Baringo,2009-06,Kenya,none,0.5203403833333334,ndvi_absolute
 Baringo,2009-07,Kenya,none,0.4582415933333333,ndvi_absolute
 Baringo,2009-08,Kenya,none,0.40673996333333334,ndvi_absolute
 Baringo,2009-09,Kenya,none,0.38090425666666666,ndvi_absolute
 Baringo,2009-10,Kenya,none,0.41596929666666665,ndvi_absolute
 Baringo,2009-11,Kenya,none,0.46317492666666665,ndvi_absolute
-Baringo,2009-12,Kenya,none,0.471569745,ndvi_absolute
+Baringo,2009-12,Kenya,none,0.47156974500000004,ndvi_absolute
 Baringo,2010-01,Kenya,none,0.5393417116666667,ndvi_absolute
 Baringo,2010-02,Kenya,none,0.5524061583333334,ndvi_absolute
 Baringo,2010-03,Kenya,none,0.596515185,ndvi_absolute
@@ -15097,7 +15097,7 @@ Baringo,2015-05,Kenya,none,0.6147140783333334,ndvi_absolute
 Baringo,2015-06,Kenya,none,0.6225015883333334,ndvi_absolute
 Baringo,2015-07,Kenya,none,0.5813159833333333,ndvi_absolute
 Baringo,2015-08,Kenya,none,0.5422184133333333,ndvi_absolute
-Baringo,2015-09,Kenya,none,0.4682306983333333,ndvi_absolute
+Baringo,2015-09,Kenya,none,0.46823069833333336,ndvi_absolute
 Baringo,2015-10,Kenya,none,0.4547330783333334,ndvi_absolute
 Baringo,2015-11,Kenya,none,0.5575762516666667,ndvi_absolute
 Baringo,2015-12,Kenya,none,0.6143041516666666,ndvi_absolute
@@ -15141,7 +15141,7 @@ Baringo,2019-01,Kenya,none,0.48034168166666663,ndvi_absolute
 Baringo,2019-02,Kenya,none,0.40267047333333333,ndvi_absolute
 Baringo,2019-03,Kenya,none,0.3757061883333333,ndvi_absolute
 Baringo,2019-04,Kenya,none,0.38330297500000005,ndvi_absolute
-Baringo,2019-05,Kenya,none,0.4568931266666667,ndvi_absolute
+Baringo,2019-05,Kenya,none,0.45689312666666665,ndvi_absolute
 Baringo,2019-06,Kenya,none,0.6129615949999999,ndvi_absolute
 Baringo,2019-07,Kenya,none,0.6940310066666666,ndvi_absolute
 Baringo,2019-08,Kenya,none,0.6879564916666667,ndvi_absolute
@@ -15193,7 +15193,7 @@ Baringo,2023-05,Kenya,none,0.6270456533333334,ndvi_absolute
 Baringo,2023-06,Kenya,none,0.5986362633333333,ndvi_absolute
 Baringo,2023-07,Kenya,none,0.5573222883333333,ndvi_absolute
 Baringo,2023-08,Kenya,none,0.5296070133333334,ndvi_absolute
-Baringo,2023-09,Kenya,none,0.5174136483333334,ndvi_absolute
+Baringo,2023-09,Kenya,none,0.5174136483333333,ndvi_absolute
 Baringo,2023-10,Kenya,none,0.5494472566666667,ndvi_absolute
 Baringo,2023-11,Kenya,none,0.5946132166666667,ndvi_absolute
 Baringo,2023-12,Kenya,none,0.5732296733333333,ndvi_absolute
@@ -15401,7 +15401,7 @@ Embu,2004-06,Kenya,none,0.6255960866666667,ndvi_absolute
 Embu,2004-07,Kenya,none,0.5480990783333334,ndvi_absolute
 Embu,2004-08,Kenya,none,0.485477245,ndvi_absolute
 Embu,2004-09,Kenya,none,0.4585987866666667,ndvi_absolute
-Embu,2004-10,Kenya,none,0.4963486883333334,ndvi_absolute
+Embu,2004-10,Kenya,none,0.4963486883333333,ndvi_absolute
 Embu,2004-11,Kenya,none,0.6608677883333334,ndvi_absolute
 Embu,2004-12,Kenya,none,0.7442809633333334,ndvi_absolute
 Embu,2005-01,Kenya,none,0.6746164499999999,ndvi_absolute
@@ -15454,12 +15454,12 @@ Embu,2008-11,Kenya,none,0.6654387933333333,ndvi_absolute
 Embu,2008-12,Kenya,none,0.641097985,ndvi_absolute
 Embu,2009-01,Kenya,none,0.5791373916666667,ndvi_absolute
 Embu,2009-02,Kenya,none,0.5522726816666667,ndvi_absolute
-Embu,2009-03,Kenya,none,0.5228988733333333,ndvi_absolute
+Embu,2009-03,Kenya,none,0.5228988733333334,ndvi_absolute
 Embu,2009-04,Kenya,none,0.5894177616666667,ndvi_absolute
 Embu,2009-05,Kenya,none,0.6608584066666666,ndvi_absolute
 Embu,2009-06,Kenya,none,0.6020473216666667,ndvi_absolute
-Embu,2009-07,Kenya,none,0.522192075,ndvi_absolute
-Embu,2009-08,Kenya,none,0.4703823833333333,ndvi_absolute
+Embu,2009-07,Kenya,none,0.5221920750000001,ndvi_absolute
+Embu,2009-08,Kenya,none,0.4703823833333334,ndvi_absolute
 Embu,2009-09,Kenya,none,0.4467940483333333,ndvi_absolute
 Embu,2009-10,Kenya,none,0.5034023633333333,ndvi_absolute
 Embu,2009-11,Kenya,none,0.6382806733333334,ndvi_absolute
@@ -15477,8 +15477,8 @@ Embu,2010-10,Kenya,none,0.5282409816666667,ndvi_absolute
 Embu,2010-11,Kenya,none,0.6555680533333333,ndvi_absolute
 Embu,2010-12,Kenya,none,0.6475319350000001,ndvi_absolute
 Embu,2011-01,Kenya,none,0.5634013966666667,ndvi_absolute
-Embu,2011-02,Kenya,none,0.5045318316666666,ndvi_absolute
-Embu,2011-03,Kenya,none,0.5007165533333333,ndvi_absolute
+Embu,2011-02,Kenya,none,0.5045318316666667,ndvi_absolute
+Embu,2011-03,Kenya,none,0.5007165533333334,ndvi_absolute
 Embu,2011-04,Kenya,none,0.5745310933333333,ndvi_absolute
 Embu,2011-05,Kenya,none,0.642160945,ndvi_absolute
 Embu,2011-06,Kenya,none,0.5936436033333333,ndvi_absolute
@@ -15508,7 +15508,7 @@ Embu,2013-05,Kenya,none,0.7031410133333332,ndvi_absolute
 Embu,2013-06,Kenya,none,0.6334922883333333,ndvi_absolute
 Embu,2013-07,Kenya,none,0.572572465,ndvi_absolute
 Embu,2013-08,Kenya,none,0.5244756183333333,ndvi_absolute
-Embu,2013-09,Kenya,none,0.4982188216666667,ndvi_absolute
+Embu,2013-09,Kenya,none,0.4982188216666666,ndvi_absolute
 Embu,2013-10,Kenya,none,0.507660525,ndvi_absolute
 Embu,2013-11,Kenya,none,0.60994752,ndvi_absolute
 Embu,2013-12,Kenya,none,0.6921427383333333,ndvi_absolute
@@ -15530,7 +15530,7 @@ Embu,2015-03,Kenya,none,0.5123428566666667,ndvi_absolute
 Embu,2015-04,Kenya,none,0.6377441983333333,ndvi_absolute
 Embu,2015-05,Kenya,none,0.716191165,ndvi_absolute
 Embu,2015-06,Kenya,none,0.6541381283333333,ndvi_absolute
-Embu,2015-07,Kenya,none,0.5759188116666666,ndvi_absolute
+Embu,2015-07,Kenya,none,0.5759188116666667,ndvi_absolute
 Embu,2015-08,Kenya,none,0.5198958083333333,ndvi_absolute
 Embu,2015-09,Kenya,none,0.4870397833333333,ndvi_absolute
 Embu,2015-10,Kenya,none,0.5279559916666666,ndvi_absolute
@@ -15543,7 +15543,7 @@ Embu,2016-04,Kenya,none,0.6649289566666666,ndvi_absolute
 Embu,2016-05,Kenya,none,0.713493855,ndvi_absolute
 Embu,2016-06,Kenya,none,0.67576211,ndvi_absolute
 Embu,2016-07,Kenya,none,0.5988610133333333,ndvi_absolute
-Embu,2016-08,Kenya,none,0.546579825,ndvi_absolute
+Embu,2016-08,Kenya,none,0.5465798249999999,ndvi_absolute
 Embu,2016-09,Kenya,none,0.5123630433333334,ndvi_absolute
 Embu,2016-10,Kenya,none,0.5086557833333334,ndvi_absolute
 Embu,2016-11,Kenya,none,0.6262803583333333,ndvi_absolute
@@ -15641,7 +15641,7 @@ Embu,2024-06,Kenya,none,0.7256692716666667,ndvi_absolute
 Embu,2024-07,Kenya,none,0.6653841933333333,ndvi_absolute
 Embu,2024-08,Kenya,none,0.6241333266666667,ndvi_absolute
 Embu,2024-09,Kenya,none,0.577899935,ndvi_absolute
-Embu,2024-10,Kenya,none,0.5591950849999999,ndvi_absolute
+Embu,2024-10,Kenya,none,0.559195085,ndvi_absolute
 Embu,2024-11,Kenya,none,0.6511578116666666,ndvi_absolute
 Embu,2024-12,Kenya,none,0.733363995,ndvi_absolute
 Embu,2025-01,Kenya,none,0.6961563599999999,ndvi_absolute
@@ -15810,7 +15810,7 @@ Garissa,2002-04,,,,
 Garissa,2002-05,,,,
 Garissa,2002-06,,,,
 Garissa,2002-07,Kenya,none,0.4571998433333333,ndvi_absolute
-Garissa,2002-08,Kenya,none,0.40933325499999995,ndvi_absolute
+Garissa,2002-08,Kenya,none,0.409333255,ndvi_absolute
 Garissa,2002-09,Kenya,none,0.40024952333333336,ndvi_absolute
 Garissa,2002-10,Kenya,none,0.44654392000000004,ndvi_absolute
 Garissa,2002-11,Kenya,none,0.5553315483333333,ndvi_absolute
@@ -15875,7 +15875,7 @@ Garissa,2007-09,Kenya,none,0.4302500816666666,ndvi_absolute
 Garissa,2007-10,Kenya,none,0.47210908166666665,ndvi_absolute
 Garissa,2007-11,Kenya,none,0.5328391149999999,ndvi_absolute
 Garissa,2007-12,Kenya,none,0.5619249516666667,ndvi_absolute
-Garissa,2008-01,Kenya,none,0.4962092333333333,ndvi_absolute
+Garissa,2008-01,Kenya,none,0.4962092333333334,ndvi_absolute
 Garissa,2008-02,Kenya,none,0.42385976999999997,ndvi_absolute
 Garissa,2008-03,Kenya,none,0.4108711333333333,ndvi_absolute
 Garissa,2008-04,Kenya,none,0.5042978033333333,ndvi_absolute
@@ -15897,7 +15897,7 @@ Garissa,2009-07,Kenya,none,0.41182055833333336,ndvi_absolute
 Garissa,2009-08,Kenya,none,0.3637065016666667,ndvi_absolute
 Garissa,2009-09,Kenya,none,0.3378918233333333,ndvi_absolute
 Garissa,2009-10,Kenya,none,0.414283365,ndvi_absolute
-Garissa,2009-11,Kenya,none,0.5400936766666667,ndvi_absolute
+Garissa,2009-11,Kenya,none,0.5400936766666666,ndvi_absolute
 Garissa,2009-12,Kenya,none,0.5384246366666666,ndvi_absolute
 Garissa,2010-01,Kenya,none,0.44642121333333334,ndvi_absolute
 Garissa,2010-02,Kenya,none,0.3756700433333333,ndvi_absolute
@@ -15914,9 +15914,9 @@ Garissa,2010-12,Kenya,none,0.44484443500000004,ndvi_absolute
 Garissa,2011-01,Kenya,none,0.3691852,ndvi_absolute
 Garissa,2011-02,Kenya,none,0.319978755,ndvi_absolute
 Garissa,2011-03,Kenya,none,0.321880705,ndvi_absolute
-Garissa,2011-04,Kenya,none,0.40314944499999994,ndvi_absolute
+Garissa,2011-04,Kenya,none,0.403149445,ndvi_absolute
 Garissa,2011-05,Kenya,none,0.45417410333333336,ndvi_absolute
-Garissa,2011-06,Kenya,none,0.40992850333333336,ndvi_absolute
+Garissa,2011-06,Kenya,none,0.4099285033333333,ndvi_absolute
 Garissa,2011-07,Kenya,none,0.36945452666666667,ndvi_absolute
 Garissa,2011-08,Kenya,none,0.34061876166666666,ndvi_absolute
 Garissa,2011-09,Kenya,none,0.34157469,ndvi_absolute
@@ -15927,7 +15927,7 @@ Garissa,2012-01,Kenya,none,0.49681762166666665,ndvi_absolute
 Garissa,2012-02,Kenya,none,0.39591610833333335,ndvi_absolute
 Garissa,2012-03,Kenya,none,0.35671178,ndvi_absolute
 Garissa,2012-04,Kenya,none,0.38468249000000004,ndvi_absolute
-Garissa,2012-05,Kenya,none,0.41445296499999995,ndvi_absolute
+Garissa,2012-05,Kenya,none,0.414452965,ndvi_absolute
 Garissa,2012-06,Kenya,none,0.39911616666666666,ndvi_absolute
 Garissa,2012-07,Kenya,none,0.3741880016666667,ndvi_absolute
 Garissa,2012-08,Kenya,none,0.35403058000000004,ndvi_absolute
@@ -15950,15 +15950,15 @@ Garissa,2013-12,Kenya,none,0.5103927433333334,ndvi_absolute
 Garissa,2014-01,Kenya,none,0.4202513216666666,ndvi_absolute
 Garissa,2014-02,Kenya,none,0.3501218716666667,ndvi_absolute
 Garissa,2014-03,Kenya,none,0.36822419666666667,ndvi_absolute
-Garissa,2014-04,Kenya,none,0.45956456666666673,ndvi_absolute
+Garissa,2014-04,Kenya,none,0.4595645666666666,ndvi_absolute
 Garissa,2014-05,Kenya,none,0.49118073833333337,ndvi_absolute
-Garissa,2014-06,Kenya,none,0.45208939833333334,ndvi_absolute
+Garissa,2014-06,Kenya,none,0.4520893983333334,ndvi_absolute
 Garissa,2014-07,Kenya,none,0.41170163666666665,ndvi_absolute
 Garissa,2014-08,Kenya,none,0.38241713666666666,ndvi_absolute
 Garissa,2014-09,Kenya,none,0.36366429499999997,ndvi_absolute
 Garissa,2014-10,Kenya,none,0.38958423000000003,ndvi_absolute
-Garissa,2014-11,Kenya,none,0.48088653000000003,ndvi_absolute
-Garissa,2014-12,Kenya,none,0.501347425,ndvi_absolute
+Garissa,2014-11,Kenya,none,0.48088653,ndvi_absolute
+Garissa,2014-12,Kenya,none,0.5013474250000001,ndvi_absolute
 Garissa,2015-01,Kenya,none,0.3994735266666667,ndvi_absolute
 Garissa,2015-02,Kenya,none,0.33585928166666673,ndvi_absolute
 Garissa,2015-03,Kenya,none,0.372619515,ndvi_absolute
@@ -15994,24 +15994,24 @@ Garissa,2017-08,Kenya,none,0.37058990500000005,ndvi_absolute
 Garissa,2017-09,Kenya,none,0.35032000999999996,ndvi_absolute
 Garissa,2017-10,Kenya,none,0.38218047,ndvi_absolute
 Garissa,2017-11,Kenya,none,0.4572599583333334,ndvi_absolute
-Garissa,2017-12,Kenya,none,0.42589306499999996,ndvi_absolute
+Garissa,2017-12,Kenya,none,0.42589306500000007,ndvi_absolute
 Garissa,2018-01,Kenya,none,0.34098127166666664,ndvi_absolute
 Garissa,2018-02,Kenya,none,0.3168548233333333,ndvi_absolute
 Garissa,2018-03,Kenya,none,0.3826583266666666,ndvi_absolute
 Garissa,2018-04,Kenya,none,0.5532521816666667,ndvi_absolute
 Garissa,2018-05,Kenya,none,0.6039060333333334,ndvi_absolute
-Garissa,2018-06,Kenya,none,0.5340937499999999,ndvi_absolute
+Garissa,2018-06,Kenya,none,0.53409375,ndvi_absolute
 Garissa,2018-07,Kenya,none,0.46696687833333334,ndvi_absolute
 Garissa,2018-08,Kenya,none,0.412158915,ndvi_absolute
 Garissa,2018-09,Kenya,none,0.378159165,ndvi_absolute
-Garissa,2018-10,Kenya,none,0.3980540350000001,ndvi_absolute
+Garissa,2018-10,Kenya,none,0.398054035,ndvi_absolute
 Garissa,2018-11,Kenya,none,0.4738470866666667,ndvi_absolute
 Garissa,2018-12,Kenya,none,0.4882352433333333,ndvi_absolute
 Garissa,2019-01,Kenya,none,0.4110605683333333,ndvi_absolute
 Garissa,2019-02,Kenya,none,0.35241995833333334,ndvi_absolute
 Garissa,2019-03,Kenya,none,0.3388501916666667,ndvi_absolute
 Garissa,2019-04,Kenya,none,0.37766980666666666,ndvi_absolute
-Garissa,2019-05,Kenya,none,0.44894301999999997,ndvi_absolute
+Garissa,2019-05,Kenya,none,0.44894302,ndvi_absolute
 Garissa,2019-06,Kenya,none,0.4398919683333333,ndvi_absolute
 Garissa,2019-07,Kenya,none,0.39279200999999997,ndvi_absolute
 Garissa,2019-08,Kenya,none,0.3593110116666667,ndvi_absolute
@@ -16025,14 +16025,14 @@ Garissa,2020-03,Kenya,none,0.46869494,ndvi_absolute
 Garissa,2020-04,Kenya,none,0.54730266,ndvi_absolute
 Garissa,2020-05,Kenya,none,0.5757747966666668,ndvi_absolute
 Garissa,2020-06,Kenya,none,0.504983375,ndvi_absolute
-Garissa,2020-07,Kenya,none,0.45385378,ndvi_absolute
+Garissa,2020-07,Kenya,none,0.45385378000000004,ndvi_absolute
 Garissa,2020-08,Kenya,none,0.4195932166666667,ndvi_absolute
-Garissa,2020-09,Kenya,none,0.39238416166666673,ndvi_absolute
+Garissa,2020-09,Kenya,none,0.3923841616666666,ndvi_absolute
 Garissa,2020-10,Kenya,none,0.4134937066666667,ndvi_absolute
 Garissa,2020-11,Kenya,none,0.5139248049999999,ndvi_absolute
 Garissa,2020-12,Kenya,none,0.5032110666666667,ndvi_absolute
 Garissa,2021-01,Kenya,none,0.41892841500000005,ndvi_absolute
-Garissa,2021-02,Kenya,none,0.3544667883333333,ndvi_absolute
+Garissa,2021-02,Kenya,none,0.3544667883333334,ndvi_absolute
 Garissa,2021-03,Kenya,none,0.35089277999999996,ndvi_absolute
 Garissa,2021-04,Kenya,none,0.43307576,ndvi_absolute
 Garissa,2021-05,Kenya,none,0.45746317833333333,ndvi_absolute
@@ -16043,7 +16043,7 @@ Garissa,2021-09,Kenya,none,0.3289554433333333,ndvi_absolute
 Garissa,2021-10,Kenya,none,0.32076444833333334,ndvi_absolute
 Garissa,2021-11,Kenya,none,0.38482932833333333,ndvi_absolute
 Garissa,2021-12,Kenya,none,0.5286290833333332,ndvi_absolute
-Garissa,2022-01,Kenya,none,0.5250682883333334,ndvi_absolute
+Garissa,2022-01,Kenya,none,0.5250682883333333,ndvi_absolute
 Garissa,2022-02,Kenya,none,0.4063473416666667,ndvi_absolute
 Garissa,2022-03,Kenya,none,0.36630504,ndvi_absolute
 Garissa,2022-04,Kenya,none,0.41953430666666663,ndvi_absolute
@@ -16051,7 +16051,7 @@ Garissa,2022-05,Kenya,none,0.46404866333333333,ndvi_absolute
 Garissa,2022-06,Kenya,none,0.4374360483333333,ndvi_absolute
 Garissa,2022-07,Kenya,none,0.40325634833333335,ndvi_absolute
 Garissa,2022-08,Kenya,none,0.36032645166666666,ndvi_absolute
-Garissa,2022-09,Kenya,none,0.32766147500000004,ndvi_absolute
+Garissa,2022-09,Kenya,none,0.327661475,ndvi_absolute
 Garissa,2022-10,Kenya,none,0.35029947666666666,ndvi_absolute
 Garissa,2022-11,Kenya,none,0.4595358233333333,ndvi_absolute
 Garissa,2022-12,Kenya,none,0.4958912133333333,ndvi_absolute
@@ -16068,7 +16068,7 @@ Garissa,2023-10,Kenya,none,0.41912481,ndvi_absolute
 Garissa,2023-11,Kenya,none,0.574746545,ndvi_absolute
 Garissa,2023-12,Kenya,none,0.6502429616666666,ndvi_absolute
 Garissa,2024-01,Kenya,none,0.5741473483333334,ndvi_absolute
-Garissa,2024-02,Kenya,none,0.47539382999999996,ndvi_absolute
+Garissa,2024-02,Kenya,none,0.47539383,ndvi_absolute
 Garissa,2024-03,Kenya,none,0.4677746166666667,ndvi_absolute
 Garissa,2024-04,Kenya,none,0.5759317483333334,ndvi_absolute
 Garissa,2024-05,Kenya,none,0.5868895416666667,ndvi_absolute
@@ -16090,7 +16090,7 @@ Garissa,2025-08,Kenya,none,0.4032670033333334,ndvi_absolute
 Garissa,2025-09,Kenya,none,0.3735616716666667,ndvi_absolute
 Garissa,2025-10,Kenya,none,0.37767819166666666,ndvi_absolute
 Garissa,2025-11,Kenya,none,0.4554152333333334,ndvi_absolute
-Garissa,2025-12,Kenya,none,0.478877435,ndvi_absolute
+Garissa,2025-12,Kenya,none,0.47887743499999996,ndvi_absolute
 Garissa,2026-01,Kenya,none,0.40672262666666664,ndvi_absolute
 Garissa,2026-02,Kenya,none,0.36352598500000005,ndvi_absolute
 Garissa,2026-03,Kenya,none,0.366816535,ndvi_absolute
@@ -17195,7 +17195,7 @@ Kilifi,2008-12,Kenya,none,0.5868018083333334,ndvi_absolute
 Kilifi,2009-01,Kenya,none,0.508340415,ndvi_absolute
 Kilifi,2009-02,Kenya,none,0.45913901000000007,ndvi_absolute
 Kilifi,2009-03,Kenya,none,0.4535510166666667,ndvi_absolute
-Kilifi,2009-04,Kenya,none,0.4988598516666667,ndvi_absolute
+Kilifi,2009-04,Kenya,none,0.49885985166666663,ndvi_absolute
 Kilifi,2009-05,Kenya,none,0.5332797166666666,ndvi_absolute
 Kilifi,2009-06,Kenya,none,0.5505399816666666,ndvi_absolute
 Kilifi,2009-07,Kenya,none,0.5253914916666667,ndvi_absolute
@@ -17249,12 +17249,12 @@ Kilifi,2013-06,Kenya,none,0.6032113066666667,ndvi_absolute
 Kilifi,2013-07,Kenya,none,0.5616914366666667,ndvi_absolute
 Kilifi,2013-08,Kenya,none,0.51183318,ndvi_absolute
 Kilifi,2013-09,Kenya,none,0.4809927516666666,ndvi_absolute
-Kilifi,2013-10,Kenya,none,0.49863355666666664,ndvi_absolute
+Kilifi,2013-10,Kenya,none,0.4986335566666667,ndvi_absolute
 Kilifi,2013-11,Kenya,none,0.54870635,ndvi_absolute
 Kilifi,2013-12,Kenya,none,0.609638805,ndvi_absolute
 Kilifi,2014-01,Kenya,none,0.5616113483333334,ndvi_absolute
 Kilifi,2014-02,Kenya,none,0.48003680499999996,ndvi_absolute
-Kilifi,2014-03,Kenya,none,0.5036604783333334,ndvi_absolute
+Kilifi,2014-03,Kenya,none,0.5036604783333333,ndvi_absolute
 Kilifi,2014-04,Kenya,none,0.59073031,ndvi_absolute
 Kilifi,2014-05,Kenya,none,0.6532285999999999,ndvi_absolute
 Kilifi,2014-06,Kenya,none,0.6408319100000001,ndvi_absolute
@@ -17297,7 +17297,7 @@ Kilifi,2017-06,Kenya,none,0.5786981183333334,ndvi_absolute
 Kilifi,2017-07,Kenya,none,0.5215291266666667,ndvi_absolute
 Kilifi,2017-08,Kenya,none,0.46650616500000003,ndvi_absolute
 Kilifi,2017-09,Kenya,none,0.4308007866666667,ndvi_absolute
-Kilifi,2017-10,Kenya,none,0.472167215,ndvi_absolute
+Kilifi,2017-10,Kenya,none,0.47216721500000003,ndvi_absolute
 Kilifi,2017-11,Kenya,none,0.593034,ndvi_absolute
 Kilifi,2017-12,Kenya,none,0.613319025,ndvi_absolute
 Kilifi,2018-01,Kenya,none,0.5000503016666666,ndvi_absolute
@@ -17667,7 +17667,7 @@ Kitui,2012-01,Kenya,none,0.53773707,ndvi_absolute
 Kitui,2012-02,Kenya,none,0.40068525,ndvi_absolute
 Kitui,2012-03,Kenya,none,0.34547617999999997,ndvi_absolute
 Kitui,2012-04,Kenya,none,0.44012286166666664,ndvi_absolute
-Kitui,2012-05,Kenya,none,0.5060281383333334,ndvi_absolute
+Kitui,2012-05,Kenya,none,0.5060281383333333,ndvi_absolute
 Kitui,2012-06,Kenya,none,0.384026775,ndvi_absolute
 Kitui,2012-07,Kenya,none,0.32636613333333336,ndvi_absolute
 Kitui,2012-08,Kenya,none,0.29919009999999996,ndvi_absolute
@@ -17712,10 +17712,10 @@ Kitui,2015-10,Kenya,none,0.29408473333333335,ndvi_absolute
 Kitui,2015-11,Kenya,none,0.5086577566666667,ndvi_absolute
 Kitui,2015-12,Kenya,none,0.6879815499999999,ndvi_absolute
 Kitui,2016-01,Kenya,none,0.600979705,ndvi_absolute
-Kitui,2016-02,Kenya,none,0.4524098333333333,ndvi_absolute
+Kitui,2016-02,Kenya,none,0.45240983333333334,ndvi_absolute
 Kitui,2016-03,Kenya,none,0.3971963866666666,ndvi_absolute
 Kitui,2016-04,Kenya,none,0.45279223,ndvi_absolute
-Kitui,2016-05,Kenya,none,0.5021041483333334,ndvi_absolute
+Kitui,2016-05,Kenya,none,0.5021041483333333,ndvi_absolute
 Kitui,2016-06,Kenya,none,0.405871815,ndvi_absolute
 Kitui,2016-07,Kenya,none,0.3359665216666667,ndvi_absolute
 Kitui,2016-08,Kenya,none,0.304838915,ndvi_absolute
@@ -17740,7 +17740,7 @@ Kitui,2018-02,Kenya,none,0.3029935516666667,ndvi_absolute
 Kitui,2018-03,Kenya,none,0.46118170333333336,ndvi_absolute
 Kitui,2018-04,Kenya,none,0.6674118116666667,ndvi_absolute
 Kitui,2018-05,Kenya,none,0.6628818616666666,ndvi_absolute
-Kitui,2018-06,Kenya,none,0.5332670083333333,ndvi_absolute
+Kitui,2018-06,Kenya,none,0.5332670083333334,ndvi_absolute
 Kitui,2018-07,Kenya,none,0.42300683166666664,ndvi_absolute
 Kitui,2018-08,Kenya,none,0.36453019333333336,ndvi_absolute
 Kitui,2018-09,Kenya,none,0.3343942166666667,ndvi_absolute
@@ -20161,26 +20161,26 @@ Marsabit,2002-05,,,,
 Marsabit,2002-06,,,,
 Marsabit,2002-07,Kenya,none,0.23482617583333332,ndvi_absolute
 Marsabit,2002-08,Kenya,none,0.20703820375,ndvi_absolute
-Marsabit,2002-09,Kenya,none,0.20189545674999998,ndvi_absolute
+Marsabit,2002-09,Kenya,none,0.20189545675,ndvi_absolute
 Marsabit,2002-10,Kenya,none,0.23584524583333333,ndvi_absolute
 Marsabit,2002-11,Kenya,none,0.314937065,ndvi_absolute
 Marsabit,2002-12,Kenya,none,0.36085005166666667,ndvi_absolute
 Marsabit,2003-01,Kenya,none,0.33696745666666666,ndvi_absolute
 Marsabit,2003-02,Kenya,none,0.24146744583333335,ndvi_absolute
-Marsabit,2003-03,Kenya,none,0.21715474316666664,ndvi_absolute
+Marsabit,2003-03,Kenya,none,0.2171547431666667,ndvi_absolute
 Marsabit,2003-04,Kenya,none,0.29243828916666664,ndvi_absolute
 Marsabit,2003-05,Kenya,none,0.4191516208333333,ndvi_absolute
-Marsabit,2003-06,Kenya,none,0.3635915791666666,ndvi_absolute
+Marsabit,2003-06,Kenya,none,0.3635915791666667,ndvi_absolute
 Marsabit,2003-07,Kenya,none,0.25884400916666667,ndvi_absolute
-Marsabit,2003-08,Kenya,none,0.22066518083333334,ndvi_absolute
+Marsabit,2003-08,Kenya,none,0.2206651808333333,ndvi_absolute
 Marsabit,2003-09,Kenya,none,0.2065856075,ndvi_absolute
 Marsabit,2003-10,Kenya,none,0.21456711375,ndvi_absolute
 Marsabit,2003-11,Kenya,none,0.282240407,ndvi_absolute
 Marsabit,2003-12,Kenya,none,0.31997716375,ndvi_absolute
 Marsabit,2004-01,Kenya,none,0.2752252575,ndvi_absolute
 Marsabit,2004-02,Kenya,none,0.2389927295833333,ndvi_absolute
-Marsabit,2004-03,Kenya,none,0.23691887416666668,ndvi_absolute
-Marsabit,2004-04,Kenya,none,0.33239429,ndvi_absolute
+Marsabit,2004-03,Kenya,none,0.23691887416666665,ndvi_absolute
+Marsabit,2004-04,Kenya,none,0.33239429000000004,ndvi_absolute
 Marsabit,2004-05,Kenya,none,0.3368317791666667,ndvi_absolute
 Marsabit,2004-06,Kenya,none,0.2523179975,ndvi_absolute
 Marsabit,2004-07,Kenya,none,0.20679871583333334,ndvi_absolute
@@ -20200,7 +20200,7 @@ Marsabit,2005-08,Kenya,none,0.19446452783333334,ndvi_absolute
 Marsabit,2005-09,Kenya,none,0.18420238916666667,ndvi_absolute
 Marsabit,2005-10,Kenya,none,0.19351239333333334,ndvi_absolute
 Marsabit,2005-11,Kenya,none,0.22545437383333333,ndvi_absolute
-Marsabit,2005-12,Kenya,none,0.22278505949999997,ndvi_absolute
+Marsabit,2005-12,Kenya,none,0.22278505950000002,ndvi_absolute
 Marsabit,2006-01,Kenya,none,0.19167297633333336,ndvi_absolute
 Marsabit,2006-02,Kenya,none,0.18393888041666664,ndvi_absolute
 Marsabit,2006-03,Kenya,none,0.21788433,ndvi_absolute
@@ -20227,10 +20227,10 @@ Marsabit,2007-11,Kenya,none,0.305464275,ndvi_absolute
 Marsabit,2007-12,Kenya,none,0.28107112083333335,ndvi_absolute
 Marsabit,2008-01,Kenya,none,0.2408947825,ndvi_absolute
 Marsabit,2008-02,Kenya,none,0.22096469133333332,ndvi_absolute
-Marsabit,2008-03,Kenya,none,0.22737543549999997,ndvi_absolute
+Marsabit,2008-03,Kenya,none,0.22737543550000003,ndvi_absolute
 Marsabit,2008-04,Kenya,none,0.3272768308333333,ndvi_absolute
-Marsabit,2008-05,Kenya,none,0.3456001975,ndvi_absolute
-Marsabit,2008-06,Kenya,none,0.25380994633333337,ndvi_absolute
+Marsabit,2008-05,Kenya,none,0.34560019750000004,ndvi_absolute
+Marsabit,2008-06,Kenya,none,0.2538099463333333,ndvi_absolute
 Marsabit,2008-07,Kenya,none,0.20568785874999998,ndvi_absolute
 Marsabit,2008-08,Kenya,none,0.19090841091666666,ndvi_absolute
 Marsabit,2008-09,Kenya,none,0.19582747666666667,ndvi_absolute
@@ -20248,7 +20248,7 @@ Marsabit,2009-08,Kenya,none,0.17225611291666665,ndvi_absolute
 Marsabit,2009-09,Kenya,none,0.17723018083333333,ndvi_absolute
 Marsabit,2009-10,Kenya,none,0.226837375,ndvi_absolute
 Marsabit,2009-11,Kenya,none,0.27969568883333334,ndvi_absolute
-Marsabit,2009-12,Kenya,none,0.2827041116666667,ndvi_absolute
+Marsabit,2009-12,Kenya,none,0.28270411166666665,ndvi_absolute
 Marsabit,2010-01,Kenya,none,0.27529691333333334,ndvi_absolute
 Marsabit,2010-02,Kenya,none,0.24350844083333334,ndvi_absolute
 Marsabit,2010-03,Kenya,none,0.3028028208333333,ndvi_absolute
@@ -20272,10 +20272,10 @@ Marsabit,2011-08,Kenya,none,0.17184424316666666,ndvi_absolute
 Marsabit,2011-09,Kenya,none,0.17963279733333334,ndvi_absolute
 Marsabit,2011-10,Kenya,none,0.2550986775,ndvi_absolute
 Marsabit,2011-11,Kenya,none,0.42911717916666664,ndvi_absolute
-Marsabit,2011-12,Kenya,none,0.4733636491666667,ndvi_absolute
+Marsabit,2011-12,Kenya,none,0.4733636491666666,ndvi_absolute
 Marsabit,2012-01,Kenya,none,0.32020754,ndvi_absolute
 Marsabit,2012-02,Kenya,none,0.22208025499999998,ndvi_absolute
-Marsabit,2012-03,Kenya,none,0.2098125875,ndvi_absolute
+Marsabit,2012-03,Kenya,none,0.20981258749999998,ndvi_absolute
 Marsabit,2012-04,Kenya,none,0.29409915000000003,ndvi_absolute
 Marsabit,2012-05,Kenya,none,0.34991734,ndvi_absolute
 Marsabit,2012-06,Kenya,none,0.264515365,ndvi_absolute
@@ -20284,7 +20284,7 @@ Marsabit,2012-08,Kenya,none,0.19994076708333333,ndvi_absolute
 Marsabit,2012-09,Kenya,none,0.19651245583333332,ndvi_absolute
 Marsabit,2012-10,Kenya,none,0.24416856791666666,ndvi_absolute
 Marsabit,2012-11,Kenya,none,0.31719602083333337,ndvi_absolute
-Marsabit,2012-12,Kenya,none,0.3082670016666667,ndvi_absolute
+Marsabit,2012-12,Kenya,none,0.30826700166666665,ndvi_absolute
 Marsabit,2013-01,Kenya,none,0.2557620275,ndvi_absolute
 Marsabit,2013-02,Kenya,none,0.21262823958333332,ndvi_absolute
 Marsabit,2013-03,Kenya,none,0.26531205333333335,ndvi_absolute
@@ -20332,7 +20332,7 @@ Marsabit,2016-08,Kenya,none,0.197171408,ndvi_absolute
 Marsabit,2016-09,Kenya,none,0.18435765841666665,ndvi_absolute
 Marsabit,2016-10,Kenya,none,0.18849783325,ndvi_absolute
 Marsabit,2016-11,Kenya,none,0.23479091625,ndvi_absolute
-Marsabit,2016-12,Kenya,none,0.26418296416666665,ndvi_absolute
+Marsabit,2016-12,Kenya,none,0.2641829641666667,ndvi_absolute
 Marsabit,2017-01,Kenya,none,0.21488718758333333,ndvi_absolute
 Marsabit,2017-02,Kenya,none,0.18472390033333333,ndvi_absolute
 Marsabit,2017-03,Kenya,none,0.18585224241666667,ndvi_absolute
@@ -20348,7 +20348,7 @@ Marsabit,2017-12,Kenya,none,0.28344365833333335,ndvi_absolute
 Marsabit,2018-01,Kenya,none,0.2038382995,ndvi_absolute
 Marsabit,2018-02,Kenya,none,0.19857729166666668,ndvi_absolute
 Marsabit,2018-03,Kenya,none,0.3018382575,ndvi_absolute
-Marsabit,2018-04,Kenya,none,0.4880010891666667,ndvi_absolute
+Marsabit,2018-04,Kenya,none,0.4880010891666666,ndvi_absolute
 Marsabit,2018-05,Kenya,none,0.5144734175,ndvi_absolute
 Marsabit,2018-06,Kenya,none,0.394538895,ndvi_absolute
 Marsabit,2018-07,Kenya,none,0.29111323333333333,ndvi_absolute
@@ -20358,7 +20358,7 @@ Marsabit,2018-10,Kenya,none,0.24738957833333333,ndvi_absolute
 Marsabit,2018-11,Kenya,none,0.29558510916666664,ndvi_absolute
 Marsabit,2018-12,Kenya,none,0.29469941541666667,ndvi_absolute
 Marsabit,2019-01,Kenya,none,0.23919494583333334,ndvi_absolute
-Marsabit,2019-02,Kenya,none,0.2037925041666667,ndvi_absolute
+Marsabit,2019-02,Kenya,none,0.20379250416666664,ndvi_absolute
 Marsabit,2019-03,Kenya,none,0.20586231583333334,ndvi_absolute
 Marsabit,2019-04,Kenya,none,0.2401231725,ndvi_absolute
 Marsabit,2019-05,Kenya,none,0.26522838583333336,ndvi_absolute
@@ -20409,7 +20409,7 @@ Marsabit,2023-01,Kenya,none,0.1971379533333333,ndvi_absolute
 Marsabit,2023-02,Kenya,none,0.18090883049999998,ndvi_absolute
 Marsabit,2023-03,Kenya,none,0.23832855458333335,ndvi_absolute
 Marsabit,2023-04,Kenya,none,0.3889500266666667,ndvi_absolute
-Marsabit,2023-05,Kenya,none,0.42666902749999996,ndvi_absolute
+Marsabit,2023-05,Kenya,none,0.4266690275,ndvi_absolute
 Marsabit,2023-06,Kenya,none,0.30018563000000004,ndvi_absolute
 Marsabit,2023-07,Kenya,none,0.22854174041666667,ndvi_absolute
 Marsabit,2023-08,Kenya,none,0.20537471083333333,ndvi_absolute
@@ -20421,7 +20421,7 @@ Marsabit,2024-01,Kenya,none,0.3657915304166666,ndvi_absolute
 Marsabit,2024-02,Kenya,none,0.27920203316666664,ndvi_absolute
 Marsabit,2024-03,Kenya,none,0.29016517999999997,ndvi_absolute
 Marsabit,2024-04,Kenya,none,0.42572324666666667,ndvi_absolute
-Marsabit,2024-05,Kenya,none,0.5102271508333333,ndvi_absolute
+Marsabit,2024-05,Kenya,none,0.5102271508333334,ndvi_absolute
 Marsabit,2024-06,Kenya,none,0.37889171,ndvi_absolute
 Marsabit,2024-07,Kenya,none,0.2878797441666667,ndvi_absolute
 Marsabit,2024-08,Kenya,none,0.2595719008333333,ndvi_absolute
@@ -20602,13 +20602,13 @@ Meru,2002-11,Kenya,none,0.6593862783333334,ndvi_absolute
 Meru,2002-12,Kenya,none,0.7427294033333333,ndvi_absolute
 Meru,2003-01,Kenya,none,0.6943621916666666,ndvi_absolute
 Meru,2003-02,Kenya,none,0.55421847,ndvi_absolute
-Meru,2003-03,Kenya,none,0.48978181166666673,ndvi_absolute
+Meru,2003-03,Kenya,none,0.4897818116666666,ndvi_absolute
 Meru,2003-04,Kenya,none,0.5781544916666667,ndvi_absolute
 Meru,2003-05,Kenya,none,0.7139528049999999,ndvi_absolute
 Meru,2003-06,Kenya,none,0.6522191583333333,ndvi_absolute
 Meru,2003-07,Kenya,none,0.532453255,ndvi_absolute
-Meru,2003-08,Kenya,none,0.4810049066666666,ndvi_absolute
-Meru,2003-09,Kenya,none,0.45666332000000004,ndvi_absolute
+Meru,2003-08,Kenya,none,0.4810049066666667,ndvi_absolute
+Meru,2003-09,Kenya,none,0.45666331999999993,ndvi_absolute
 Meru,2003-10,Kenya,none,0.486523775,ndvi_absolute
 Meru,2003-11,Kenya,none,0.64737986,ndvi_absolute
 Meru,2003-12,Kenya,none,0.7282170516666667,ndvi_absolute
@@ -20627,7 +20627,7 @@ Meru,2004-12,Kenya,none,0.7328831166666667,ndvi_absolute
 Meru,2005-01,Kenya,none,0.6404568216666667,ndvi_absolute
 Meru,2005-02,Kenya,none,0.54681229,ndvi_absolute
 Meru,2005-03,Kenya,none,0.5042790133333334,ndvi_absolute
-Meru,2005-04,Kenya,none,0.5546055316666666,ndvi_absolute
+Meru,2005-04,Kenya,none,0.5546055316666667,ndvi_absolute
 Meru,2005-05,Kenya,none,0.6462054683333333,ndvi_absolute
 Meru,2005-06,Kenya,none,0.6143505666666667,ndvi_absolute
 Meru,2005-07,Kenya,none,0.5161938533333333,ndvi_absolute
@@ -20666,9 +20666,9 @@ Meru,2008-03,Kenya,none,0.5090220266666666,ndvi_absolute
 Meru,2008-04,Kenya,none,0.5986979666666666,ndvi_absolute
 Meru,2008-05,Kenya,none,0.642783775,ndvi_absolute
 Meru,2008-06,Kenya,none,0.5495680666666667,ndvi_absolute
-Meru,2008-07,Kenya,none,0.4761110016666666,ndvi_absolute
+Meru,2008-07,Kenya,none,0.4761110016666667,ndvi_absolute
 Meru,2008-08,Kenya,none,0.43636878166666665,ndvi_absolute
-Meru,2008-09,Kenya,none,0.4224033233333333,ndvi_absolute
+Meru,2008-09,Kenya,none,0.42240332333333336,ndvi_absolute
 Meru,2008-10,Kenya,none,0.5177225883333333,ndvi_absolute
 Meru,2008-11,Kenya,none,0.6606410766666667,ndvi_absolute
 Meru,2008-12,Kenya,none,0.6302735216666667,ndvi_absolute
@@ -20681,7 +20681,7 @@ Meru,2009-06,Kenya,none,0.5019812933333333,ndvi_absolute
 Meru,2009-07,Kenya,none,0.44240754833333334,ndvi_absolute
 Meru,2009-08,Kenya,none,0.400614375,ndvi_absolute
 Meru,2009-09,Kenya,none,0.38028898833333336,ndvi_absolute
-Meru,2009-10,Kenya,none,0.44864957833333335,ndvi_absolute
+Meru,2009-10,Kenya,none,0.4486495783333333,ndvi_absolute
 Meru,2009-11,Kenya,none,0.607435795,ndvi_absolute
 Meru,2009-12,Kenya,none,0.67041008,ndvi_absolute
 Meru,2010-01,Kenya,none,0.6271712366666666,ndvi_absolute
@@ -20725,7 +20725,7 @@ Meru,2013-02,Kenya,none,0.5571306533333333,ndvi_absolute
 Meru,2013-03,Kenya,none,0.5386858449999999,ndvi_absolute
 Meru,2013-04,Kenya,none,0.67371727,ndvi_absolute
 Meru,2013-05,Kenya,none,0.6711844516666666,ndvi_absolute
-Meru,2013-06,Kenya,none,0.562820425,ndvi_absolute
+Meru,2013-06,Kenya,none,0.5628204250000001,ndvi_absolute
 Meru,2013-07,Kenya,none,0.5024616883333334,ndvi_absolute
 Meru,2013-08,Kenya,none,0.45842766166666665,ndvi_absolute
 Meru,2013-09,Kenya,none,0.42901138,ndvi_absolute
@@ -20733,7 +20733,7 @@ Meru,2013-10,Kenya,none,0.4470996683333333,ndvi_absolute
 Meru,2013-11,Kenya,none,0.5970672566666667,ndvi_absolute
 Meru,2013-12,Kenya,none,0.7014809233333333,ndvi_absolute
 Meru,2014-01,Kenya,none,0.6104913666666666,ndvi_absolute
-Meru,2014-02,Kenya,none,0.5154478583333334,ndvi_absolute
+Meru,2014-02,Kenya,none,0.5154478583333333,ndvi_absolute
 Meru,2014-03,Kenya,none,0.5231112433333334,ndvi_absolute
 Meru,2014-04,Kenya,none,0.6253649433333334,ndvi_absolute
 Meru,2014-05,Kenya,none,0.6017110216666667,ndvi_absolute
@@ -20751,7 +20751,7 @@ Meru,2015-04,Kenya,none,0.5820232566666667,ndvi_absolute
 Meru,2015-05,Kenya,none,0.6472506416666667,ndvi_absolute
 Meru,2015-06,Kenya,none,0.5525740683333333,ndvi_absolute
 Meru,2015-07,Kenya,none,0.4782934016666667,ndvi_absolute
-Meru,2015-08,Kenya,none,0.43428229166666665,ndvi_absolute
+Meru,2015-08,Kenya,none,0.4342822916666667,ndvi_absolute
 Meru,2015-09,Kenya,none,0.40761417166666664,ndvi_absolute
 Meru,2015-10,Kenya,none,0.4650564066666667,ndvi_absolute
 Meru,2015-11,Kenya,none,0.6316966833333334,ndvi_absolute
@@ -20777,7 +20777,7 @@ Meru,2017-06,Kenya,none,0.5484699666666667,ndvi_absolute
 Meru,2017-07,Kenya,none,0.4775738566666667,ndvi_absolute
 Meru,2017-08,Kenya,none,0.4428327733333333,ndvi_absolute
 Meru,2017-09,Kenya,none,0.4209269416666667,ndvi_absolute
-Meru,2017-10,Kenya,none,0.4740582516666667,ndvi_absolute
+Meru,2017-10,Kenya,none,0.47405825166666665,ndvi_absolute
 Meru,2017-11,Kenya,none,0.6489545716666667,ndvi_absolute
 Meru,2017-12,Kenya,none,0.6375807116666666,ndvi_absolute
 Meru,2018-01,Kenya,none,0.5097859783333334,ndvi_absolute
@@ -20788,7 +20788,7 @@ Meru,2018-05,Kenya,none,0.7243986483333332,ndvi_absolute
 Meru,2018-06,Kenya,none,0.6536452916666667,ndvi_absolute
 Meru,2018-07,Kenya,none,0.5699731899999999,ndvi_absolute
 Meru,2018-08,Kenya,none,0.5037165966666667,ndvi_absolute
-Meru,2018-09,Kenya,none,0.462373495,ndvi_absolute
+Meru,2018-09,Kenya,none,0.46237349499999997,ndvi_absolute
 Meru,2018-10,Kenya,none,0.46892326333333334,ndvi_absolute
 Meru,2018-11,Kenya,none,0.570113615,ndvi_absolute
 Meru,2018-12,Kenya,none,0.6824927399999999,ndvi_absolute
@@ -20818,13 +20818,13 @@ Meru,2020-11,Kenya,none,0.6516177766666666,ndvi_absolute
 Meru,2020-12,Kenya,none,0.6696204116666666,ndvi_absolute
 Meru,2021-01,Kenya,none,0.6009754616666666,ndvi_absolute
 Meru,2021-02,Kenya,none,0.5387416049999999,ndvi_absolute
-Meru,2021-03,Kenya,none,0.5113623633333334,ndvi_absolute
+Meru,2021-03,Kenya,none,0.5113623633333333,ndvi_absolute
 Meru,2021-04,Kenya,none,0.5718563516666667,ndvi_absolute
 Meru,2021-05,Kenya,none,0.6407121416666667,ndvi_absolute
 Meru,2021-06,Kenya,none,0.5778976233333334,ndvi_absolute
 Meru,2021-07,Kenya,none,0.49425146999999997,ndvi_absolute
 Meru,2021-08,Kenya,none,0.44804847000000003,ndvi_absolute
-Meru,2021-09,Kenya,none,0.4318173516666666,ndvi_absolute
+Meru,2021-09,Kenya,none,0.43181735166666674,ndvi_absolute
 Meru,2021-10,Kenya,none,0.44662,ndvi_absolute
 Meru,2021-11,Kenya,none,0.5260841266666666,ndvi_absolute
 Meru,2021-12,Kenya,none,0.672544165,ndvi_absolute
@@ -20837,7 +20837,7 @@ Meru,2022-06,Kenya,none,0.4983479716666667,ndvi_absolute
 Meru,2022-07,Kenya,none,0.4563223216666667,ndvi_absolute
 Meru,2022-08,Kenya,none,0.4359030716666667,ndvi_absolute
 Meru,2022-09,Kenya,none,0.4204685366666667,ndvi_absolute
-Meru,2022-10,Kenya,none,0.4264573683333333,ndvi_absolute
+Meru,2022-10,Kenya,none,0.4264573683333334,ndvi_absolute
 Meru,2022-11,Kenya,none,0.558531185,ndvi_absolute
 Meru,2022-12,Kenya,none,0.64863953,ndvi_absolute
 Meru,2023-01,Kenya,none,0.5795468716666666,ndvi_absolute
@@ -20859,7 +20859,7 @@ Meru,2024-04,Kenya,none,0.686671815,ndvi_absolute
 Meru,2024-05,Kenya,none,0.7550354966666667,ndvi_absolute
 Meru,2024-06,Kenya,none,0.6616998266666667,ndvi_absolute
 Meru,2024-07,Kenya,none,0.5789587266666667,ndvi_absolute
-Meru,2024-08,Kenya,none,0.5434447050000001,ndvi_absolute
+Meru,2024-08,Kenya,none,0.543444705,ndvi_absolute
 Meru,2024-09,Kenya,none,0.5163599866666667,ndvi_absolute
 Meru,2024-10,Kenya,none,0.50395345,ndvi_absolute
 Meru,2024-11,Kenya,none,0.6046540483333334,ndvi_absolute
@@ -20870,13 +20870,13 @@ Meru,2025-03,Kenya,none,0.5612814316666667,ndvi_absolute
 Meru,2025-04,Kenya,none,0.703225235,ndvi_absolute
 Meru,2025-05,Kenya,none,0.7278289416666667,ndvi_absolute
 Meru,2025-06,Kenya,none,0.6212976016666666,ndvi_absolute
-Meru,2025-07,Kenya,none,0.5333053583333334,ndvi_absolute
+Meru,2025-07,Kenya,none,0.5333053583333333,ndvi_absolute
 Meru,2025-08,Kenya,none,0.5020099333333333,ndvi_absolute
-Meru,2025-09,Kenya,none,0.48693598999999993,ndvi_absolute
+Meru,2025-09,Kenya,none,0.48693599000000004,ndvi_absolute
 Meru,2025-10,Kenya,none,0.50416564,ndvi_absolute
 Meru,2025-11,Kenya,none,0.6098131366666667,ndvi_absolute
 Meru,2025-12,Kenya,none,0.633622335,ndvi_absolute
-Meru,2026-01,Kenya,none,0.5629010799999999,ndvi_absolute
+Meru,2026-01,Kenya,none,0.56290108,ndvi_absolute
 Meru,2026-02,Kenya,none,0.52166613,ndvi_absolute
 Meru,2026-03,Kenya,none,0.5825360500000001,ndvi_absolute
 Narok,1990-01,,,,
@@ -21032,7 +21032,7 @@ Narok,2002-06,,,,
 Narok,2002-07,Kenya,none,0.594956615,ndvi_absolute
 Narok,2002-08,Kenya,none,0.5455300266666666,ndvi_absolute
 Narok,2002-09,Kenya,none,0.49227015333333335,ndvi_absolute
-Narok,2002-10,Kenya,none,0.49107773166666663,ndvi_absolute
+Narok,2002-10,Kenya,none,0.49107773166666674,ndvi_absolute
 Narok,2002-11,Kenya,none,0.5822984733333333,ndvi_absolute
 Narok,2002-12,Kenya,none,0.6722117133333333,ndvi_absolute
 Narok,2003-01,Kenya,none,0.697569515,ndvi_absolute
@@ -21080,7 +21080,7 @@ Narok,2006-06,Kenya,none,0.6585810883333333,ndvi_absolute
 Narok,2006-07,Kenya,none,0.5684947650000001,ndvi_absolute
 Narok,2006-08,Kenya,none,0.5150628066666667,ndvi_absolute
 Narok,2006-09,Kenya,none,0.4889356633333333,ndvi_absolute
-Narok,2006-10,Kenya,none,0.4848579116666667,ndvi_absolute
+Narok,2006-10,Kenya,none,0.48485791166666664,ndvi_absolute
 Narok,2006-11,Kenya,none,0.5617384233333333,ndvi_absolute
 Narok,2006-12,Kenya,none,0.6839378866666667,ndvi_absolute
 Narok,2007-01,Kenya,none,0.734229205,ndvi_absolute
@@ -21165,7 +21165,7 @@ Narok,2013-07,Kenya,none,0.5457344633333333,ndvi_absolute
 Narok,2013-08,Kenya,none,0.5071920983333333,ndvi_absolute
 Narok,2013-09,Kenya,none,0.5272712366666666,ndvi_absolute
 Narok,2013-10,Kenya,none,0.54762794,ndvi_absolute
-Narok,2013-11,Kenya,none,0.5638616533333334,ndvi_absolute
+Narok,2013-11,Kenya,none,0.5638616533333333,ndvi_absolute
 Narok,2013-12,Kenya,none,0.6182069433333334,ndvi_absolute
 Narok,2014-01,Kenya,none,0.637756695,ndvi_absolute
 Narok,2014-02,Kenya,none,0.6118403466666666,ndvi_absolute
@@ -21236,7 +21236,7 @@ Narok,2019-06,Kenya,none,0.6649835766666666,ndvi_absolute
 Narok,2019-07,Kenya,none,0.6408968866666667,ndvi_absolute
 Narok,2019-08,Kenya,none,0.5735405216666667,ndvi_absolute
 Narok,2019-09,Kenya,none,0.5422371283333333,ndvi_absolute
-Narok,2019-10,Kenya,none,0.5641532616666667,ndvi_absolute
+Narok,2019-10,Kenya,none,0.5641532616666666,ndvi_absolute
 Narok,2019-11,Kenya,none,0.6336506066666666,ndvi_absolute
 Narok,2019-12,Kenya,none,0.706729195,ndvi_absolute
 Narok,2020-01,Kenya,none,0.7294094866666666,ndvi_absolute
@@ -21260,7 +21260,7 @@ Narok,2021-06,Kenya,none,0.656271105,ndvi_absolute
 Narok,2021-07,Kenya,none,0.5991180583333333,ndvi_absolute
 Narok,2021-08,Kenya,none,0.5492583283333333,ndvi_absolute
 Narok,2021-09,Kenya,none,0.54765807,ndvi_absolute
-Narok,2021-10,Kenya,none,0.5700586666666667,ndvi_absolute
+Narok,2021-10,Kenya,none,0.5700586666666666,ndvi_absolute
 Narok,2021-11,Kenya,none,0.57186271,ndvi_absolute
 Narok,2021-12,Kenya,none,0.5590591083333333,ndvi_absolute
 Narok,2022-01,Kenya,none,0.5751826750000001,ndvi_absolute
@@ -22966,7 +22966,7 @@ Tana River,2018-08,Kenya,none,0.3432143566666667,ndvi_absolute
 Tana River,2018-09,Kenya,none,0.32137266833333333,ndvi_absolute
 Tana River,2018-10,Kenya,none,0.33712063333333336,ndvi_absolute
 Tana River,2018-11,Kenya,none,0.40917727,ndvi_absolute
-Tana River,2018-12,Kenya,none,0.4514938933333334,ndvi_absolute
+Tana River,2018-12,Kenya,none,0.4514938933333333,ndvi_absolute
 Tana River,2019-01,Kenya,none,0.38279453333333335,ndvi_absolute
 Tana River,2019-02,Kenya,none,0.31556861833333333,ndvi_absolute
 Tana River,2019-03,Kenya,none,0.2961848933333333,ndvi_absolute
@@ -22976,7 +22976,7 @@ Tana River,2019-06,Kenya,none,0.37250624000000004,ndvi_absolute
 Tana River,2019-07,Kenya,none,0.330245275,ndvi_absolute
 Tana River,2019-08,Kenya,none,0.30485852666666663,ndvi_absolute
 Tana River,2019-09,Kenya,none,0.316849785,ndvi_absolute
-Tana River,2019-10,Kenya,none,0.4301048283333333,ndvi_absolute
+Tana River,2019-10,Kenya,none,0.43010482833333336,ndvi_absolute
 Tana River,2019-11,Kenya,none,0.5682725750000001,ndvi_absolute
 Tana River,2019-12,Kenya,none,0.6335063366666667,ndvi_absolute
 Tana River,2020-01,Kenya,none,0.594920225,ndvi_absolute
@@ -22999,7 +22999,7 @@ Tana River,2021-05,Kenya,none,0.38173561833333336,ndvi_absolute
 Tana River,2021-06,Kenya,none,0.3405799483333333,ndvi_absolute
 Tana River,2021-07,Kenya,none,0.3162813933333333,ndvi_absolute
 Tana River,2021-08,Kenya,none,0.29527976666666667,ndvi_absolute
-Tana River,2021-09,Kenya,none,0.2782531033333333,ndvi_absolute
+Tana River,2021-09,Kenya,none,0.27825310333333336,ndvi_absolute
 Tana River,2021-10,Kenya,none,0.26645836,ndvi_absolute
 Tana River,2021-11,Kenya,none,0.31392062,ndvi_absolute
 Tana River,2021-12,Kenya,none,0.5033464950000001,ndvi_absolute
@@ -23205,7 +23205,7 @@ Tharaka Nithi,2002-04,,,,
 Tharaka Nithi,2002-05,,,,
 Tharaka Nithi,2002-06,,,,
 Tharaka Nithi,2002-07,Kenya,none,0.5668272933333334,ndvi_absolute
-Tharaka Nithi,2002-08,Kenya,none,0.5117438550000001,ndvi_absolute
+Tharaka Nithi,2002-08,Kenya,none,0.511743855,ndvi_absolute
 Tharaka Nithi,2002-09,Kenya,none,0.4733773966666666,ndvi_absolute
 Tharaka Nithi,2002-10,Kenya,none,0.5066384316666667,ndvi_absolute
 Tharaka Nithi,2002-11,Kenya,none,0.6738695616666667,ndvi_absolute
@@ -23243,7 +23243,7 @@ Tharaka Nithi,2005-06,Kenya,none,0.697714895,ndvi_absolute
 Tharaka Nithi,2005-07,Kenya,none,0.5751977583333333,ndvi_absolute
 Tharaka Nithi,2005-08,Kenya,none,0.49288624166666667,ndvi_absolute
 Tharaka Nithi,2005-09,Kenya,none,0.45518452,ndvi_absolute
-Tharaka Nithi,2005-10,Kenya,none,0.4668019366666667,ndvi_absolute
+Tharaka Nithi,2005-10,Kenya,none,0.46680193666666664,ndvi_absolute
 Tharaka Nithi,2005-11,Kenya,none,0.6208850166666666,ndvi_absolute
 Tharaka Nithi,2005-12,Kenya,none,0.696110785,ndvi_absolute
 Tharaka Nithi,2006-01,Kenya,none,0.6086023066666667,ndvi_absolute
@@ -23301,13 +23301,13 @@ Tharaka Nithi,2010-04,Kenya,none,0.7215750333333334,ndvi_absolute
 Tharaka Nithi,2010-05,Kenya,none,0.7067318666666665,ndvi_absolute
 Tharaka Nithi,2010-06,Kenya,none,0.5973582566666666,ndvi_absolute
 Tharaka Nithi,2010-07,Kenya,none,0.5165622833333333,ndvi_absolute
-Tharaka Nithi,2010-08,Kenya,none,0.4682978733333334,ndvi_absolute
+Tharaka Nithi,2010-08,Kenya,none,0.46829787333333334,ndvi_absolute
 Tharaka Nithi,2010-09,Kenya,none,0.439413165,ndvi_absolute
 Tharaka Nithi,2010-10,Kenya,none,0.46839543499999997,ndvi_absolute
 Tharaka Nithi,2010-11,Kenya,none,0.6368428,ndvi_absolute
 Tharaka Nithi,2010-12,Kenya,none,0.643263525,ndvi_absolute
 Tharaka Nithi,2011-01,Kenya,none,0.5435749983333333,ndvi_absolute
-Tharaka Nithi,2011-02,Kenya,none,0.49328785333333336,ndvi_absolute
+Tharaka Nithi,2011-02,Kenya,none,0.4932878533333333,ndvi_absolute
 Tharaka Nithi,2011-03,Kenya,none,0.477135685,ndvi_absolute
 Tharaka Nithi,2011-04,Kenya,none,0.53529229,ndvi_absolute
 Tharaka Nithi,2011-05,Kenya,none,0.6124571183333334,ndvi_absolute
@@ -23351,7 +23351,7 @@ Tharaka Nithi,2014-06,Kenya,none,0.5211436533333333,ndvi_absolute
 Tharaka Nithi,2014-07,Kenya,none,0.4652924033333334,ndvi_absolute
 Tharaka Nithi,2014-08,Kenya,none,0.4376567983333333,ndvi_absolute
 Tharaka Nithi,2014-09,Kenya,none,0.4336893,ndvi_absolute
-Tharaka Nithi,2014-10,Kenya,none,0.458909885,ndvi_absolute
+Tharaka Nithi,2014-10,Kenya,none,0.45890988499999996,ndvi_absolute
 Tharaka Nithi,2014-11,Kenya,none,0.6211112550000001,ndvi_absolute
 Tharaka Nithi,2014-12,Kenya,none,0.6775391333333333,ndvi_absolute
 Tharaka Nithi,2015-01,Kenya,none,0.5553231983333333,ndvi_absolute
@@ -23361,9 +23361,9 @@ Tharaka Nithi,2015-04,Kenya,none,0.64207766,ndvi_absolute
 Tharaka Nithi,2015-05,Kenya,none,0.7026499199999999,ndvi_absolute
 Tharaka Nithi,2015-06,Kenya,none,0.59373925,ndvi_absolute
 Tharaka Nithi,2015-07,Kenya,none,0.5030303150000001,ndvi_absolute
-Tharaka Nithi,2015-08,Kenya,none,0.45730051000000005,ndvi_absolute
+Tharaka Nithi,2015-08,Kenya,none,0.45730051,ndvi_absolute
 Tharaka Nithi,2015-09,Kenya,none,0.42515717666666664,ndvi_absolute
-Tharaka Nithi,2015-10,Kenya,none,0.4784353733333333,ndvi_absolute
+Tharaka Nithi,2015-10,Kenya,none,0.47843537333333336,ndvi_absolute
 Tharaka Nithi,2015-11,Kenya,none,0.6464903266666667,ndvi_absolute
 Tharaka Nithi,2015-12,Kenya,none,0.7326204266666667,ndvi_absolute
 Tharaka Nithi,2016-01,Kenya,none,0.69233241,ndvi_absolute
@@ -23372,18 +23372,18 @@ Tharaka Nithi,2016-03,Kenya,none,0.5486282883333333,ndvi_absolute
 Tharaka Nithi,2016-04,Kenya,none,0.5984233616666667,ndvi_absolute
 Tharaka Nithi,2016-05,Kenya,none,0.6791913150000001,ndvi_absolute
 Tharaka Nithi,2016-06,Kenya,none,0.6409739783333334,ndvi_absolute
-Tharaka Nithi,2016-07,Kenya,none,0.5486686416666666,ndvi_absolute
+Tharaka Nithi,2016-07,Kenya,none,0.5486686416666667,ndvi_absolute
 Tharaka Nithi,2016-08,Kenya,none,0.49326165499999997,ndvi_absolute
 Tharaka Nithi,2016-09,Kenya,none,0.45915195166666667,ndvi_absolute
 Tharaka Nithi,2016-10,Kenya,none,0.45590196,ndvi_absolute
 Tharaka Nithi,2016-11,Kenya,none,0.5946994666666666,ndvi_absolute
 Tharaka Nithi,2016-12,Kenya,none,0.699947075,ndvi_absolute
 Tharaka Nithi,2017-01,Kenya,none,0.6056459216666666,ndvi_absolute
-Tharaka Nithi,2017-02,Kenya,none,0.4999555683333334,ndvi_absolute
+Tharaka Nithi,2017-02,Kenya,none,0.49995556833333327,ndvi_absolute
 Tharaka Nithi,2017-03,Kenya,none,0.47649504500000006,ndvi_absolute
 Tharaka Nithi,2017-04,Kenya,none,0.5699220216666666,ndvi_absolute
 Tharaka Nithi,2017-05,Kenya,none,0.6722180566666666,ndvi_absolute
-Tharaka Nithi,2017-06,Kenya,none,0.5928876283333334,ndvi_absolute
+Tharaka Nithi,2017-06,Kenya,none,0.5928876283333333,ndvi_absolute
 Tharaka Nithi,2017-07,Kenya,none,0.49304902,ndvi_absolute
 Tharaka Nithi,2017-08,Kenya,none,0.4530593216666667,ndvi_absolute
 Tharaka Nithi,2017-09,Kenya,none,0.42459772333333334,ndvi_absolute
@@ -23408,9 +23408,9 @@ Tharaka Nithi,2019-03,Kenya,none,0.4654338,ndvi_absolute
 Tharaka Nithi,2019-04,Kenya,none,0.5145786683333333,ndvi_absolute
 Tharaka Nithi,2019-05,Kenya,none,0.6072067900000001,ndvi_absolute
 Tharaka Nithi,2019-06,Kenya,none,0.571437575,ndvi_absolute
-Tharaka Nithi,2019-07,Kenya,none,0.4950399233333333,ndvi_absolute
+Tharaka Nithi,2019-07,Kenya,none,0.49503992333333335,ndvi_absolute
 Tharaka Nithi,2019-08,Kenya,none,0.45223706833333327,ndvi_absolute
-Tharaka Nithi,2019-09,Kenya,none,0.42933718666666665,ndvi_absolute
+Tharaka Nithi,2019-09,Kenya,none,0.4293371866666667,ndvi_absolute
 Tharaka Nithi,2019-10,Kenya,none,0.5170847616666666,ndvi_absolute
 Tharaka Nithi,2019-11,Kenya,none,0.688173155,ndvi_absolute
 Tharaka Nithi,2019-12,Kenya,none,0.7519954383333333,ndvi_absolute
@@ -23439,7 +23439,7 @@ Tharaka Nithi,2021-10,Kenya,none,0.4595124016666667,ndvi_absolute
 Tharaka Nithi,2021-11,Kenya,none,0.54612421,ndvi_absolute
 Tharaka Nithi,2021-12,Kenya,none,0.691886965,ndvi_absolute
 Tharaka Nithi,2022-01,Kenya,none,0.709865445,ndvi_absolute
-Tharaka Nithi,2022-02,Kenya,none,0.5824605366666668,ndvi_absolute
+Tharaka Nithi,2022-02,Kenya,none,0.5824605366666666,ndvi_absolute
 Tharaka Nithi,2022-03,Kenya,none,0.5139264883333333,ndvi_absolute
 Tharaka Nithi,2022-04,Kenya,none,0.5989415033333333,ndvi_absolute
 Tharaka Nithi,2022-05,Kenya,none,0.6610350783333333,ndvi_absolute
@@ -23451,7 +23451,7 @@ Tharaka Nithi,2022-10,Kenya,none,0.4396981933333333,ndvi_absolute
 Tharaka Nithi,2022-11,Kenya,none,0.5910949466666667,ndvi_absolute
 Tharaka Nithi,2022-12,Kenya,none,0.7004773283333333,ndvi_absolute
 Tharaka Nithi,2023-01,Kenya,none,0.62708398,ndvi_absolute
-Tharaka Nithi,2023-02,Kenya,none,0.5085770633333334,ndvi_absolute
+Tharaka Nithi,2023-02,Kenya,none,0.5085770633333333,ndvi_absolute
 Tharaka Nithi,2023-03,Kenya,none,0.513433575,ndvi_absolute
 Tharaka Nithi,2023-04,Kenya,none,0.662936765,ndvi_absolute
 Tharaka Nithi,2023-05,Kenya,none,0.73054766,ndvi_absolute
@@ -23647,20 +23647,20 @@ Turkana,2002-11,Kenya,none,0.29307344166666666,ndvi_absolute
 Turkana,2002-12,Kenya,none,0.33871983166666664,ndvi_absolute
 Turkana,2003-01,Kenya,none,0.35262323,ndvi_absolute
 Turkana,2003-02,Kenya,none,0.2821901083333333,ndvi_absolute
-Turkana,2003-03,Kenya,none,0.250596925,ndvi_absolute
+Turkana,2003-03,Kenya,none,0.25059692499999997,ndvi_absolute
 Turkana,2003-04,Kenya,none,0.30625956833333334,ndvi_absolute
 Turkana,2003-05,Kenya,none,0.3999837216666667,ndvi_absolute
 Turkana,2003-06,Kenya,none,0.38965213499999996,ndvi_absolute
 Turkana,2003-07,Kenya,none,0.33239033833333337,ndvi_absolute
 Turkana,2003-08,Kenya,none,0.32304600666666666,ndvi_absolute
-Turkana,2003-09,Kenya,none,0.32412896666666663,ndvi_absolute
+Turkana,2003-09,Kenya,none,0.3241289666666667,ndvi_absolute
 Turkana,2003-10,Kenya,none,0.28162965333333334,ndvi_absolute
 Turkana,2003-11,Kenya,none,0.27304996666666664,ndvi_absolute
-Turkana,2003-12,Kenya,none,0.2855413266666667,ndvi_absolute
+Turkana,2003-12,Kenya,none,0.28554132666666665,ndvi_absolute
 Turkana,2004-01,Kenya,none,0.2774661116666666,ndvi_absolute
 Turkana,2004-02,Kenya,none,0.26576942666666664,ndvi_absolute
 Turkana,2004-03,Kenya,none,0.2634805966666667,ndvi_absolute
-Turkana,2004-04,Kenya,none,0.33045208333333337,ndvi_absolute
+Turkana,2004-04,Kenya,none,0.3304520833333333,ndvi_absolute
 Turkana,2004-05,Kenya,none,0.36668538833333336,ndvi_absolute
 Turkana,2004-06,Kenya,none,0.31681782833333333,ndvi_absolute
 Turkana,2004-07,Kenya,none,0.279099595,ndvi_absolute
@@ -23682,7 +23682,7 @@ Turkana,2005-10,Kenya,none,0.28743079833333335,ndvi_absolute
 Turkana,2005-11,Kenya,none,0.2690990233333333,ndvi_absolute
 Turkana,2005-12,Kenya,none,0.24270860833333333,ndvi_absolute
 Turkana,2006-01,Kenya,none,0.22141510333333336,ndvi_absolute
-Turkana,2006-02,Kenya,none,0.2215377966666667,ndvi_absolute
+Turkana,2006-02,Kenya,none,0.22153779666666665,ndvi_absolute
 Turkana,2006-03,Kenya,none,0.25677839,ndvi_absolute
 Turkana,2006-04,Kenya,none,0.329259545,ndvi_absolute
 Turkana,2006-05,Kenya,none,0.34634144166666664,ndvi_absolute
@@ -23725,7 +23725,7 @@ Turkana,2009-05,Kenya,none,0.31114413333333335,ndvi_absolute
 Turkana,2009-06,Kenya,none,0.30351906666666667,ndvi_absolute
 Turkana,2009-07,Kenya,none,0.26729954,ndvi_absolute
 Turkana,2009-08,Kenya,none,0.24107718,ndvi_absolute
-Turkana,2009-09,Kenya,none,0.23134361333333334,ndvi_absolute
+Turkana,2009-09,Kenya,none,0.2313436133333333,ndvi_absolute
 Turkana,2009-10,Kenya,none,0.2528948483333333,ndvi_absolute
 Turkana,2009-11,Kenya,none,0.27943633166666665,ndvi_absolute
 Turkana,2009-12,Kenya,none,0.30360672,ndvi_absolute
@@ -23753,8 +23753,8 @@ Turkana,2011-09,Kenya,none,0.3519597216666666,ndvi_absolute
 Turkana,2011-10,Kenya,none,0.34584718333333336,ndvi_absolute
 Turkana,2011-11,Kenya,none,0.4158513033333333,ndvi_absolute
 Turkana,2011-12,Kenya,none,0.43861372166666673,ndvi_absolute
-Turkana,2012-01,Kenya,none,0.33945515,ndvi_absolute
-Turkana,2012-02,Kenya,none,0.26573881166666663,ndvi_absolute
+Turkana,2012-01,Kenya,none,0.33945515000000004,ndvi_absolute
+Turkana,2012-02,Kenya,none,0.2657388116666667,ndvi_absolute
 Turkana,2012-03,Kenya,none,0.2498022483333333,ndvi_absolute
 Turkana,2012-04,Kenya,none,0.31900804833333335,ndvi_absolute
 Turkana,2012-05,Kenya,none,0.4399636416666666,ndvi_absolute
@@ -23781,7 +23781,7 @@ Turkana,2014-01,Kenya,none,0.30783099333333336,ndvi_absolute
 Turkana,2014-02,Kenya,none,0.2779437166666667,ndvi_absolute
 Turkana,2014-03,Kenya,none,0.29430885333333334,ndvi_absolute
 Turkana,2014-04,Kenya,none,0.3332898,ndvi_absolute
-Turkana,2014-05,Kenya,none,0.3213882,ndvi_absolute
+Turkana,2014-05,Kenya,none,0.32138819999999996,ndvi_absolute
 Turkana,2014-06,Kenya,none,0.2992431383333333,ndvi_absolute
 Turkana,2014-07,Kenya,none,0.29367574,ndvi_absolute
 Turkana,2014-08,Kenya,none,0.30892364,ndvi_absolute
@@ -23804,7 +23804,7 @@ Turkana,2015-12,Kenya,none,0.41099154,ndvi_absolute
 Turkana,2016-01,Kenya,none,0.35823161,ndvi_absolute
 Turkana,2016-02,Kenya,none,0.29910963333333335,ndvi_absolute
 Turkana,2016-03,Kenya,none,0.284587785,ndvi_absolute
-Turkana,2016-04,Kenya,none,0.33423309333333334,ndvi_absolute
+Turkana,2016-04,Kenya,none,0.3342330933333333,ndvi_absolute
 Turkana,2016-05,Kenya,none,0.40480346666666667,ndvi_absolute
 Turkana,2016-06,Kenya,none,0.3839343116666667,ndvi_absolute
 Turkana,2016-07,Kenya,none,0.35502827,ndvi_absolute
@@ -23871,7 +23871,7 @@ Turkana,2021-07,Kenya,none,0.34603231333333334,ndvi_absolute
 Turkana,2021-08,Kenya,none,0.32970611666666666,ndvi_absolute
 Turkana,2021-09,Kenya,none,0.33025795666666663,ndvi_absolute
 Turkana,2021-10,Kenya,none,0.34387176166666666,ndvi_absolute
-Turkana,2021-11,Kenya,none,0.31275016833333336,ndvi_absolute
+Turkana,2021-11,Kenya,none,0.3127501683333333,ndvi_absolute
 Turkana,2021-12,Kenya,none,0.2921283783333333,ndvi_absolute
 Turkana,2022-01,Kenya,none,0.2836794716666667,ndvi_absolute
 Turkana,2022-02,Kenya,none,0.275890025,ndvi_absolute
@@ -23886,7 +23886,7 @@ Turkana,2022-10,Kenya,none,0.29499788833333335,ndvi_absolute
 Turkana,2022-11,Kenya,none,0.27943570166666665,ndvi_absolute
 Turkana,2022-12,Kenya,none,0.282203245,ndvi_absolute
 Turkana,2023-01,Kenya,none,0.26629811166666667,ndvi_absolute
-Turkana,2023-02,Kenya,none,0.240268625,ndvi_absolute
+Turkana,2023-02,Kenya,none,0.24026862499999999,ndvi_absolute
 Turkana,2023-03,Kenya,none,0.2765546783333333,ndvi_absolute
 Turkana,2023-04,Kenya,none,0.3735810883333333,ndvi_absolute
 Turkana,2023-05,Kenya,none,0.4181155816666666,ndvi_absolute
@@ -23908,7 +23908,7 @@ Turkana,2024-08,Kenya,none,0.431496615,ndvi_absolute
 Turkana,2024-09,Kenya,none,0.39949925999999997,ndvi_absolute
 Turkana,2024-10,Kenya,none,0.3653149116666667,ndvi_absolute
 Turkana,2024-11,Kenya,none,0.39665759,ndvi_absolute
-Turkana,2024-12,Kenya,none,0.41572753500000004,ndvi_absolute
+Turkana,2024-12,Kenya,none,0.415727535,ndvi_absolute
 Turkana,2025-01,Kenya,none,0.34737193499999997,ndvi_absolute
 Turkana,2025-02,Kenya,none,0.30223836,ndvi_absolute
 Turkana,2025-03,Kenya,none,0.33400314166666667,ndvi_absolute
@@ -24116,7 +24116,7 @@ Wajir,2005-09,Kenya,none,0.23050483166666666,ndvi_absolute
 Wajir,2005-10,Kenya,none,0.239260165,ndvi_absolute
 Wajir,2005-11,Kenya,none,0.2772040783333333,ndvi_absolute
 Wajir,2005-12,Kenya,none,0.27418397499999997,ndvi_absolute
-Wajir,2006-01,Kenya,none,0.23789133166666668,ndvi_absolute
+Wajir,2006-01,Kenya,none,0.23789133166666665,ndvi_absolute
 Wajir,2006-02,Kenya,none,0.22615258666666668,ndvi_absolute
 Wajir,2006-03,Kenya,none,0.24147577499999998,ndvi_absolute
 Wajir,2006-04,Kenya,none,0.3310091333333333,ndvi_absolute
@@ -24171,7 +24171,7 @@ Wajir,2010-04,Kenya,none,0.42157057666666664,ndvi_absolute
 Wajir,2010-05,Kenya,none,0.3789982566666667,ndvi_absolute
 Wajir,2010-06,Kenya,none,0.29448487166666665,ndvi_absolute
 Wajir,2010-07,Kenya,none,0.2575955833333333,ndvi_absolute
-Wajir,2010-08,Kenya,none,0.24560006333333337,ndvi_absolute
+Wajir,2010-08,Kenya,none,0.2456000633333333,ndvi_absolute
 Wajir,2010-09,Kenya,none,0.24002942333333332,ndvi_absolute
 Wajir,2010-10,Kenya,none,0.24980930166666668,ndvi_absolute
 Wajir,2010-11,Kenya,none,0.28222073166666667,ndvi_absolute
@@ -24182,7 +24182,7 @@ Wajir,2011-03,Kenya,none,0.22026837666666665,ndvi_absolute
 Wajir,2011-04,Kenya,none,0.25203660833333336,ndvi_absolute
 Wajir,2011-05,Kenya,none,0.2799658,ndvi_absolute
 Wajir,2011-06,Kenya,none,0.2505984316666667,ndvi_absolute
-Wajir,2011-07,Kenya,none,0.23230587000000003,ndvi_absolute
+Wajir,2011-07,Kenya,none,0.23230587,ndvi_absolute
 Wajir,2011-08,Kenya,none,0.224633745,ndvi_absolute
 Wajir,2011-09,Kenya,none,0.23070516166666666,ndvi_absolute
 Wajir,2011-10,Kenya,none,0.35306608,ndvi_absolute
@@ -24195,7 +24195,7 @@ Wajir,2012-04,Kenya,none,0.3169467283333333,ndvi_absolute
 Wajir,2012-05,Kenya,none,0.34328927000000004,ndvi_absolute
 Wajir,2012-06,Kenya,none,0.29820198833333333,ndvi_absolute
 Wajir,2012-07,Kenya,none,0.26547482166666664,ndvi_absolute
-Wajir,2012-08,Kenya,none,0.2494839166666667,ndvi_absolute
+Wajir,2012-08,Kenya,none,0.24948391666666667,ndvi_absolute
 Wajir,2012-09,Kenya,none,0.24739499833333334,ndvi_absolute
 Wajir,2012-10,Kenya,none,0.3068858483333333,ndvi_absolute
 Wajir,2012-11,Kenya,none,0.375668125,ndvi_absolute
@@ -24237,7 +24237,7 @@ Wajir,2015-10,Kenya,none,0.28907735166666665,ndvi_absolute
 Wajir,2015-11,Kenya,none,0.37519745833333334,ndvi_absolute
 Wajir,2015-12,Kenya,none,0.3991371516666667,ndvi_absolute
 Wajir,2016-01,Kenya,none,0.30964817,ndvi_absolute
-Wajir,2016-02,Kenya,none,0.246052725,ndvi_absolute
+Wajir,2016-02,Kenya,none,0.24605272499999997,ndvi_absolute
 Wajir,2016-03,Kenya,none,0.24643838166666665,ndvi_absolute
 Wajir,2016-04,Kenya,none,0.3239989366666667,ndvi_absolute
 Wajir,2016-05,Kenya,none,0.4051653366666667,ndvi_absolute
@@ -45613,7 +45613,7 @@ Nagero,2020-11,South Sudan,none,0.6559140583333333,ndvi_absolute
 Nagero,2020-12,South Sudan,none,0.5275007349999999,ndvi_absolute
 Nagero,2021-01,South Sudan,none,0.42767142666666663,ndvi_absolute
 Nagero,2021-02,South Sudan,none,0.4262994766666666,ndvi_absolute
-Nagero,2021-03,South Sudan,none,0.4887636983333334,ndvi_absolute
+Nagero,2021-03,South Sudan,none,0.4887636983333333,ndvi_absolute
 Nagero,2021-04,South Sudan,none,0.5989406566666667,ndvi_absolute
 Nagero,2021-05,South Sudan,none,0.7249919283333334,ndvi_absolute
 Nagero,2021-06,South Sudan,none,0.8068149383333334,ndvi_absolute

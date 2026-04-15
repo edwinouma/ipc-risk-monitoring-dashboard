@@ -234,7 +234,7 @@ INDICATOR_METHOD = {
     "10 day NDVI anomaly": "tukey",
     # 🔥 ADD THESE
     "rainfall-mm": "spi_true",
-    "ndvi_absolute": "spi_true",
+    "ndvi_absolute": "zscore_true",
 
     # Afghanistan price indicators
     "Bread": "percentile",
@@ -636,11 +636,11 @@ INDICATOR_ALLOWED_METHODS = {}
 
 # Climate → full methods
 for ind in CLIMATE_INDICATORS:
-    INDICATOR_ALLOWED_METHODS[ind] = ["tukey", "percentile", "zscore"]
+    INDICATOR_ALLOWED_METHODS[ind] = ["tukey", "percentile"]
 
 # Prices → percentile + tukey
 for ind in PRICE_INDICATORS:
-    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore"]
+    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey"]
 
 # Shock indicators → special handling
 INDICATOR_ALLOWED_METHODS["conflict_events"] = ["percentile", "categorical"]
@@ -648,6 +648,17 @@ INDICATOR_ALLOWED_METHODS["conflict_fatalities"] = ["percentile", "categorical"]
 
 
 INDICATOR_ALLOWED_METHODS["percent_area_flooded"] = ["percentile"]
+
+
+# -----------------------------------------
+# 🔥 OVERRIDES (CRITICAL)
+# -----------------------------------------
+
+# NDVI raw → Z-score only
+INDICATOR_ALLOWED_METHODS["ndvi_absolute"] = ["zscore_true"]
+
+# Rainfall raw → SPI only
+INDICATOR_ALLOWED_METHODS["rainfall-mm"] = ["spi_true"]
 
 # ---------------------------------------------------
 # Z-score Aggregation Method (Monthly Level)
@@ -855,18 +866,31 @@ SPI_TRUE_FLOOD_THRESHOLDS = {
     "ndvi_absolute": {"alert": 1.0, "alarm": 2.0}
 }
 
+ZSCORE_TRUE_THRESHOLDS = {
+    "default": {"alert": -1.0, "alarm": -2.0},
+    "ndvi_absolute": {"alert": -1.0, "alarm": -2.0}
+}
+
 # ---------------------------------------------------
 # METHODS THAT REQUIRE SEASONAL STANDARDIZATION
 # ---------------------------------------------------
 
-SEASONAL_STANDARDIZATION_METHODS = ["spi_true"]
+SEASONAL_STANDARDIZATION_METHODS = ["spi_true","zscore_true"]
+
+# ---------------------------------------------------
+# NEW METHOD: TRUE Z-SCORE (SPI-STYLE)
+# ---------------------------------------------------
+Z_SCORE_TRUE_METHOD = "zscore_true"
 
 # ---------------------------------------------------
 # SPI REQUIRES RAW CLIMATE DATA (CRITICAL CONTROL)
 # ---------------------------------------------------
 
 SPI_TRUE_INDICATORS = [
-    "rainfall-mm",
+    "rainfall-mm"
+]
+
+ZSCORE_TRUE_INDICATORS = [
     "ndvi_absolute"
 ]
 
