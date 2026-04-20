@@ -3,6 +3,8 @@ import os
 
 from src.config import DATE_COL, STANDARD_ADM1, ADMIN_REPLACEMENTS
 from difflib import get_close_matches
+from src.config import ADM1_GROUP_MAPPING
+
 
 # ---------------------------------------------------
 # 🔥 ADD THIS FUNCTION HERE (⬇️ RIGHT HERE)
@@ -94,6 +96,14 @@ def preprocess_data(df, date_col):
     # Drop invalid
     df = df.dropna(subset=["adm1_name"])
 
+    # -----------------------------------------
+    # 🔥 ADD GROUP MAPPING HERE
+    # -----------------------------------------
+    df["group"] = df["adm1_name"].map(ADM1_GROUP_MAPPING)
+
+    # Safety (recommended)
+    df["group"] = df["group"].fillna("Unknown")
+
     # Time features
     df["year"] = df[DATE_COL].dt.year
     df["month"] = df[DATE_COL].dt.month
@@ -104,6 +114,11 @@ def preprocess_data(df, date_col):
 
     # Sort
     df = df.sort_values(DATE_COL)
+
+    missing = df[df["group"] == "Unknown"]["adm1_name"].unique()
+
+    if len(missing) > 0:
+        print("⚠️ Missing group mapping:", missing)
 
     return df
 
@@ -157,6 +172,11 @@ def process_conflict_data(df, country=None):
     # Drop invalid
     df_final = df_final.dropna(subset=["adm1_name"])
 
+    from src.config import ADM1_GROUP_MAPPING
+
+    df_final["group"] = df_final["adm1_name"].map(ADM1_GROUP_MAPPING)
+    df_final["group"] = df_final["group"].fillna("Unknown")
+
     return df_final
 
 # ---------------------------------------------------
@@ -205,6 +225,9 @@ def process_flood_data(df, country=None):
     export_invalid_names(invalid_tracker, "outputs/invalid_admin_names_flood.xlsx")
 
     df = df.dropna(subset=["adm1_name"])
+
+    df["group"] = df["adm1_name"].map(ADM1_GROUP_MAPPING)
+    df["group"] = df["group"].fillna("Unknown")
 
     # -------------------------
     # Time features

@@ -1,3 +1,4 @@
+from src.config import ADM1_GROUP_MAPPING
 from src.zscore_true import compute_true_zscore
 from src.data_loader import load_rainfall_data, load_price_data, load_conflict_data, load_flood_data
 from src.preprocessing import preprocess_data, process_flood_data
@@ -199,6 +200,8 @@ def main():
         ["country", UNIT_COL, "year_month", INDICATOR_COL, VALUE_COL, "baseline_method"]
     ].copy()
 
+    df_price_standard["group"] = df_price_standard["adm1_name"].map(ADM1_GROUP_MAPPING)
+
     df_price_standard = df_price_standard.rename(columns={
         UNIT_COL: "adm1_name",
         INDICATOR_COL: "indicator",
@@ -223,6 +226,8 @@ def main():
         ["country", UNIT_COL, "year_month", INDICATOR_COL, VALUE_COL]
     ].copy()
 
+    df_rainfall_standard["group"] = df_rainfall_standard["adm1_name"].map(ADM1_GROUP_MAPPING)
+
     df_rainfall_standard = df_rainfall_standard.rename(columns={
         UNIT_COL: "adm1_name",
         INDICATOR_COL: "indicator",
@@ -239,6 +244,8 @@ def main():
         df_flood_standard = df_flood[
             ["country", UNIT_COL, "year_month", INDICATOR_COL, VALUE_COL]
         ].copy()
+
+        df_flood_standard["group"] = df_flood_standard["adm1_name"].map(ADM1_GROUP_MAPPING)
 
         df_flood_standard = df_flood_standard.rename(columns={
             UNIT_COL: "adm1_name",
@@ -296,6 +303,8 @@ def main():
     df_conflict_standard = df_conflict_anom[
         ["country", UNIT_COL, "year_month", INDICATOR_COL, VALUE_COL, "baseline_method"]
     ].copy()
+
+    df_conflict_standard["group"] = df_conflict_standard["adm1_name"].map(ADM1_GROUP_MAPPING)
 
     df_conflict_standard = df_conflict_standard.rename(columns={
         UNIT_COL: "adm1_name",
@@ -477,6 +486,10 @@ def main():
 
                     unit_month["indicator"] = ind
                     unit_month["baseline_method"] = baseline_method
+
+                    # 🔥 ADD GROUP TO UNIT-MONTH (CRITICAL FIX)
+                    unit_month["group"] = unit_month["adm1_name"].map(ADM1_GROUP_MAPPING)
+                    unit_month["group"] = unit_month["group"].fillna("Unknown")
 
                 else:
                     # -----------------------------------------
@@ -827,6 +840,9 @@ def main():
         [df for df in all_unit_month_values if not df.empty],
         ignore_index=True
     ) if any(not df.empty for df in all_unit_month_values) else pd.DataFrame()
+
+    final_unit_month["group"] = final_unit_month["adm1_name"].map(ADM1_GROUP_MAPPING)
+    final_unit_month["group"] = final_unit_month["group"].fillna("Unknown")
 
     valid_spatial = [df for df in all_spatial_percentiles if not df.empty]
 

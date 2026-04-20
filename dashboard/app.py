@@ -162,7 +162,40 @@ country_df = df_unit_month[
     df_unit_month["country"] == selected_country
 ]
 
-all_units = sorted(country_df[unit_col].unique())
+# -----------------------------------------
+# 🔥 NEW: GROUP FILTER (ADD HERE)
+# -----------------------------------------
+# -----------------------------------------
+# 🔥 GROUP FILTER (SAFE VERSION)
+# -----------------------------------------
+if "group" in country_df.columns:
+
+    country_groups = sorted(
+        country_df["group"].dropna().unique()
+    )
+
+    selected_region = st.sidebar.selectbox(
+        "Select Region (Group)",
+        ["All"] + country_groups
+    )
+
+    if selected_region == "All":
+        filtered_units = sorted(country_df["adm1_name"].unique())
+    else:
+        filtered_units = sorted(
+            country_df[
+                country_df["group"] == selected_region
+            ]["adm1_name"].unique()
+        )
+
+else:
+    # 🔥 fallback (no grouping available)
+    selected_region = "All"
+    filtered_units = sorted(country_df["adm1_name"].unique())
+
+
+# 🔥 USE THIS INSTEAD OF all_units
+all_units = filtered_units
 
 default_thresholds_df = load_default_thresholds()
 
@@ -391,6 +424,37 @@ if baseline_method is not None and "baseline_method" in df_filtered.columns:
         df_filtered["baseline_method"] == baseline_method
     ]
 
+# 🔥 USER OVERRIDE CONTROL
+user_override_active = False
+
+# ---------------------------------------------------
+# 🔥 EARLY USER CHANGE DETECTION (FIX)
+# ---------------------------------------------------
+if method in ["percentile", "tukey"]:
+
+    direction = INDICATOR_DIRECTION.get(indicator, "lower")
+
+    if direction == "lower":
+        default_alarm_pct = 25
+        default_alert_pct = 50
+    else:
+        default_alarm_pct = 75
+        default_alert_pct = 50
+
+    # Use session state if available
+    alarm_pct_temp = st.session_state.get("alarm_pct", default_alarm_pct)
+    alert_pct_temp = st.session_state.get("alert_pct", default_alert_pct)
+
+    if method == "percentile":
+        user_override_active = (
+                alarm_pct_temp != default_alarm_pct or
+                alert_pct_temp != default_alert_pct
+        )
+    else:
+        user_override_active = (
+                alarm_pct_temp != default_alarm_pct
+        )
+
 # ---------------------------------------------------
 # EVENT INDICATORS → FIXED THRESHOLDS
 # ---------------------------------------------------
@@ -501,15 +565,18 @@ else:
         if not threshold_row.empty:
             row = threshold_row.iloc[0]
 
-            if method == "percentile":
-                alarm_threshold = row["alarm_percentile"]
-                alert_threshold = row["alert_percentile"]
+            if not user_override_active:
 
-            elif method == "tukey":
-                alarm_threshold = row["alarm_tukey"]
-                alert_threshold = row["alert_tukey"]
+                if method == "percentile":
+                    alarm_threshold = row["alarm_percentile"]
+                    alert_threshold = row["alert_percentile"]
 
-            elif method == "zscore":
+                elif method == "tukey":
+                    alarm_threshold = row["alarm_tukey"]
+                    alert_threshold = row["alert_tukey"]
+
+            # 🔥 Z-score should ALWAYS load independently
+            if method == "zscore":
                 alarm_threshold = row["alarm_zscore"]
                 alert_threshold = row["alert_zscore"]
 
@@ -522,8 +589,11 @@ else:
         else:
             alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
 
+
     else:
-        alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
+
+        if not user_override_active:
+            alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
 
 # ---------------------------------------------------
 # Dynamic Threshold Recalculation (Selected Units)
@@ -543,8 +613,9 @@ if baseline_mode == "Dynamic (Selected Units)" and len(selected_units) > 0:
             )
 
             if method in recalculated:
-                alarm_threshold = recalculated[method]["alarm"]
-                alert_threshold = recalculated[method]["alert"]
+                if not user_override_active:
+                    alarm_threshold = recalculated[method]["alarm"]
+                    alert_threshold = recalculated[method]["alert"]
 
                 st.info("Dynamic thresholds recomputed using Selected Units.")
 
@@ -595,6 +666,12 @@ st.markdown(f"### Suggested Thresholds ({method.lower()})")
 row1_col1, row1_col2 = st.columns([1, 1])
 row2_col1, row2_col2 = st.columns([1, 1])
 
+# ---------------------------------------------------
+# 🔥 SAFETY DEFAULT (FIX NameError)
+# ---------------------------------------------------
+if "alarm_threshold" not in locals():
+    alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
+
 # -----------------------------------------
 # SPI DISPLAY FIX (UI ONLY)
 # -----------------------------------------
@@ -630,7 +707,8 @@ if method in ["percentile", "tukey"]:
                 min_value=1,
                 max_value=99,
                 value=default_alarm_pct,
-                step=1
+                step=1,
+                key="alarm_pct"  # 🔥 ADD THIS
             )
 
     if method == "percentile":
@@ -642,7 +720,8 @@ if method in ["percentile", "tukey"]:
                     min_value=1,
                     max_value=99,
                     value=default_alert_pct,
-                    step=1
+                    step=1,
+                    key="alert_pct"  # 🔥 ADD THIS
                 )
     else:
         # Tukey → no alert input
@@ -664,6 +743,7 @@ if method in ["percentile", "tukey"]:
         user_changed = alarm_pct != default_alarm_pct
 
     if user_changed:
+        user_override_active = True
 
         try:
             recalculated = recalculate_thresholds(
@@ -683,6 +763,10 @@ if method in ["percentile", "tukey"]:
             elif method == "tukey":
                 alarm_threshold = recalculated["tukey"]["alarm"]
                 alert_threshold = recalculated["tukey"]["alert"]
+
+            # 🔥 UPDATE DISPLAY VALUES AFTER RECALCULATION
+            display_alarm = alarm_threshold
+            display_alert = alert_threshold
 
             # 🔥 Fix ordering for upper-tail indicators
             if direction == "upper":
