@@ -43,4 +43,6 @@ def compute_ltm_anomaly(
     # Use anomaly as pipeline value
     df_price["value"] = df_price["ltm_anomaly"]
 
+    df_price["baseline_method"] = "LTM"
+
     return df_price

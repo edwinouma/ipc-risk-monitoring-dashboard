@@ -1,62 +1,73 @@
 import pandas as pd
-from src.spi_true import compute_true_spi
-from src.config import COUNTRY_CONFIG, SPI_TRUE_INDICATORS
+from src.zscore_true import compute_true_zscore
+
+print("\n🔍 TESTING Z-SCORE ON REAL PRICE ANOMALIES\n")
 
 # -----------------------------------------
-# Select country
+# LOAD REAL ANOMALY DATA
 # -----------------------------------------
-country = "Afghanistan"
-
-# -----------------------------------------
-# Load rainfall file from config
-# -----------------------------------------
-rainfall_file = COUNTRY_CONFIG[country]["rainfall_file"]
-df = pd.read_excel(rainfall_file)
-
-print(f"✅ Loaded rainfall file: {rainfall_file}")
-print("SHAPE:", df.shape)
-
-print("\nAVAILABLE INDICATORS:")
-print(df["indicator"].unique())
+df_price_standard = pd.read_excel(
+    "outputs/price_monthly_percent_deviation.xlsx"
+)
 
 # -----------------------------------------
-# 🔥 FILTER: Only SPI-relevant indicator
+# Ensure correct types
 # -----------------------------------------
-indicator = SPI_TRUE_INDICATORS[0]  # "rainfall-mm"
+df_price_standard["year_month"] = pd.to_datetime(
+    df_price_standard["year_month"]
+).dt.to_period("M")
 
-df_spi = df[df["indicator"] == indicator].copy()
-
-print(f"\n✅ Using indicator for SPI: {indicator}")
-print("FILTERED SHAPE:", df_spi.shape)
-
-# -----------------------------------------
-# Run TRUE SPI
-# -----------------------------------------
-spi_df = compute_true_spi(df_spi)
+# 🔥 CRITICAL FIX: recreate 'date' column
+df_price_standard["date"] = df_price_standard["year_month"].dt.to_timestamp()
 
 # -----------------------------------------
-# 🔥 ADD BACK INDICATOR COLUMN (IMPORTANT)
+# Pick one country + one indicator
 # -----------------------------------------
-spi_df["indicator"] = indicator
+test_country = df_price_standard["country"].iloc[0]
+test_indicator = df_price_standard["indicator"].dropna().unique()[0]
 
-# -----------------------------------------
-# Inspect output
-# -----------------------------------------
-print("\nCOLUMNS:")
-print(spi_df.columns)
+df_test = df_price_standard[
+    (df_price_standard["country"] == test_country) &
+    (df_price_standard["indicator"] == test_indicator)
+].copy()
 
-print("\nHEAD:")
-print(spi_df.head())
+print(f"Testing indicator: {test_indicator} | Country: {test_country}")
 
-print("\nVALUE STATS:")
-print(spi_df["value"].describe())
-
-print("\nUNIQUE UNITS:", spi_df["adm1_name"].nunique())
-print("DATE RANGE:", spi_df["date"].min(), "→", spi_df["date"].max())
+print("\n📊 Input anomaly sample:")
+print(df_test.head())
 
 # -----------------------------------------
-# Save output
+# APPLY Z-SCORE
 # -----------------------------------------
-spi_df.to_csv("outputs/test_spi_true_afghanistan.csv", index=False)
+df_z = compute_true_zscore(df_test)
 
-print("\n✅ Test file saved: outputs/test_spi_true_afghanistan.csv")
+print("\n✅ Z-score output sample:")
+print(df_z.head())
+
+# -----------------------------------------
+# CHECK DISTRIBUTION
+# -----------------------------------------
+print("\n📈 Z-score distribution:")
+print(df_z["value_zscore"].describe())
+
+# -----------------------------------------
+# CHECK BASELINE SEPARATION
+# -----------------------------------------
+if "baseline_method" in df_z.columns:
+    print("\n🔍 Z-score by baseline:")
+    print(df_z.groupby("baseline_method")["value_zscore"].describe())
+
+# -----------------------------------------
+# MERGE BACK FOR COMPARISON
+# -----------------------------------------
+df_compare = df_test.merge(
+    df_z,
+    on=["country", "adm1_name", "year_month", "baseline_method"],
+    how="left",
+    suffixes=("_anom", "_z")
+)
+
+print("\n🔎 Anomaly vs Z-score:")
+print(df_compare[["value_anom", "value_zscore"]].head())
+
+print("\n🎯 TEST COMPLETE\n")

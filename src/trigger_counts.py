@@ -163,23 +163,6 @@ def compute_monthly_trigger_counts(
         # 🔥 DO NOT fill with 0 for price/climate
         # Keep NaN → will be classified as Minimal
 
-    # -----------------------------------------
-    # 🔍 DEBUG: Save unit-month used for triggers
-    # -----------------------------------------
-    if df_unit_month is not None:
-        safe_name = (
-            indicator_value
-            .replace(" ", "_")
-            .replace("/", "_")
-            .replace("(", "")
-            .replace(")", "")
-        )
-
-        df_unit_month.to_csv(
-            f"outputs/debug_trigger_unit_month_{safe_name}.csv",
-            index=False
-        )
-
     from src.config import COMBINED_INDICATORS, CONFLICT_COMBINED_RULES
 
     # ---------------------------------------------------

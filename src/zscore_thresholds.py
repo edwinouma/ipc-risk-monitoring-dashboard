@@ -12,7 +12,7 @@ from src.config import (
 
 from src.config import Z_AGGREGATION_METHOD
 
-def compute_zscore_thresholds(df, indicator):
+def compute_zscore_thresholds(df, indicator, value_col="value"):
     """
     Compute Z-score based thresholds.
 
@@ -34,8 +34,8 @@ def compute_zscore_thresholds(df, indicator):
     # 1. Ensure numeric + clean
     # -----------------------------------------
     df = df.copy()
-    df["value"] = pd.to_numeric(df["value"], errors="coerce")
-    df = df.dropna(subset=["value"])
+    df[value_col] = pd.to_numeric(df[value_col], errors="coerce")
+    df = df.dropna(subset=[value_col])
 
     if df.empty:
         return pd.DataFrame()
@@ -58,7 +58,7 @@ def compute_zscore_thresholds(df, indicator):
             df
             .groupby(["adm1_name", "year_month"], as_index=False)
             .agg({
-                "value": agg_method
+                value_col: agg_method
             })
         )
 
@@ -86,8 +86,8 @@ def compute_zscore_thresholds(df, indicator):
     # -----------------------------------------
     # 5. Compute mean & std
     # -----------------------------------------
-    mean_val = df["value"].mean()
-    std_val = df["value"].std()
+    mean_val = df[value_col].mean()
+    std_val = df[value_col].std()
 
     if std_val == 0 or np.isnan(std_val):
         return pd.DataFrame()

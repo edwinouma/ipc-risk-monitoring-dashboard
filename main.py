@@ -25,6 +25,7 @@ from src.config import TOT_CONFIG, DERIVED_INDICATORS
 from src.spi_true import compute_true_spi
 import pandas as pd
 import os
+import numpy as np
 
 ROBUST_MIN_RETENTION = 40
 
@@ -374,24 +375,60 @@ def main():
                         print(f"SPI-TRUE failed for {ind}: {e}")
                         continue
 
-
                 # -----------------------------------------
                 # 🔥 TRUE Z-SCORE (Seasonal standardized)
                 # -----------------------------------------
-                elif method_type == "zscore_true" and ind in ZSCORE_TRUE_INDICATORS:
+                elif ind in ZSCORE_TRUE_INDICATORS:
 
                     try:
-                        df_z_source = df_rainfall[
-                            (df_rainfall["country"] == country) &
-                            (df_rainfall[INDICATOR_COL] == ind)
-                            ].copy()
+                        # -----------------------------------------
+                        # 🔥 SELECT CORRECT DATA SOURCE
+                        # -----------------------------------------
+                        if ind in PRICE_INDICATORS:
+                            df_z_source = df_indicator.copy()
+                        else:
+                            df_z_source = df_rainfall[
+                                (df_rainfall["country"] == country) &
+                                (df_rainfall[INDICATOR_COL] == ind)
+                                ].copy()
 
+                        # -----------------------------------------
+                        # 🔥 CRITICAL FIX: FILTER BASELINE FIRST
+                        # -----------------------------------------
+                        if ind in PRICE_INDICATORS and "baseline_method" in df_z_source.columns:
+                            df_z_source = df_z_source[
+                                df_z_source["baseline_method"] == baseline_method
+                                ]
+
+                        # ✅ ADD THIS HERE
+                        if "date" not in df_z_source.columns:
+                            df_z_source["date"] = df_z_source["year_month"].dt.to_timestamp()
+
+                        # -----------------------------------------
+                        # Apply zscore_true
+                        # -----------------------------------------
                         df_z = compute_true_zscore(df_z_source)
 
                         df_z["indicator"] = ind
-                        df_z["baseline_method"] = "none"
 
-                        df_indicator = df_z.copy()
+                        # -----------------------------------------
+                        # ONLY set baseline for NON-PRICE
+                        # -----------------------------------------
+                        if ind not in PRICE_INDICATORS:
+                            df_z["baseline_method"] = "none"
+
+                        # -----------------------------------------
+                        # 🔥 SAFE Z-SCORE MERGE (FINAL FIX)
+                        # -----------------------------------------
+                        df_z_small = df_z[
+                            ["adm1_name", "year_month", "baseline_method", "value_zscore"]
+                        ].drop_duplicates()
+
+                        df_indicator = df_indicator.merge(
+                            df_z_small,
+                            on=["adm1_name", "year_month", "baseline_method"],
+                            how="left"
+                        )
 
                         print(f"✅ TRUE Z-SCORE applied for {ind}")
 
@@ -432,35 +469,70 @@ def main():
                 # 🔥 SPECIAL HANDLING FOR CONFLICT (event indicators)
                 # ---------------------------------------------------
                 if method_type in ["event", "event_combined"]:
-
-                    # Already unit-month → use directly
                     unit_month = df_indicator.copy()
 
+                    # ✅ Ensure structure consistency
+                    if "value" not in unit_month.columns:
+                        unit_month["value"] = unit_month.get(VALUE_COL, np.nan)
+
+                    unit_month["indicator"] = ind
+                    unit_month["baseline_method"] = baseline_method
+
                 else:
+                    # -----------------------------------------
+                    # 🔥 SELECT VALUE COLUMN
+                    # -----------------------------------------
+                    # -----------------------------------------
+                    # 🔥 ALWAYS USE ANOMALY FOR AGGREGATION
+                    # -----------------------------------------
+                    value_col_unit = VALUE_COL
 
                     # -----------------------------------------
-                    # 🔥 SELECT VALUE COLUMN (FIXED LOGIC)
+                    # 🔥 AGGREGATE
                     # -----------------------------------------
-                    value_col = VALUE_COL
-
                     unit_month = compute_unit_month_values(
                         df=df_indicator,
                         unit_col=UNIT_COL,
                         indicator_col=INDICATOR_COL,
-                        value_col=value_col,
+                        value_col=value_col_unit,
                         indicator_value=ind,
                         aggregation="mean"
                     )
 
-                unit_month["indicator"] = ind
-                unit_month["baseline_method"] = baseline_method
+                    # -----------------------------------------
+                    # 🔥 MERGE Z-SCORE AT UNIT-MONTH LEVEL
+                    # -----------------------------------------
+                    if "value_zscore" in df_indicator.columns:
+                        df_z_unit = (
+                            df_indicator[
+                                ["adm1_name", "year_month", "baseline_method", "value_zscore"]
+                            ]
+                            .dropna(subset=["value_zscore"])
+                            .drop_duplicates()
+                        )
+
+                        unit_month = unit_month.merge(
+                            df_z_unit,
+                            on=["adm1_name", "year_month", "baseline_method"],
+                            how="left"
+                        )
+
+                    unit_month["indicator"] = ind
+                    unit_month["baseline_method"] = baseline_method
 
                 all_unit_month_values.append(unit_month)
 
                 # -----------------------------------------
-                # 🔥 SPATIAL VALUE COLUMN (FIXED)
+                # 🔥 SELECT VALUE COLUMN (SPATIAL - FINAL FIX)
                 # -----------------------------------------
-                value_col_spatial = VALUE_COL
+                if method_type == "zscore_true":
+                    value_col_spatial = "value_zscore"
+                else:
+                    value_col_spatial = VALUE_COL
+
+                # fallback safety
+                if value_col_spatial not in df_indicator.columns:
+                    value_col_spatial = VALUE_COL
 
                 spatial = compute_spatial_percentiles(
                     df_indicator,
@@ -528,7 +600,11 @@ def main():
                     # -----------------------------------------
                     from src.zscore_thresholds import compute_zscore_thresholds
 
-                    zscore_thresholds = compute_zscore_thresholds(df_indicator, ind)
+                    zscore_thresholds = compute_zscore_thresholds(
+                        df_indicator,
+                        ind,
+                        value_col=value_col_spatial
+                    )
 
                     # -----------------------------------------
                     # Merge ALL
@@ -631,7 +707,7 @@ def main():
                     UNIT_COL,
                     DATE_COL,
                     INDICATOR_COL,
-                    VALUE_COL,
+                    value_col_spatial,
                     ind,
                     min_retention_pct=ROBUST_MIN_RETENTION
                 )
@@ -654,7 +730,11 @@ def main():
 
                     from src.zscore_thresholds import compute_zscore_thresholds
 
-                    zscore_thresholds = compute_zscore_thresholds(df_indicator, ind)
+                    zscore_thresholds = compute_zscore_thresholds(
+                        df_indicator,
+                        ind,
+                        value_col=value_col_spatial
+                    )
 
                     merged_robust = pct_robust.merge(
                         tukey_robust,
@@ -691,7 +771,7 @@ def main():
                         UNIT_COL,
                         DATE_COL,
                         INDICATOR_COL,
-                        VALUE_COL,
+                        value_col_spatial,
                         ind,
                         season_months=season_months
                     )
@@ -709,7 +789,11 @@ def main():
 
                         from src.zscore_thresholds import compute_zscore_thresholds
 
-                        zscore_thresholds = compute_zscore_thresholds(df_indicator, ind)
+                        zscore_thresholds = compute_zscore_thresholds(
+                            df_indicator,
+                            ind,
+                            value_col=value_col_spatial
+                        )
 
                         merged_season = pct_season.merge(
                             tukey_season,
@@ -743,13 +827,6 @@ def main():
         [df for df in all_unit_month_values if not df.empty],
         ignore_index=True
     ) if any(not df.empty for df in all_unit_month_values) else pd.DataFrame()
-
-    final_unit_month[
-        final_unit_month["indicator"].str.contains("conflict")
-    ].to_csv(
-        "outputs/debug_unit_month_conflict.csv",
-        index=False
-    )
 
     valid_spatial = [df for df in all_spatial_percentiles if not df.empty]
 
@@ -846,11 +923,30 @@ def main():
             print(f"Skipping trigger counts for {ind} (no thresholds)")
             continue
 
+        method_type = INDICATOR_METHOD.get(ind, "percentile")
+
+        # -----------------------------------------
+        # 🔥 SAFE VALUE COLUMN (TRIGGER - FINAL)
+        # -----------------------------------------
+        if (
+                ind in ZSCORE_TRUE_INDICATORS
+                and "value_zscore" in final_unit_month.columns
+                and final_unit_month["value_zscore"].notna().any()
+        ):
+            value_col_trigger = "value_zscore"
+        else:
+            value_col_trigger = VALUE_COL
+
+        # -----------------------------------------
+        # 🔥 ALWAYS USE UNIT-MONTH DATA (CRITICAL FIX)
+        # -----------------------------------------
+        df_trigger_source = final_unit_month
+
         trigger_counts = compute_monthly_trigger_counts(
-            df,
+            df_trigger_source,
             UNIT_COL,
             INDICATOR_COL,
-            VALUE_COL,
+            value_col_trigger,
             ind,
             final_thresholds[
                 (final_thresholds["retention_filter"] == "none") &
@@ -864,10 +960,6 @@ def main():
         [df for df in all_trigger_counts if not df.empty],
         ignore_index=True
     ) if any(not df.empty for df in all_trigger_counts) else pd.DataFrame()
-
-    final_trigger_counts["indicator"].value_counts().to_csv(
-        "outputs/debug_trigger_counts_indicators.csv"
-    )
 
     # ---------------------------------------------------
     # 8. Combine Monthly Quartile Tables
@@ -985,11 +1077,20 @@ def main():
         if "baseline_method" in df_matrix.columns:
             df_matrix = df_matrix[df_matrix["baseline_method"] == DEFAULT_BASELINE].copy()
 
+        if (
+                ind in ZSCORE_TRUE_INDICATORS
+                and "value_zscore" in df_matrix.columns
+                and df_matrix["value_zscore"].notna().any()
+        ):
+            value_col_classification = "value_zscore"
+        else:
+            value_col_classification = VALUE_COL
+
         matrix_percentile = compute_unit_month_classification_matrix(
             df=df_matrix,
             unit_col=UNIT_COL,
             indicator_col=INDICATOR_COL,
-            value_col=VALUE_COL,
+            value_col=value_col_classification,
             indicator_value=ind,
             alarm_threshold=alarm_percentile,
             alert_threshold=alert_percentile
@@ -999,7 +1100,7 @@ def main():
             df=df_matrix,
             unit_col=UNIT_COL,
             indicator_col=INDICATOR_COL,
-            value_col=VALUE_COL,
+            value_col=value_col_classification,
             indicator_value=ind,
             alarm_threshold=alarm_tukey,
             alert_threshold=alert_tukey

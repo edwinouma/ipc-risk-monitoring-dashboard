@@ -250,6 +250,16 @@ method = st.sidebar.selectbox(
     label_visibility="collapsed"
 )
 
+# -----------------------------------------
+# 🔥 SHOW ACTIVE SIGNAL TYPE
+# -----------------------------------------
+if method == "zscore_true":
+    st.sidebar.success("Using standardized signal (Z-score)")
+elif method == "spi_true":
+    st.sidebar.success("Using SPI standardized signal")
+else:
+    st.sidebar.info("Using anomaly-based signal")
+
 # 🔹 spacing
 st.sidebar.markdown("---")
 
@@ -363,6 +373,16 @@ df_filtered = country_df[
     country_df["indicator"] == indicator
 ].copy()
 
+# -----------------------------------------
+# 🔥 USE Z-SCORE VALUES FOR ZSCORE_TRUE
+# -----------------------------------------
+if method == "zscore_true":
+    if "value_zscore" not in df_filtered.columns:
+        st.error("Z-score values not found.")
+        st.stop()
+
+    df_filtered.loc[:, "value"] = df_filtered["value_zscore"]
+
 
 # Apply baseline filter only for price indicators
 if baseline_method is not None and "baseline_method" in df_filtered.columns:
@@ -406,22 +426,46 @@ else:
         alert_threshold = thresholds["alert"]
         alarm_threshold = thresholds["alarm"]
 
-    # 👇👇👇 ADD HERE 👇👇👇
-    # -----------------------------------------
-    # 🔥 TRUE Z-SCORE THRESHOLDS
-    # -----------------------------------------
     elif method == "zscore_true":
 
-        from src.config import ZSCORE_TRUE_THRESHOLDS
+        from src.config import ZSCORE_TRUE_THRESHOLDS, INDICATOR_DIRECTION, PRICE_INDICATORS
 
-        thresholds = ZSCORE_TRUE_THRESHOLDS.get(
-            indicator,
-            ZSCORE_TRUE_THRESHOLDS["default"]
-        )
+        # -----------------------------------------
+        # 🔥 SELECT THRESHOLDS
+        # -----------------------------------------
+        if indicator in PRICE_INDICATORS:
+            thresholds = ZSCORE_TRUE_THRESHOLDS["price_default"]
+        else:
+            thresholds = ZSCORE_TRUE_THRESHOLDS.get(
+                indicator,
+                ZSCORE_TRUE_THRESHOLDS["default"]
+            )
 
-        # 🔥 ALWAYS use raw thresholds (like SPI)
-        alert_threshold = thresholds["alert"]
-        alarm_threshold = thresholds["alarm"]
+        direction = INDICATOR_DIRECTION.get(indicator, "upper")
+
+        alert_z = thresholds["alert"]
+        alarm_z = thresholds["alarm"]
+
+        # -----------------------------------------
+        # 🔥 APPLY DIRECTION
+        # -----------------------------------------
+        if direction == "lower":
+            # Ensure negative thresholds
+            alert_threshold = -abs(alert_z)
+            alarm_threshold = -abs(alarm_z)
+
+            # Ensure correct ordering
+            alert_threshold = max(alert_threshold, alarm_threshold)  # closer to 0
+            alarm_threshold = min(alert_threshold, alarm_threshold)  # more extreme
+
+        else:
+            # Ensure positive thresholds
+            alert_threshold = abs(alert_z)
+            alarm_threshold = abs(alarm_z)
+
+            # Ensure correct ordering
+            alert_threshold = min(alert_threshold, alarm_threshold)
+            alarm_threshold = max(alert_threshold, alarm_threshold)
 
     # 👇 EXISTING BLOCK CONTINUES 👇
     elif df_thresholds_file is not None and "retention_filter" in df_thresholds_file.columns:
@@ -882,6 +926,12 @@ st.info(
     "and time window."
 )
 
+# 🔥 ADD HERE
+if method == "zscore_true":
+    st.caption(
+        "ⓘ Z-score uses the full historical distribution (no data filtering applied)."
+    )
+
 if len(units_for_calc) == 0:
     st.warning("Please select at least one province.")
 else:
@@ -963,14 +1013,17 @@ else:
         # Market indicators
         elif indicator in PRICE_INDICATORS:
 
-            if direction == "upper":
-                filtered_count = df_retention[df_retention["value"] > 0]["value"].count()
-
-            elif direction == "lower":
-                filtered_count = df_retention[df_retention["value"] < 0]["value"].count()
-
-            else:
+            if method == "zscore_true":
+                # 🔥 NO FILTERING for Z-score
                 filtered_count = total_count
+            else:
+                # Existing logic for anomaly-based methods
+                if direction == "upper":
+                    filtered_count = df_retention[df_retention["value"] > 0]["value"].count()
+                elif direction == "lower":
+                    filtered_count = df_retention[df_retention["value"] < 0]["value"].count()
+                else:
+                    filtered_count = total_count
 
         else:
             filtered_count = total_count
@@ -996,42 +1049,91 @@ else:
                 .reset_index()
             )
 
+        elif indicator in FLOOD_INDICATORS:
+
+            monthly_stats = (
+
+                df_retention
+
+                .groupby("year_month")["value"]
+
+                .agg(total="count", filtered="count")
+
+                .reset_index()
+
+            )
+
         elif indicator in PRICE_INDICATORS:
 
-            if direction == "upper":
+            if method == "zscore_true":
 
-                # food price inflation
                 monthly_stats = (
-                    df_retention
-                    .groupby("year_month")["value"]
-                    .agg(
-                        total="count",
-                        filtered=lambda x: (x > 0).sum()
-                    )
-                    .reset_index()
-                )
 
-            elif direction == "lower":
-
-                # livestock / ToT decline
-                monthly_stats = (
                     df_retention
+
                     .groupby("year_month")["value"]
-                    .agg(
-                        total="count",
-                        filtered=lambda x: (x < 0).sum()
-                    )
+
+                    .agg(total="count", filtered="count")
+
                     .reset_index()
+
                 )
 
             else:
-                monthly_stats = (
-                    df_retention
-                    .groupby("year_month")["value"]
-                    .agg(total="count", filtered="count")
-                    .reset_index()
-                )
 
+                if direction == "upper":
+
+                    monthly_stats = (
+
+                        df_retention
+
+                        .groupby("year_month")["value"]
+
+                        .agg(
+
+                            total="count",
+
+                            filtered=lambda x: (x > 0).sum()
+
+                        )
+
+                        .reset_index()
+
+                    )
+
+                elif direction == "lower":
+
+                    monthly_stats = (
+
+                        df_retention
+
+                        .groupby("year_month")["value"]
+
+                        .agg(
+
+                            total="count",
+
+                            filtered=lambda x: (x < 0).sum()
+
+                        )
+
+                        .reset_index()
+
+                    )
+
+                else:
+
+                    monthly_stats = (
+
+                        df_retention
+
+                        .groupby("year_month")["value"]
+
+                        .agg(total="count", filtered="count")
+
+                        .reset_index()
+
+                    )
         else:
 
             monthly_stats = (

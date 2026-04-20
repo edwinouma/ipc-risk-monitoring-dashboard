@@ -278,6 +278,14 @@ INDICATOR_METHOD = {
 }
 
 
+METHOD_VALUE_COLUMN = {
+    "percentile": "value",
+    "tukey": "value",
+    "spi_true": "value",
+    "zscore_true": "value_zscore",
+    "categorical": "value"
+}
+
 # ---------------------------------------------------
 # Indicator Type (for future composite risk modelling)
 # ---------------------------------------------------
@@ -640,7 +648,7 @@ for ind in CLIMATE_INDICATORS:
 
 # Prices → percentile + tukey
 for ind in PRICE_INDICATORS:
-    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey"]
+    INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore_true"]
 
 # Shock indicators → special handling
 INDICATOR_ALLOWED_METHODS["conflict_events"] = ["percentile", "categorical"]
@@ -868,7 +876,32 @@ SPI_TRUE_FLOOD_THRESHOLDS = {
 
 ZSCORE_TRUE_THRESHOLDS = {
     "default": {"alert": -1.0, "alarm": -2.0},
-    "ndvi_absolute": {"alert": -1.0, "alarm": -2.0}
+
+    # Climate
+    "ndvi_absolute": {"alert": -1.0, "alarm": -2.0},
+
+    # 🔥 PRICES (same logic, but now explicit & extensible)
+    "price_default": {"alert": 1.0, "alarm": 2.0}
+}
+
+# ---------------------------------------------------
+# ZSCORE_TRUE GROUP MAPPING (CRITICAL FOR PIPELINE)
+# ---------------------------------------------------
+
+ZSCORE_TRUE_GROUP = {
+    "ndvi_absolute": "climate",
+
+    # 🔥 ALL PRICES USE PRICE LOGIC
+    **{ind: "price" for ind in PRICE_INDICATORS}
+}
+
+# ---------------------------------------------------
+# ZSCORE_TRUE INPUT REQUIREMENTS
+# ---------------------------------------------------
+
+ZSCORE_TRUE_REQUIRES_ANOMALY = {
+    "price": True,
+    "climate": False
 }
 
 # ---------------------------------------------------
@@ -891,7 +924,11 @@ SPI_TRUE_INDICATORS = [
 ]
 
 ZSCORE_TRUE_INDICATORS = [
-    "ndvi_absolute"
+    "ndvi_absolute",
+    "Maize",
+
+    # 🔥 PRICE INDICATORS (ENABLE ZSCORE_TRUE PIPELINE)
+    *PRICE_INDICATORS
 ]
 
 # ---------------------------------------------------
