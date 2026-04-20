@@ -176,7 +176,13 @@ if "group" in country_df.columns:
 
     selected_region = st.sidebar.selectbox(
         "Select Region (Group)",
-        ["All"] + country_groups
+        ["All"] + country_groups,
+        help="Use this to focus on specific regions for viewing only. It does NOT affect threshold calculation."
+    )
+
+    st.sidebar.caption(
+        "ⓘ Use this to focus on specific regions for viewing only. "
+        "It does NOT affect threshold calculation."
     )
 
     if selected_region == "All":
