@@ -50,6 +50,85 @@ def load_flood_data(filepath):
     return df_flood
 
 
+# -----------------------------------------
+# LOAD IPC HISTORICAL CLASSIFICATION
+# -----------------------------------------
+def load_ipc_data(file_path):
+    import pandas as pd
+
+    # Read file
+    df = pd.read_excel(file_path)
+
+    # -------------------------------------
+    # Standardize column names
+    # -------------------------------------
+    df.columns = df.columns.str.strip().str.lower()
+
+    # -------------------------------------
+    # Required columns check
+    # -------------------------------------
+    required_cols = [
+        "country",
+        "adm1_name",
+        "year_month",
+        "ipc_phase",
+        "analysis_type"
+    ]
+
+    missing = [c for c in required_cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing IPC columns: {missing}")
+
+    # -------------------------------------
+    # Standardize key fields
+    # -------------------------------------
+    df["country"] = df["country"].astype(str).str.strip()
+    df["adm1_name"] = df["adm1_name"].astype(str).str.strip()
+
+    # -------------------------------------
+    # Convert to Period[M] (CRITICAL)
+    # -------------------------------------
+    df["year_month"] = pd.to_datetime(
+        df["year_month"],
+        errors="coerce"
+    ).dt.to_period("M")
+
+    # Drop rows with invalid dates
+    df = df.dropna(subset=["year_month"])
+
+    # -------------------------------------
+    # Clean text fields
+    # -------------------------------------
+    df["ipc_phase"] = (
+        df["ipc_phase"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    df["analysis_type"] = (
+        df["analysis_type"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    # -------------------------------------
+    # Optional: ensure valid IPC phases
+    # -------------------------------------
+    valid_phases = {
+        "phase 1", "phase 2", "phase 3", "phase 4", "phase 5"
+    }
+
+    df = df[df["ipc_phase"].isin(valid_phases)]
+
+    # -------------------------------------
+    # Final reset index
+    # -------------------------------------
+    df = df.reset_index(drop=True)
+
+    return df
+
 # ---------------------------------------------------
 # Country Loader (UPDATED - RETURNS SEPARATE DATASETS)
 # ---------------------------------------------------
@@ -99,4 +178,13 @@ def load_country_data(country):
         df_flood = load_flood_data(config["flood_file"])
         df_flood["country"] = country
 
-    return df_rainfall, df_price, df_conflict, df_flood
+    # -------------------------
+    # IPC (NEW)
+    # -------------------------
+    df_ipc = None
+
+    if "ipc_file" in config:
+        df_ipc = load_ipc_data(config["ipc_file"])
+        df_ipc["country"] = country
+
+    return df_rainfall, df_price, df_conflict, df_flood, df_ipc

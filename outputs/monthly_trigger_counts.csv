@@ -1,4 +1,4 @@
-year_month,Alarm,Alert,Minimal,alarms_percentile,alerts_percentile,alarms_tukey,alerts_tukey,alarms_zscore,alerts_zscore,minimal_percentile,minimal_tukey,minimal_zscore,alarm_percentile_pct,alert_percentile_pct,minimal_percentile_pct,alarm_tukey_pct,alert_tukey_pct,minimal_tukey_pct,alarm_zscore_pct,alert_zscore_pct,minimal_zscore_pct,indicator,date
+year_month,Alarm,Alert,No concern,alarms_percentile,alerts_percentile,alarms_tukey,alerts_tukey,alarms_zscore,alerts_zscore,minimal_percentile,minimal_tukey,minimal_zscore,alarm_percentile_pct,alert_percentile_pct,minimal_percentile_pct,alarm_tukey_pct,alert_tukey_pct,minimal_tukey_pct,alarm_zscore_pct,alert_zscore_pct,minimal_zscore_pct,indicator,date
 1990-01,0,0,134,0,0,0,0,0,0,134,134,134,0.0,0.0,100.0,0.0,0.0,100.0,0.0,0.0,100.0,rainfall 1-month anomaly [%],1990-01-01
 1990-02,0,0,134,0,0,0,0,0,0,134,134,134,0.0,0.0,100.0,0.0,0.0,100.0,0.0,0.0,100.0,rainfall 1-month anomaly [%],1990-02-01
 1990-03,23,11,100,23,11,23,11,23,11,100,100,100,17.16,8.21,74.63,17.16,8.21,74.63,17.16,8.21,74.63,rainfall 1-month anomaly [%],1990-03-01

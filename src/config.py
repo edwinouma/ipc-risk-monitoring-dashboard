@@ -283,7 +283,8 @@ METHOD_VALUE_COLUMN = {
     "tukey": "value",
     "spi_true": "value",
     "zscore_true": "value_zscore",
-    "categorical": "value"
+    "categorical": "value",
+    "hybrid":"value"
 }
 
 # ---------------------------------------------------
@@ -427,6 +428,7 @@ COUNTRY_CONFIG = {
         "rainfall_file": "data/rainfall_ndvi_South Sudan.xlsx",
         "conflict_file": "data/acled_south_sudan.xlsx",
         "flood_file": "data/flood_south_sudan.xlsx",
+        "ipc_file": "data/ipc_south_sudan.xlsx",   # 🔥 ADD THIS
     },
 
     # Temporarily using adm1_name until dataset changes to county
@@ -553,32 +555,6 @@ INDICATOR_ALLOWED_BASELINES = {
     "percent_area_flooded": ["none"]
 }
 
-# ---------------------------------------------------
-# Indicator Threshold Override (ADVANCED)
-# ---------------------------------------------------
-
-INDICATOR_THRESHOLD_OVERRIDE = {
-
-    "conflict_fatalities": "anomaly_zscore"
-}
-
-# ---------------------------------------------------
-# Conflict Threshold Rules
-# ---------------------------------------------------
-
-CONFLICT_ZSCORE_THRESHOLDS = {
-
-    "conflict_events": {
-        "alert": 2.0,
-        "alarm": 5.0
-    },
-
-    "conflict_fatalities": {
-        "alert": 5,
-        "alarm": 20
-    }
-}
-
 INDICATOR_GROUPS = {
     "Climate": CLIMATE_INDICATORS,
     "Flood": FLOOD_INDICATORS,
@@ -611,6 +587,58 @@ EVENT_THRESHOLDS = {
     "conflict_fatalities": {
         "alert": 5,
         "alarm": 20
+    }
+}
+
+# ---------------------------------------------------
+# HYBRID CONFLICT THRESHOLDS (NEW)
+# ---------------------------------------------------
+
+CONFLICT_HYBRID_THRESHOLDS = {
+
+    "conflict_events": {
+        "alert": 2,
+        "alarm": 5
+    },
+
+    "conflict_fatalities": {
+        "alert": 5,
+        "alarm": 20
+    }
+}
+
+
+# ---------------------------------------------------
+# CONFLICT TREND ESCALATION (YOY)
+# ---------------------------------------------------
+
+CONFLICT_TREND_RULES = {
+
+    "yoy_abs": {
+        "alert": 2,
+        "alarm": 4
+    },
+
+    "yoy_ratio": {
+        "alert": 1.5,
+        "alarm": 2.0
+    }
+}
+
+# ---------------------------------------------------
+# CONFLICT ANOMALY RULES (ROLLING)
+# ---------------------------------------------------
+
+CONFLICT_ANOMALY_RULES = {
+
+    "anomaly_abs": {
+        "alert": 2,
+        "alarm": 5
+    },
+
+    "anomaly_ratio": {
+        "alert": 1.5,
+        "alarm": 2.0
     }
 }
 
@@ -651,8 +679,17 @@ for ind in PRICE_INDICATORS:
     INDICATOR_ALLOWED_METHODS[ind] = ["percentile", "tukey", "zscore_true"]
 
 # Shock indicators → special handling
-INDICATOR_ALLOWED_METHODS["conflict_events"] = ["percentile", "categorical"]
-INDICATOR_ALLOWED_METHODS["conflict_fatalities"] = ["percentile", "categorical"]
+INDICATOR_ALLOWED_METHODS["conflict_events"] = [
+    "categorical",
+    "hybrid",
+    "percentile"
+]
+
+INDICATOR_ALLOWED_METHODS["conflict_fatalities"] = [
+    "categorical",
+    "hybrid",
+    "percentile"
+]
 
 
 INDICATOR_ALLOWED_METHODS["percent_area_flooded"] = ["percentile"]
@@ -1099,4 +1136,23 @@ ADM1_GROUP_MAPPING = {
     "Nzara": "Western Equatoria",
     "Tambura": "Western Equatoria",
     "Yambio": "Western Equatoria",
+}
+
+# ---------------------------------------------------
+# IPC CONFIG (VALIDATION DATA)
+# ---------------------------------------------------
+
+IPC_PHASE_COLORS = {
+    "phase 1": "green",
+    "phase 2": "yellow",
+    "phase 3": "orange",
+    "phase 4": "red",
+    "phase 5": "darkred"
+}
+
+CLASSIFICATION_LABELS = {
+    "alarm": "Alarm",
+    "alert": "Alert",
+    "minimal": "No concern",  # 🔥 changed here only
+    "no_data": "No data"   # ✅ add this
 }

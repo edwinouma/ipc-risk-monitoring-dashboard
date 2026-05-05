@@ -1,6 +1,12 @@
 from src.unit_month import compute_unit_month_values
 import pandas as pd
 from src.classification_utils import classify_series
+from src.config import CLASSIFICATION_LABELS
+
+
+alarm_label = CLASSIFICATION_LABELS["alarm"]
+alert_label = CLASSIFICATION_LABELS["alert"]
+minimal_label = CLASSIFICATION_LABELS["minimal"]
 
 def compute_monthly_trigger_counts(
     df,
@@ -107,19 +113,19 @@ def compute_monthly_trigger_counts(
         )
 
         # Ensure all categories exist
-        for col in ["Alarm", "Alert", "Minimal"]:
+        for col in [alarm_label, alert_label, minimal_label]:
             if col not in counts.columns:
                 counts[col] = 0
 
         # Map to expected structure
-        counts["alarms_percentile"] = counts["Alarm"]
-        counts["alerts_percentile"] = counts["Alert"]
+        counts["alarms_percentile"] = counts[alarm_label]
+        counts["alerts_percentile"] = counts[alert_label]
 
-        counts["alarms_tukey"] = counts["Alarm"]
-        counts["alerts_tukey"] = counts["Alert"]
+        counts["alarms_tukey"] = counts[alarm_label]
+        counts["alerts_tukey"] = counts[alert_label]
 
-        counts["alarms_zscore"] = counts["Alarm"]
-        counts["alerts_zscore"] = counts["Alert"]
+        counts["alarms_zscore"] = counts[alarm_label]
+        counts["alerts_zscore"] = counts[alert_label]
 
         counts["year_month"] = counts["year_month"]
 
@@ -265,20 +271,20 @@ def compute_monthly_trigger_counts(
         )
 
         # Ensure all categories exist
-        for col in ["Alarm", "Alert", "Minimal"]:
+        for col in [alarm_label, alert_label, minimal_label]:
             if col not in counts.columns:
                 counts[col] = 0
 
         # 🔥 STEP 3: Map to your existing structure
-        counts["alarms_percentile"] = counts["Alarm"]
-        counts["alerts_percentile"] = counts["Alert"]
+        counts["alarms_percentile"] = counts[alarm_label]
+        counts["alerts_percentile"] = counts[alert_label]
 
         # 🔥 Keep compatibility for tukey/zscore (same counts)
-        counts["alarms_tukey"] = counts["Alarm"]
-        counts["alerts_tukey"] = counts["Alert"]
+        counts["alarms_tukey"] = counts[alarm_label]
+        counts["alerts_tukey"] = counts[alert_label]
 
-        counts["alarms_zscore"] = counts["Alarm"]
-        counts["alerts_zscore"] = counts["Alert"]
+        counts["alarms_zscore"] = counts[alarm_label]
+        counts["alerts_zscore"] = counts[alert_label]
 
         counts["year_month"] = counts["year_month"]
 
@@ -287,9 +293,9 @@ def compute_monthly_trigger_counts(
     # -----------------------------------------
     if method_type == "event":
         # Minimal already computed via classification
-        counts["minimal_percentile"] = counts["Minimal"]
-        counts["minimal_tukey"] = counts["Minimal"]
-        counts["minimal_zscore"] = counts["Minimal"]
+        counts["minimal_percentile"] = counts[minimal_label]
+        counts["minimal_tukey"] = counts[minimal_label]
+        counts["minimal_zscore"] = counts[minimal_label]
 
     else:
         counts["minimal_percentile"] = (

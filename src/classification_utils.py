@@ -9,6 +9,12 @@ from src.config import (
 import pandas as pd
 import numpy as np
 
+from src.config import CLASSIFICATION_LABELS
+
+alarm_label = CLASSIFICATION_LABELS["alarm"]
+alert_label = CLASSIFICATION_LABELS["alert"]
+minimal_label = CLASSIFICATION_LABELS["minimal"]
+no_data_label = CLASSIFICATION_LABELS.get("no_data", "No data")
 
 def validate_thresholds(indicator_value, alarm_threshold, alert_threshold):
 
@@ -56,14 +62,14 @@ def classify_series(values, indicator_value, alarm_threshold, alert_threshold):
 
         return np.where(
             pd.isna(events),
-            "Missing",
+            no_data_label,
             np.where(
                 events >= event_alarm,
-                "Alarm",
+                alarm_label,
                 np.where(
                     events >= event_alert,
-                    "Alert",
-                    "Minimal"
+                    alert_label,
+                    minimal_label
                 )
             )
         )
@@ -74,14 +80,14 @@ def classify_series(values, indicator_value, alarm_threshold, alert_threshold):
     if method in ["event", "event_combined"]:
         return np.where(
             pd.isna(values),
-            "Missing",
+            no_data_label,
             np.where(
                 values >= alarm_threshold,
-                "Alarm",
+                alarm_label,
                 np.where(
                     values >= alert_threshold,
-                    "Alert",
-                    "Minimal"
+                    alert_label,
+                    minimal_label
                 )
             )
         )
@@ -112,34 +118,33 @@ def classify_series(values, indicator_value, alarm_threshold, alert_threshold):
 
         return np.where(
             pd.isna(values),
-            "Minimal",
+            minimal_label,
 
             # -----------------------------
             # DROUGHT (lower tail)
             # -----------------------------
             np.where(
                 values <= drought_alarm,
-                "Alarm",
+                alarm_label,
                 np.where(
                     values <= drought_alert,
-                    "Alert",
+                    alert_label,
 
                     # -----------------------------
                     # FLOOD (upper tail)
                     # -----------------------------
                     np.where(
                         values >= flood_alarm,
-                        "Alarm",
+                        alarm_label,
                         np.where(
                             values >= flood_alert,
-                            "Alert",
-                            "Minimal"
+                            alert_label,
+                            minimal_label
                         )
                     )
                 )
             )
         )
-
     # ---------------------------------------------------
     # 2. DEFAULT DIRECTIONAL LOGIC
     # ---------------------------------------------------
@@ -152,44 +157,31 @@ def classify_series(values, indicator_value, alarm_threshold, alert_threshold):
     if direction == "lower":
         return np.where(
             pd.isna(values),
-            "Minimal",  # 🔥 FIX HERE TOO
+            minimal_label,
             np.where(
                 values <= alarm_threshold,
-                "Alarm",
+                alarm_label,
                 np.where(
                     values <= alert_threshold,
-                    "Alert",
-                    "Minimal"
+                    alert_label,
+                    minimal_label
                 )
             )
         )
 
     if direction == "upper":
-
         return np.where(
-
             pd.isna(values),
-
-            "Minimal",  # 🔥 FIX: treat missing as Minimal
-
+            minimal_label,
             np.where(
-
                 values >= alarm_threshold,
-
-                "Alarm",
-
+                alarm_label,
                 np.where(
-
                     values >= alert_threshold,
-
-                    "Alert",
-
-                    "Minimal"
-
+                    alert_label,
+                    minimal_label
                 )
-
             )
-
         )
 
     else:

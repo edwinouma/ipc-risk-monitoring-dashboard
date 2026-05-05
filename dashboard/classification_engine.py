@@ -2,6 +2,13 @@ import pandas as pd
 import numpy as np
 from src.classification_utils import classify_series
 
+from src.config import CLASSIFICATION_LABELS
+
+alarm_label = CLASSIFICATION_LABELS["alarm"]
+alert_label = CLASSIFICATION_LABELS["alert"]
+minimal_label = CLASSIFICATION_LABELS["minimal"]
+no_data_label = CLASSIFICATION_LABELS.get("no_data", "No data")
+
 # ---------------------------------------------------
 # Apply thresholds to unit-month values
 # ---------------------------------------------------
@@ -94,16 +101,16 @@ def apply_thresholds(
         # Classification
         df_combined["classification"] = np.where(
             missing_mask,
-            "Missing",
+            no_data_label,
             np.where(
                 (df_combined["value_events"] >= event_alarm) |
                 (df_combined["value_fatalities"] >= fatal_alarm),
-                "Alarm",
+                alarm_label,
                 np.where(
                     (df_combined["value_events"] >= event_alert) &
                     (df_combined["value_fatalities"] < fatal_alarm),
-                    "Alert",
-                    "Minimal"
+                    alert_label,
+                    minimal_label
                 )
             )
         )
@@ -116,7 +123,7 @@ def apply_thresholds(
             on=["year_month", unit_col],
             how="left"
         )
-        df["classification"] = df["classification"].fillna("No data")
+        df["classification"] = no_data_label
 
         df["indicator"] = "conflict_events"
 
@@ -130,7 +137,7 @@ def apply_thresholds(
         # -----------------------------------------
         valid_mask = df[value_col].notna()
 
-        df["classification"] = "No data"  # default
+        df["classification"] = no_data_label  # default
 
         df.loc[valid_mask, "classification"] = classify_series(
             df.loc[valid_mask, value_col],
@@ -147,7 +154,7 @@ def apply_thresholds(
     if method == "spi_true":
         df["signal_type"] = np.where(
             df[value_col].isna(),
-            "Missing",
+            no_data_label,
             np.where(
                 df[value_col] <= 0,
                 "Drought",
@@ -170,17 +177,17 @@ def apply_thresholds(
     )
 
     # Ensure columns exist
-    for col in ["Alarm", "Alert", "Minimal", "No data"]:
+    for col in [alarm_label, alert_label, minimal_label, no_data_label]:
         if col not in counts.columns:
             counts[col] = 0
 
     # ---------------------------------------------------
     # 5. Percentages (based on fixed total)
     # ---------------------------------------------------
-    counts["Alarm_pct"] = counts["Alarm"] / TOTAL_UNITS * 100
-    counts["Alert_pct"] = counts["Alert"] / TOTAL_UNITS * 100
-    counts["Minimal_pct"] = counts["Minimal"] / TOTAL_UNITS * 100
-    counts["No data_pct"] = counts["No data"] / TOTAL_UNITS * 100
+    counts[f"{alarm_label}_pct"] = counts[alarm_label] / TOTAL_UNITS * 100
+    counts[f"{alert_label}_pct"] = counts[alert_label] / TOTAL_UNITS * 100
+    counts[f"{minimal_label}_pct"] = counts[minimal_label] / TOTAL_UNITS * 100
+    counts[f"{no_data_label}_pct"] = counts[no_data_label] / TOTAL_UNITS * 100
 
     # Convert for plotting
     counts["date"] = counts["year_month"].dt.to_timestamp()

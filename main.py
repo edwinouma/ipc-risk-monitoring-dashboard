@@ -1,6 +1,16 @@
+from src.conflict_hybrid import classify_conflict_row
 from src.config import ADM1_GROUP_MAPPING
 from src.zscore_true import compute_true_zscore
-from src.data_loader import load_rainfall_data, load_price_data, load_conflict_data, load_flood_data
+from src.data_loader import (
+    load_rainfall_data,
+    load_price_data,
+    load_conflict_data,
+    load_flood_data,
+    load_ipc_data   # 🔥 ADD THIS
+)
+
+from src.config import CLASSIFICATION_LABELS
+
 from src.preprocessing import preprocess_data, process_flood_data
 from src.price_monthly import compute_monthly_prices
 from src.ltm_baseline import compute_long_term_monthly_median
@@ -32,6 +42,48 @@ ROBUST_MIN_RETENTION = 40
 
 import streamlit as st
 
+# ---------------------------------------------------
+# IPC MATRIX PREPARATION
+# ---------------------------------------------------
+def prepare_ipc_matrix(df_ipc):
+    import pandas as pd
+
+    if df_ipc is None or df_ipc.empty:
+        return pd.DataFrame()
+
+    df = df_ipc.copy()
+
+    # -----------------------------------------
+    # Short labels for analysis_type
+    # -----------------------------------------
+    df["analysis_short"] = df["analysis_type"].map({
+        "current": "C",
+        "projection 1": "P1",
+        "projection 2": "P2",
+        "projection 2 update":"P2-U"
+    }).fillna(df["analysis_type"])
+
+    # -----------------------------------------
+    # Combine phase + type (KEEP "phase X")
+    # -----------------------------------------
+    df["ipc_combined"] = (
+        df["ipc_phase"] + " (" + df["analysis_short"] + ")"
+    )
+
+    # -----------------------------------------
+    # Pivot → ONE CELL PER UNIT-MONTH
+    # -----------------------------------------
+    ipc_matrix = df.pivot_table(
+        index="adm1_name",
+        columns="year_month",
+        values="ipc_combined",
+        aggfunc=lambda x: " | ".join(sorted(x))
+    )
+
+    # 🔥 ADD THIS (CRITICAL FIX)
+    ipc_matrix = ipc_matrix.fillna("No data")
+
+    return ipc_matrix
 
 @st.cache_data
 def main():
@@ -45,6 +97,7 @@ def main():
     all_prices = []
     all_conflict = []
     all_flood = []
+    all_ipc = []
 
     for country, cfg in COUNTRY_CONFIG.items():
 
@@ -123,6 +176,23 @@ def main():
         else:
             print(f"Flood file not found for {country}")
 
+        # -------------------------
+        # IPC (NEW)
+        # -------------------------
+        ipc_path = cfg.get("ipc_file")
+
+        if ipc_path and os.path.exists(ipc_path):
+
+            df_ipc_country = load_ipc_data(ipc_path)
+            df_ipc_country["country"] = country
+
+            all_ipc.append(df_ipc_country)
+
+            print(f"IPC data for {country} loaded successfully.")
+
+        else:
+            print(f"IPC file not found for {country}")
+
     df_rainfall = pd.concat(all_rainfall, ignore_index=True)
     df_price_raw = pd.concat(all_prices, ignore_index=True)
     df_conflict = (
@@ -133,6 +203,14 @@ def main():
     df_flood = (
         pd.concat(all_flood, ignore_index=True)
         if all_flood else pd.DataFrame()
+    )
+
+    # -------------------------
+    # IPC CONCAT (FINAL FIX)
+    # -------------------------
+    df_ipc = (
+        pd.concat(all_ipc, ignore_index=True)
+        if all_ipc else pd.DataFrame()
     )
 
     df_price_monthly = compute_monthly_prices(df_price_raw)
@@ -272,36 +350,106 @@ def main():
         # ---------------------------------------------------
         # EVENT INDICATORS → NO BASELINE
         # ---------------------------------------------------
-        if method_type == "event":
+        if method_type == "event" and ind not in ["conflict_events", "conflict_fatalities"]:
 
             df_ind["baseline_method"] = "none"
             conflict_datasets.append(df_ind)
 
             print(f"Skipping baseline for {ind} (event-based)")
 
+
         else:
+
+            # ---------------------------------------------------
+
+            # 🔥 FORCE HYBRID FOR CONFLICT (CRITICAL FIX)
+
+            # ---------------------------------------------------
+
+            if ind in ["conflict_events", "conflict_fatalities"]:
+                print(f"Applying hybrid baseline for {ind}")
+
+                df_method = compute_conflict_baseline(
+
+                    method="hybrid",
+
+                    monthly_conflict=df_ind
+
+                )
+
+                conflict_datasets.append(df_method)
+
+                continue  # 🔥 skip normal baseline logic
+
+            # ---------------------------------------------------
+
+            # NORMAL BASELINE LOGIC (UNCHANGED)
+
+            # ---------------------------------------------------
+
             methods = INDICATOR_ALLOWED_BASELINES.get(ind, [])
 
             for method in methods:
 
-                # 🔥 FIX: skip NONE before calling function
+                # 🔥 skip NONE before calling function
+
                 if method.upper() == "NONE":
                     df_copy = df_ind.copy()
+
                     df_copy["baseline_method"] = "none"
+
                     conflict_datasets.append(df_copy)
 
                     print(f"Using raw values for {ind} (NONE)")
+
                     continue
 
                 print(f"Computing {ind} baseline: {method}")
 
                 df_method = compute_conflict_baseline(method, df_ind)
+
                 conflict_datasets.append(df_method)
 
     df_conflict_anom = pd.concat(conflict_datasets, ignore_index=True)
 
+    # ---------------------------------------------------
+    # 🔍 DEBUG: Inspect conflict dataset after concat
+    # ---------------------------------------------------
+
+    print("\n===== DEBUG: df_conflict_anom COLUMNS =====")
+    print(df_conflict_anom.columns.tolist())
+
+    print("\n===== DEBUG: SAMPLE ROWS =====")
+    print(df_conflict_anom.head(10))
+
+    print("\n===== DEBUG: CHECK SIGNAL PRESENCE =====")
+    required_cols = [
+        "yoy_signal",
+        "yoy_ratio",
+        "anomaly_signal",
+        "anomaly_ratio"
+    ]
+
+    for col in required_cols:
+        print(f"{col}: {'✅ EXISTS' if col in df_conflict_anom.columns else '❌ MISSING'}")
+
+    # Optional: export to file for inspection
+    df_conflict_anom.to_excel("outputs/debug_conflict_anom.xlsx", index=False)
+    print("\n✅ Debug file saved: outputs/debug_conflict_anom.xlsx")
+
     df_conflict_standard = df_conflict_anom[
-        ["country", UNIT_COL, "year_month", INDICATOR_COL, VALUE_COL, "baseline_method"]
+        [
+            "country",
+            UNIT_COL,
+            "year_month",
+            INDICATOR_COL,
+            VALUE_COL,
+            "baseline_method",
+            "yoy_signal",
+            "yoy_ratio",
+            "anomaly_signal",
+            "anomaly_ratio"
+        ]
     ].copy()
 
     df_conflict_standard["group"] = df_conflict_standard["adm1_name"].map(ADM1_GROUP_MAPPING)
@@ -460,11 +608,15 @@ def main():
                 # -----------------------------------------
                 if "baseline_method" in df_indicator.columns:
 
-                    if method_type == "spi_true":
-                        # SPI always uses raw values
+                    # 🔥 DO NOT FILTER CONFLICT (CRITICAL FIX)
+                    if ind in ["conflict_events", "conflict_fatalities"]:
+                        pass
+
+                    elif method_type == "spi_true":
                         df_indicator = df_indicator[
                             df_indicator["baseline_method"] == "none"
                             ]
+
                     else:
                         df_indicator = df_indicator[
                             df_indicator["baseline_method"] == baseline_method
@@ -511,6 +663,31 @@ def main():
                         indicator_value=ind,
                         aggregation="mean"
                     )
+
+                    # ---------------------------------------------------
+                    # 🔥 MERGE HYBRID SIGNALS INTO UNIT-MONTH (CRITICAL)
+                    # ---------------------------------------------------
+                    signal_cols = [
+                        "adm1_name",
+                        "year_month",
+                        "baseline_method",
+                        "yoy_signal",
+                        "yoy_ratio",
+                        "anomaly_signal",
+                        "anomaly_ratio"
+                    ]
+
+                    available_cols = [col for col in signal_cols if col in df_indicator.columns]
+
+                    if len(available_cols) > 3:  # ensure signals exist
+
+                        df_signals = df_indicator[available_cols].drop_duplicates()
+
+                        unit_month = unit_month.merge(
+                            df_signals,
+                            on=["adm1_name", "year_month", "baseline_method"],
+                            how="left"
+                        )
 
                     # -----------------------------------------
                     # 🔥 MERGE Z-SCORE AT UNIT-MONTH LEVEL
@@ -841,6 +1018,28 @@ def main():
         ignore_index=True
     ) if any(not df.empty for df in all_unit_month_values) else pd.DataFrame()
 
+    # ---------------------------------------------------
+    # 🔍 DEBUG: CHECK UNIT MONTH CONTENT (CONFLICT)
+    # ---------------------------------------------------
+    print("\n===== DEBUG: UNIT MONTH CHECK =====")
+
+    df_debug = final_unit_month.copy()
+
+    print("\n--- Conflict sample ---")
+    print(
+        df_debug[
+            df_debug["indicator"].isin(["conflict_events", "conflict_fatalities"])
+        ].head(10)
+    )
+
+    print("\n--- Available columns ---")
+    print(df_debug.columns.tolist())
+
+    # ---------------------------------------------------
+    # IPC MATRIX (NEW)
+    # ---------------------------------------------------
+    ipc_matrix = prepare_ipc_matrix(df_ipc)
+
     final_unit_month["group"] = final_unit_month["adm1_name"].map(ADM1_GROUP_MAPPING)
     final_unit_month["group"] = final_unit_month["group"].fillna("Unknown")
 
@@ -1102,6 +1301,50 @@ def main():
         else:
             value_col_classification = VALUE_COL
 
+        # ---------------------------------------------------
+        # 🔥 CUSTOM CONFLICT CLASSIFICATION (NEW)
+        # ---------------------------------------------------
+        if ind in ["conflict_events", "conflict_fatalities"]:
+            print(f"Applying hybrid classification for: {ind}")
+
+            df_matrix_conflict = final_unit_month[
+                final_unit_month["indicator"] == ind
+                ].copy()
+
+            # 🔥 Apply selected method (categorical / hybrid / percentile)
+            selected_method = INDICATOR_METHOD.get(ind, "categorical")
+
+            df_matrix_conflict["classification"] = df_matrix_conflict.apply(
+                lambda row: classify_conflict_row(
+                    row,
+                    indicator=ind,
+                    method=selected_method
+                ),
+                axis=1
+            )
+
+            df_matrix_conflict["classification_label"] = (
+                df_matrix_conflict["classification"]
+                .map(CLASSIFICATION_LABELS)
+            )
+
+            # Pivot to matrix format
+            matrix_conflict = df_matrix_conflict.pivot_table(
+                index="adm1_name",
+                columns="year_month",
+                values="classification_label",
+                aggfunc="first"
+            )
+
+            safe_name = ind.replace(" ", "_")
+
+            export_colored_classification_matrix(
+                matrix_conflict,
+                f"outputs/{safe_name}_{selected_method}_classification_matrix.xlsx"
+            )
+
+            continue  # 🔥 VERY IMPORTANT (skip normal logic)
+
         matrix_percentile = compute_unit_month_classification_matrix(
             df=df_matrix,
             unit_col=UNIT_COL,
@@ -1151,6 +1394,17 @@ def main():
 
     print(f"\nPipeline completed in {round(time.time() - start_time, 2)} seconds.")
 
+    # -----------------------------------------
+    # RETURN OUTPUTS (🔥 ADD THIS)
+    # -----------------------------------------
+    ipc_matrix.to_csv("outputs/ipc_matrix.csv")
+
+    return {
+        "thresholds": final_thresholds,
+        "unit_month": final_unit_month,
+        "trigger_counts": final_trigger_counts,
+        "ipc_matrix": ipc_matrix
+    }
 
 if __name__ == "__main__":
     main()

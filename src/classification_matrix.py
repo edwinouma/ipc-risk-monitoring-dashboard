@@ -1,7 +1,7 @@
 import pandas as pd
 from src.unit_month import compute_unit_month_values
 from src.classification_utils import classify_series
-
+from src.config import CLASSIFICATION_LABELS
 def compute_unit_month_classification_matrix(
     df,
     unit_col,
@@ -76,7 +76,11 @@ def compute_unit_month_classification_matrix(
 
     valid_mask = df_unit_month[value_col].notna()
 
-    df_unit_month["classification"] = "No data"
+    NO_DATA_LABEL = CLASSIFICATION_LABELS.get("no_data", "No data")
+    alarm_label = CLASSIFICATION_LABELS["alarm"]
+    alert_label = CLASSIFICATION_LABELS["alert"]
+
+    df_unit_month["classification"] = NO_DATA_LABEL
 
     df_unit_month.loc[valid_mask, "classification"] = classify_series(
         df_unit_month.loc[valid_mask, value_col],
@@ -114,7 +118,7 @@ def compute_unit_month_classification_matrix(
     # ---------------------------------------------------
     # 9. Replace NaNs
     # ---------------------------------------------------
-    matrix = matrix.fillna("No data")
+    matrix = matrix.fillna(NO_DATA_LABEL)
 
     # ---------------------------------------------------
     # 10. Structural proportions (based ONLY on visible months)
@@ -123,8 +127,8 @@ def compute_unit_month_classification_matrix(
 
         total_months = len(month_order)
 
-        alarm_pct = (matrix == "Alarm").sum(axis=1) / total_months * 100
-        alert_pct = (matrix == "Alert").sum(axis=1) / total_months * 100
+        alarm_pct = (matrix == alarm_label).sum(axis=1) / total_months * 100
+        alert_pct = (matrix == alert_label).sum(axis=1) / total_months * 100
         sum_pct = alarm_pct + alert_pct
 
         matrix["% Alarm"] = alarm_pct.round(0).astype(int).astype(str) + "%"

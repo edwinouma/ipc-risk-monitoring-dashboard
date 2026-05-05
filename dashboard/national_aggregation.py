@@ -1,4 +1,10 @@
 import pandas as pd
+from src.config import CLASSIFICATION_LABELS
+
+alarm_label = CLASSIFICATION_LABELS["alarm"]
+alert_label = CLASSIFICATION_LABELS["alert"]
+minimal_label = CLASSIFICATION_LABELS["minimal"]
+no_data_label = CLASSIFICATION_LABELS.get("no_data", "No data")
 
 
 # ---------------------------------------------------
@@ -10,24 +16,6 @@ def aggregate_national(
 ):
     """
     Aggregate classification results to national level.
-
-    Input:
-        classified_df (output of apply_thresholds)
-        Must contain:
-            - year_month
-            - classification
-            - unit_col
-
-    Output:
-        DataFrame with:
-            - year_month
-            - Alarm
-            - Alert
-            - Minimal
-            - Alarm_pct
-            - Alert_pct
-            - Minimal_pct
-            - date
     """
 
     # ---------------------------------------------------
@@ -47,16 +35,17 @@ def aggregate_national(
     )
 
     # Ensure all columns exist
-    for col in ["Alarm", "Alert", "Minimal"]:
+    for col in [alarm_label, alert_label, minimal_label, no_data_label]:
         if col not in counts.columns:
             counts[col] = 0
 
     # ---------------------------------------------------
     # 3. Compute percentages (fixed denominator)
     # ---------------------------------------------------
-    counts["Alarm_pct"] = counts["Alarm"] / total_units * 100
-    counts["Alert_pct"] = counts["Alert"] / total_units * 100
-    counts["Minimal_pct"] = counts["Minimal"] / total_units * 100
+    counts[f"{alarm_label}_pct"] = counts[alarm_label] / total_units * 100
+    counts[f"{alert_label}_pct"] = counts[alert_label] / total_units * 100
+    counts[f"{minimal_label}_pct"] = counts[minimal_label] / total_units * 100
+    counts[f"{no_data_label}_pct"] = counts[no_data_label] / total_units * 100
 
     # ---------------------------------------------------
     # 4. Add timestamp column

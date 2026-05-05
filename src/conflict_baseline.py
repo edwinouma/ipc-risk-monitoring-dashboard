@@ -1,4 +1,5 @@
 import pandas as pd
+from src.config import UNIT_COL, INDICATOR_COL
 
 from src.conflict_rolling_anomaly import compute_conflict_rolling_anomaly
 from src.conflict_yoy_abs import compute_conflict_yoy_abs
@@ -6,22 +7,64 @@ from src.conflict_yoy_abs import compute_conflict_yoy_abs
 
 def compute_conflict_baseline(method, monthly_conflict):
 
-    # Normalize method (safety)
-    method = method.upper()
+    df_list = []
 
-    if method == "ROLLING_MEAN_6":
-        df = compute_conflict_rolling_anomaly(monthly_conflict)
+    # 🔥 DYNAMIC INDICATORS (CRITICAL FIX)
+    indicators = monthly_conflict["indicator"].dropna().unique()
 
-    elif method == "YOY_ABS":
-        df = compute_conflict_yoy_abs(monthly_conflict)
+    print("\n--- DEBUG: AVAILABLE INDICATORS ---")
+    print(indicators)
 
-    else:
-        raise ValueError(
-            f"Unknown conflict baseline method: {method}. "
-            f"Allowed: ROLLING_MEAN_6, YOY_ABS"
+    for indicator in indicators:
+
+        df_ind = monthly_conflict[
+            monthly_conflict["indicator"] == indicator
+        ].copy()
+
+        # 🔥 DEBUG INSIDE LOOP
+        print(f"\nProcessing indicator: {indicator}")
+        print(f"Shape: {df_ind.shape}")
+
+        # 🔥 SKIP EMPTY (CRITICAL)
+        if df_ind.empty:
+            print(f"⚠️ Skipping {indicator} (no data)")
+            continue
+
+        df_yoy = compute_conflict_yoy_abs(df_ind)
+        df_roll = compute_conflict_rolling_anomaly(df_ind)
+
+        # 🔥 HANDLE EMPTY ROLLING OUTPUT
+        if df_roll.empty:
+            print(f"⚠️ Rolling output empty for {indicator}")
+            continue
+
+        # 🔥 SAFE MERGE
+        df = df_yoy.merge(
+            df_roll[
+                [
+                    UNIT_COL,
+                    INDICATOR_COL,
+                    "year_month",
+                    "rolling_mean_6",
+                    "anomaly_signal",
+                    "anomaly_ratio"
+                ]
+            ],
+            on=[UNIT_COL, INDICATOR_COL, "year_month"],
+            how="left"
         )
 
-    # Ensure label consistency (in case transformation didn't set it)
-    df["baseline_method"] = method
+        # Ensure signal exists
+        df["yoy_signal"] = df["conflict_yoy_abs"]
 
-    return df
+        df["indicator"] = indicator
+        df["baseline_method"] = method
+
+        df_list.append(df)
+
+    # 🔥 FINAL PROTECTION
+    if not df_list:
+        print("❌ No conflict data processed — returning empty dataframe")
+        return pd.DataFrame()
+
+    return pd.concat(df_list, ignore_index=True)

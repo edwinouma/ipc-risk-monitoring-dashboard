@@ -81,8 +81,14 @@ def recalculate_thresholds(
     else:
         # Upper = worse (prices)
         # 🔥 Reverse interpretation
-        composite_alarm = spatial["alert_q"].median()
-        composite_alert = spatial["alarm_q"].median()
+        composite_alarm = spatial["alarm_q"].median()
+        composite_alert = spatial["alert_q"].median()
+
+    if direction == "upper":
+        # Ensure alarm is more extreme than alert
+        composite_alarm, composite_alert = max(composite_alarm, composite_alert), min(composite_alarm, composite_alert)
+    else:
+        composite_alarm, composite_alert = min(composite_alarm, composite_alert), max(composite_alarm, composite_alert)
 
     # ---------------------------------------------------
     # 5. Tukey thresholds (UNCHANGED)

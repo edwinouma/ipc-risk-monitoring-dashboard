@@ -1,11 +1,63 @@
 import sys
 import os
-# Ensure project root is accessible (so src imports work)
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# 🔥 FIX: Add project root to Python path BEFORE imports
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+)
+
+# NOW imports will work
+from src.config import IPC_PHASE_COLORS
+from src.config import CLASSIFICATION_LABELS
+import numpy as np
+from src.conflict_hybrid import classify_conflict_row
+from src.indicator_insights import generate_indicator_insights
+
+alarm_label = CLASSIFICATION_LABELS["alarm"]
+alert_label = CLASSIFICATION_LABELS["alert"]
+minimal_label = CLASSIFICATION_LABELS["minimal"]
+no_data_label = CLASSIFICATION_LABELS.get("no_data", "No data")
+
+alarm_pct_col = f"{alarm_label}_pct"
+alert_pct_col = f"{alert_label}_pct"
+minimal_pct_col = f"{minimal_label}_pct"
+no_data_pct_col = f"{no_data_label}_pct"
 
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+from classification_engine import apply_thresholds
+from spatial_recalculation import recalculate_thresholds
+from src.classification_matrix import compute_unit_month_classification_matrix
+from src.config import (
+    INDICATOR_DIRECTION,
+    PRICE_INDICATORS,
+    CLIMATE_INDICATORS,
+    BASELINE_METHODS,
+    COUNTRY_CONFIG,
+    SEASONAL_DEFINITIONS,
+    DEFAULT_BASELINE,
+    INDICATOR_ALLOWED_BASELINES,
+    INDICATOR_ALLOWED_METHODS,   # 🔥 ADD THIS
+    EVENT_THRESHOLDS,
+    METHOD_DESCRIPTIONS,
+    DEFAULT_METHOD_DESCRIPTIONS,
+    SPI_TRUE_THRESHOLDS,
+    FLOOD_INDICATORS,
+    SHOCK_INDICATORS
+)
+from src.event_loader import load_reference_events, get_reference_events
+
+from threshold_storage import (
+    load_default_thresholds,
+    get_active_thresholds,
+    save_override,
+    reset_override
+)
+
+@st.cache_data
+def cached_apply_thresholds(df_hash, df, units, alarm, alert, indicator):
+    return apply_thresholds(df, units, alarm, alert, indicator)
 
 def get_percentile_explanation(indicator, alert_pct, alarm_pct):
     direction = INDICATOR_DIRECTION.get(indicator, "lower")
@@ -51,38 +103,8 @@ def get_method_description(indicator, method):
         "No description available."
     )
 
-from threshold_storage import (
-    load_default_thresholds,
-    get_active_thresholds,
-    save_override,
-    reset_override
-)
-
-from classification_engine import apply_thresholds
-from spatial_recalculation import recalculate_thresholds
-from src.classification_matrix import compute_unit_month_classification_matrix
-from src.config import (
-    INDICATOR_DIRECTION,
-    PRICE_INDICATORS,
-    CLIMATE_INDICATORS,
-    BASELINE_METHODS,
-    COUNTRY_CONFIG,
-    SEASONAL_DEFINITIONS,
-    DEFAULT_BASELINE,
-    INDICATOR_ALLOWED_BASELINES,
-    INDICATOR_ALLOWED_METHODS,   # 🔥 ADD THIS
-    EVENT_THRESHOLDS,
-    METHOD_DESCRIPTIONS,
-    DEFAULT_METHOD_DESCRIPTIONS,
-    SPI_TRUE_THRESHOLDS,
-    FLOOD_INDICATORS,
-    SHOCK_INDICATORS
-)
-from src.event_loader import load_reference_events, get_reference_events
-
 @st.cache_data
-def cached_classification_matrix(df, indicator, alarm, alert, units, start, end, unit_col):
-
+def cached_classification_matrix(df, indicator, alarm, alert, units_tuple, start, end, unit_col):
     return compute_unit_month_classification_matrix(
         df=df,
         unit_col=unit_col,
@@ -91,11 +113,54 @@ def cached_classification_matrix(df, indicator, alarm, alert, units, start, end,
         indicator_value=indicator,
         alarm_threshold=alarm,
         alert_threshold=alert,
-        selected_units=units,
+        selected_units=list(units_tuple),   # convert back to list for the function
         start_date=start,
         end_date=end,
         add_proportions=True
     )
+
+
+# UP TOP, after your other @st.cache_data functions:
+
+@st.cache_data
+def cached_style_matrix(df_hash, matrix, selected_season_months_tuple):
+    selected_season_months = list(selected_season_months_tuple)
+
+    month_name_to_number = {
+        "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
+        "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
+        "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+    }
+
+    def _style_col(col):
+        col_name = str(col.name).replace("⚠", "").strip()
+        parts = col_name.split()
+        month_abbrev = parts[-1] if len(parts) > 1 else None
+        month_num = month_name_to_number.get(month_abbrev)
+
+        styled_col = []
+        for val in col:
+            if "%" in str(val):
+                styled_col.append("background-color: #2b2b2b; color: white; font-weight: bold")
+                continue
+            in_season = month_num in selected_season_months if month_num is not None else True
+            if val == alarm_label:
+                styled_col.append(
+                    "background-color: red; color: white" if in_season else "background-color: #ff9999; color: black")
+            elif val == alert_label:
+                styled_col.append(
+                    "background-color: orange; color: black" if in_season else "background-color: #ffd699; color: black")
+            elif val == no_data_label:
+                styled_col.append("background-color: gray; color: white")
+            elif val == minimal_label:
+                styled_col.append(
+                    "background-color: green; color: white" if in_season else "background-color: #a6e3a1; color: black")
+            else:
+                styled_col.append("")
+        return styled_col
+
+    return [_style_col(matrix[col]) for col in matrix.columns]
+
 
 # ---------------------------------------------------
 # Page Config
@@ -130,6 +195,10 @@ def cached_events():
 events_df = cached_events()
 
 @st.cache_data
+def cached_get_reference_events(events_df_hash, country, indicator_type):
+    return get_reference_events(events_df, country, indicator_type)
+
+@st.cache_data
 def load_thresholds_file():
     path = "outputs/thresholds_results.csv"
     if not os.path.exists(path):
@@ -139,6 +208,29 @@ def load_thresholds_file():
 
 df_unit_month = load_unit_month()
 df_thresholds_file = load_thresholds_file()
+
+# -----------------------------------------
+# LOAD IPC MATRIX (LIGHTWEIGHT)
+# -----------------------------------------
+@st.cache_data
+def load_ipc_matrix():
+    path = "outputs/ipc_matrix.csv"
+
+    if not os.path.exists(path):
+        st.error("Run main.py first to generate IPC matrix.")
+        st.stop()
+
+    df = pd.read_csv(path, index_col=0)
+
+    # Convert columns back to Period[M]
+    period_cols = pd.to_datetime(df.columns).to_period("M")
+
+    # Convert to "YYYY Mon" format (matches signal matrix)
+    df.columns = [p.strftime("%Y %b") for p in period_cols]
+
+    return df
+
+ipc_matrix_full = load_ipc_matrix()
 
 # ---------------------------------------------------
 # Sidebar Controls
@@ -405,30 +497,52 @@ show_events = st.sidebar.checkbox(
     value=True
 )
 
+# Determine indicator_type once for the whole page
+if indicator in PRICE_INDICATORS:
+    indicator_type = "price"
+elif indicator in CLIMATE_INDICATORS:
+    indicator_type = "climate"
+elif indicator in FLOOD_INDICATORS:
+    indicator_type = "climate"
+elif indicator in SHOCK_INDICATORS:
+    indicator_type = "shock"
+else:
+    indicator_type = "price"
+
+# Fetch events once here — reused everywhere below
+events = cached_get_reference_events(
+    len(events_df),
+    selected_country,
+    indicator_type
+)
+
 # ---------------------------------------------------
 # Filter Indicator Data
 # ---------------------------------------------------
-df_filtered = country_df[
-    country_df["indicator"] == indicator
-].copy()
+@st.cache_data
+def get_filtered_df(df, country, indicator, baseline_method, method):
+    result = df[
+        (df["country"] == country) &
+        (df["indicator"] == indicator)
+    ].copy()
 
-# -----------------------------------------
-# 🔥 USE Z-SCORE VALUES FOR ZSCORE_TRUE
-# -----------------------------------------
-if method == "zscore_true":
-    if "value_zscore" not in df_filtered.columns:
-        st.error("Z-score values not found.")
-        st.stop()
+    if method == "zscore_true" and "value_zscore" in result.columns:
+        result.loc[:, "value"] = result["value_zscore"]
 
-    df_filtered.loc[:, "value"] = df_filtered["value_zscore"]
+    # 🔥 DO NOT FILTER CONFLICT BASELINE
+    if baseline_method is not None and "baseline_method" in result.columns:
+        if indicator not in ["conflict_events", "conflict_fatalities"]:
+            result = result[result["baseline_method"] == baseline_method]
 
+    return result
 
-# Apply baseline filter only for price indicators
-if baseline_method is not None and "baseline_method" in df_filtered.columns:
-
-    df_filtered = df_filtered[
-        df_filtered["baseline_method"] == baseline_method
-    ]
+df_filtered = get_filtered_df(
+    df_unit_month,
+    selected_country,
+    indicator,
+    baseline_method,
+    method
+)
 
 # 🔥 USER OVERRIDE CONTROL
 user_override_active = False
@@ -596,16 +710,17 @@ else:
             alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
 
 
+
     else:
 
-        if not user_override_active:
+        if not user_override_active and method != "hybrid":
             alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
 
 # ---------------------------------------------------
 # Dynamic Threshold Recalculation (Selected Units)
 # ---------------------------------------------------
 
-if baseline_mode == "Dynamic (Selected Units)" and len(selected_units) > 0:
+if method not in ["spi_true"] and baseline_mode == "Dynamic (Selected Units)" and len(selected_units) > 0:
 
     # Only recompute if subset of provinces selected
     if len(selected_units) < len(all_units):
@@ -676,7 +791,10 @@ row2_col1, row2_col2 = st.columns([1, 1])
 # 🔥 SAFETY DEFAULT (FIX NameError)
 # ---------------------------------------------------
 if "alarm_threshold" not in locals():
-    alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
+    if method != "hybrid":
+        alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
+    else:
+        alarm_threshold, alert_threshold = None, None
 
 # -----------------------------------------
 # SPI DISPLAY FIX (UI ONLY)
@@ -688,7 +806,32 @@ if method == "spi_true" and spi_mode == "Flood":
     display_alarm = abs(alarm_threshold)
     display_alert = abs(alert_threshold)
 
+# 🔥 SAFE DISPLAY (FIX FOR HYBRID)  ← ADD HERE
+if method == "hybrid":
+    display_alarm = 0
+    display_alert = 0
+
 # controls continue ALWAYS
+
+# -----------------------------------------
+# 🔥 RESET PERCENTILES WHEN CONTEXT CHANGES
+# -----------------------------------------
+current_context = (indicator, method)
+
+if "last_context" not in st.session_state:
+    st.session_state["last_context"] = current_context
+
+if st.session_state["last_context"] != current_context:
+    direction = INDICATOR_DIRECTION.get(indicator, "lower")
+
+    if direction == "lower":
+        st.session_state["alarm_pct"] = 25
+        st.session_state["alert_pct"] = 50
+    else:
+        st.session_state["alarm_pct"] = 75
+        st.session_state["alert_pct"] = 50
+
+    st.session_state["last_context"] = current_context
 
 # -----------------------------------------
 # NEW: Percentile inputs (direction-aware defaults)
@@ -854,62 +997,144 @@ else:
         alarm_threshold = user_alarm
         alert_threshold = user_alert
 
-# ---------------------------------------------------
-# Apply Classification (Season-Aware Only When Needed)
-# ---------------------------------------------------
+    # 🔥 Mark SPI as user override (CRITICAL FIX)
+    if method == "spi_true":
+        user_override_active = True
 
+# ---------------------------------------------------
+# 🔥 DEFINE UNITS FOR CALCULATION (FIX)
+# ---------------------------------------------------
 units_for_calc = all_units if view_mode == "National (all units)" else selected_units
 
-if season_scope == "All Months":
+# 🔥 HYBRID CLASSIFICATION (CONFLICT ONLY)
+# ---------------------------------------------------
+if method == "hybrid" and indicator in ["conflict_events", "conflict_fatalities"]:
 
-    classified_df, counts = apply_thresholds(
-        df_filtered,
-        units_for_calc,
-        alarm_threshold,
-        alert_threshold,
-        indicator
+    st.info("Using hybrid classification (level + trend + anomaly)")
+
+    df_hybrid = df_filtered.copy()
+
+    df_hybrid["classification"] = df_hybrid.apply(
+        lambda row: classify_conflict_row(
+            row,
+            indicator=indicator,
+            method="hybrid"
+        ),
+        axis=1
     )
 
+    # ---------------------------------------------------
+    # 🔥 FULL GRID FIX (CRITICAL)
+    # ---------------------------------------------------
+
+    # Build full unit × month grid
+    all_months = pd.period_range(
+        df_hybrid["year_month"].min(),
+        df_hybrid["year_month"].max(),
+        freq="M"
+    )
+
+    full_index = pd.MultiIndex.from_product(
+        [units_for_calc, all_months],
+        names=[unit_col, "year_month"]
+    )
+
+    full_df = (
+        df_hybrid
+        .set_index([unit_col, "year_month"])
+        .reindex(full_index)
+        .reset_index()
+    )
+
+    # Fill missing classifications as "No data"
+    full_df["classification"] = full_df["classification"].fillna("no_data")
+
+    # Map labels AFTER filling
+    full_df["classification_label"] = full_df["classification"].map(CLASSIFICATION_LABELS)
+
+    # ---------------------------------------------------
+    # 🔥 NOW compute counts
+    # ---------------------------------------------------
+    counts = (
+        full_df.groupby(["year_month", "classification_label"])
+        .size()
+        .unstack(fill_value=0)
+        .reset_index()
+    )
+
+    # Ensure all columns exist
+    for col in [alarm_label, alert_label, minimal_label, no_data_label]:
+        if col not in counts.columns:
+            counts[col] = 0
+
+    counts["date"] = counts["year_month"].dt.to_timestamp()
+
+    # Correct proportions
+    counts[alarm_pct_col] = counts[alarm_label] / len(units_for_calc) * 100
+    counts[alert_pct_col] = counts[alert_label] / len(units_for_calc) * 100
+    counts[minimal_pct_col] = counts[minimal_label] / len(units_for_calc) * 100
+    counts[no_data_pct_col] = counts[no_data_label] / len(units_for_calc) * 100
+
+    classified_df = df_hybrid.copy()
+
+# ---------------------------------------------------
+# 🟢 NORMAL METHODS (ONLY RUN IF NOT HYBRID)
+# ---------------------------------------------------
 else:
 
-    planting_alarm, planting_alert = get_season_thresholds("Planting (Mar–Jun)")
-    off_alarm, off_alert = get_season_thresholds("Off-Season (Jul–Feb)")
+    units_for_calc = all_units if view_mode == "National (all units)" else selected_units
 
-    # Run both classifications
-    classified_planting, counts_planting = apply_thresholds(
-        df_filtered,
-        units_for_calc,
-        planting_alarm,
-        planting_alert,
-        indicator
-    )
+    if season_scope == "All Months":
 
-    classified_off, counts_off = apply_thresholds(
-        df_filtered,
-        units_for_calc,
-        off_alarm,
-        off_alert,
-        indicator
-    )
+        classified_df, counts = cached_apply_thresholds(
+            df_filtered["value"].sum(),
+            df_filtered,
+            tuple(sorted(units_for_calc)),
+            round(alarm_threshold, 6),
+            round(alert_threshold, 6),
+            indicator
+        )
 
-    counts_planting["Month"] = counts_planting["date"].dt.month
-    counts_off["Month"] = counts_off["date"].dt.month
+    else:
 
-    counts = counts_planting.copy()
+        planting_alarm, planting_alert = get_season_thresholds("Planting (Mar–Jun)")
+        off_alarm, off_alert = get_season_thresholds("Off-Season (Jul–Feb)")
 
-    for idx, row in counts.iterrows():
-        month = row["Month"]
+        # Run both classifications
+        classified_planting, counts_planting = apply_thresholds(
+            df_filtered,
+            units_for_calc,
+            planting_alarm,
+            planting_alert,
+            indicator
+        )
 
-        # If month belongs to off-season, replace with off-season result
-        if month not in [3, 4, 5, 6]:
-            match = counts_off[counts_off["date"] == row["date"]]
-            if not match.empty:
-                counts.loc[idx, ["Alarm","Alert","Minimal",
-                                 "Alarm_pct","Alert_pct","Minimal_pct"]] = \
-                    match[["Alarm","Alert","Minimal",
-                           "Alarm_pct","Alert_pct","Minimal_pct"]].values[0]
+        classified_off, counts_off = apply_thresholds(
+            df_filtered,
+            units_for_calc,
+            off_alarm,
+            off_alert,
+            indicator
+        )
 
-    classified_df = classified_planting
+        counts_planting["Month"] = counts_planting["date"].dt.month
+        counts_off["Month"] = counts_off["date"].dt.month
+
+        counts = counts_planting.copy()
+
+        for idx, row in counts.iterrows():
+            month = row["Month"]
+
+            # If month belongs to off-season, replace with off-season result
+            if month not in [3, 4, 5, 6]:
+                match = counts_off[counts_off["date"] == row["date"]]
+                if not match.empty:
+                    counts.loc[idx, [alarm_label, alert_label, minimal_label,
+                                     f"{alarm_label}_pct", f"{alert_label}_pct", f"{minimal_label}_pct"]] = \
+                        match[[alarm_label, alert_label, minimal_label,
+                               f"{alarm_label}_pct", f"{alert_label}_pct", f"{minimal_label}_pct"]].values[0]
+
+        classified_df = classified_planting
 
 # ---------------------------------------------------
 # APPLY SPI DISPLAY LOGIC (SAFE FIX)
@@ -922,13 +1147,13 @@ if method == "spi_true" and spi_mode != "Both":
         classified_df.loc[
             classified_df["signal_type"] == "Flood",
             "classification"
-        ] = "Minimal"
+        ] = minimal_label
 
     elif spi_mode == "Flood":
         classified_df.loc[
             classified_df["signal_type"] == "Drought",
             "classification"
-        ] = "Minimal"
+        ] = minimal_label
 
     # ---------------------------------------------------
     # 🔥 FULL GRID COUNTS (FIX FOR NO DATA)
@@ -954,7 +1179,7 @@ if method == "spi_true" and spi_mode != "Both":
     )
 
     # Fill missing classifications as "No data"
-    full_df["classification"] = full_df["classification"].fillna("No data")
+    full_df["classification"] = full_df["classification"].fillna(no_data_label)
 
     # Now compute counts
     counts = (
@@ -964,14 +1189,14 @@ if method == "spi_true" and spi_mode != "Both":
         .reset_index()
     )
 
-    for col in ["Alarm", "Alert", "Minimal", "No data"]:
+    for col in [alarm_label, alert_label, minimal_label, no_data_label]:
         if col not in counts.columns:
             counts[col] = 0
 
-    counts["Alarm_pct"] = counts["Alarm"] / len(units_for_calc) * 100
-    counts["Alert_pct"] = counts["Alert"] / len(units_for_calc) * 100
-    counts["Minimal_pct"] = counts["Minimal"] / len(units_for_calc) * 100
-    counts["No data_pct"] = counts["No data"] / len(units_for_calc) * 100
+    counts[alarm_pct_col] = counts[alarm_label] / len(units_for_calc) * 100
+    counts[alert_pct_col] = counts[alert_label] / len(units_for_calc) * 100
+    counts[minimal_pct_col] = counts[minimal_label] / len(units_for_calc) * 100
+    counts[no_data_pct_col] = counts[no_data_label] / len(units_for_calc) * 100
 
     counts["date"] = counts["year_month"].dt.to_timestamp()
 
@@ -1002,6 +1227,38 @@ counts = counts[
     (counts["date"] >= start_date) &
     (counts["date"] <= end_date)
 ]
+
+# -----------------------------------------
+# FILTER + ALIGN IPC MATRIX (FINAL CLEAN)
+# -----------------------------------------
+ipc_matrix = ipc_matrix_full.copy()
+
+if not ipc_matrix.empty:
+
+    # Filter units
+    if view_mode == "National (all units)":
+        units_for_ipc = all_units
+    else:
+        units_for_ipc = selected_units
+
+    ipc_matrix = ipc_matrix.loc[
+        ipc_matrix.index.intersection(units_for_ipc)
+    ]
+
+    # 🔥 Build FULL timeline directly from slider
+    full_period_range = pd.period_range(
+        start=start_date.to_period("M"),
+        end=end_date.to_period("M"),
+        freq="M"
+    )
+
+    formatted_range = [p.strftime("%Y %b") for p in full_period_range]
+
+    # 🔥 Align + fill missing
+    ipc_matrix = ipc_matrix.reindex(
+        columns=formatted_range,
+        fill_value=no_data_label
+    )
 
 # ---------------------------------------------------
 # Structural Summary Panel (FULLY PRESERVED)
@@ -1036,8 +1293,9 @@ else:
         matrix_input_df = matrix_input_df.copy()
 
         # Create signal_type (same logic as classified_df)
-        matrix_input_df["signal_type"] = matrix_input_df["value"].apply(
-            lambda x: "Drought" if x <= 0 else "Flood"
+
+        matrix_input_df["signal_type"] = np.where(
+            matrix_input_df["value"] <= 0, "Drought", "Flood"
         )
 
         if spi_mode == "Drought":
@@ -1053,17 +1311,53 @@ else:
                 "value"
             ] = 0
 
-    # Use matrix_input_df instead of df_filtered
-    matrix_summary = cached_classification_matrix(
-        matrix_input_df,
-        indicator,
-        alarm_threshold,
-        alert_threshold,
-        units_for_calc,
-        start_date,
-        end_date,
-        unit_col
-    )
+    # ---------------------------------------------------
+    # 🔥 USE HYBRID MATRIX WHEN METHOD = HYBRID
+    # ---------------------------------------------------
+    if method == "hybrid" and indicator in ["conflict_events", "conflict_fatalities"]:
+
+        # Use the SAME full_df from hybrid logic
+        df_matrix_conflict = full_df.copy()
+
+        # Pivot directly
+        matrix_summary = df_matrix_conflict.pivot_table(
+            index=unit_col,
+            columns="year_month",
+            values="classification_label",
+            aggfunc="first"
+        )
+
+        # Convert to same format expected downstream
+        matrix_summary = matrix_summary.fillna(no_data_label)
+
+        # Format column names to match display
+        matrix_summary.columns = [
+            col.strftime("%Y %b") if hasattr(col, "strftime") else col
+            for col in matrix_summary.columns
+        ]
+
+    else:
+
+        # ORIGINAL LOGIC
+        matrix_summary = cached_classification_matrix(
+            matrix_input_df,
+            indicator,
+            alarm_threshold,
+            alert_threshold,
+            tuple(sorted(units_for_calc)),
+            start_date,
+            end_date,
+            unit_col
+        )
+
+# ---------------------------------------------------
+# 🔥 HANDLE HYBRID (NO SUMMARY METRICS)
+# ---------------------------------------------------
+if method == "hybrid" and indicator in ["conflict_events", "conflict_fatalities"]:
+
+    st.info("Summary metrics are not computed for hybrid method (non-threshold-based).")
+
+else:
 
     if matrix_summary.empty or "% Alarm" not in matrix_summary.columns:
         st.warning("Insufficient data to compute proportions.")
@@ -1252,13 +1546,13 @@ else:
                 "Monthly % Retained Range",
                 "Warning Frequency (range across all units)"
             ],
-            "Alarm": [
+            alarm_label: [
                 f"{round(display_alarm, 2)}",
                 overall_display,
                 proportion_range,
                 f"{int(alarm_min)}% - {int(alarm_max)}%"
             ],
-            "Alert": [
+            alert_label: [
                 f"{round(display_alert, 2)}",
                 overall_display,
                 proportion_range,
@@ -1286,8 +1580,8 @@ else:
         def highlight_rows(row):
             if row["Metric"] in ["Data Points Used (Filtered)", "Monthly % Retained Range"]:
                 return ["",
-                        retention_color(row["Alarm"]),
-                        retention_color(row["Alert"])]
+                        retention_color(row[alarm_label]),
+                        retention_color(row[alert_label])]
             return ["", "", ""]
 
         styled_summary = summary_df.style.apply(highlight_rows, axis=1)
@@ -1299,6 +1593,48 @@ else:
                 "Threshold stability may be affected."
             )
 
+# ---------------------------------------------------
+# Indicator Insights Panel
+# ---------------------------------------------------
+st.subheader("Indicator Insights")
+
+with st.expander("🧠 Summary of current indicator results", expanded=True):
+
+    insights = generate_indicator_insights(
+        counts=counts,
+        matrix_summary=matrix_summary,
+        indicator=indicator,
+        selected_country=selected_country,
+        start_date=start_date,
+        end_date=end_date,
+        top_n=5,
+        events=events,
+        ipc_matrix=ipc_matrix
+    )
+
+    from src.indicator_insights import generate_indicator_narrative
+
+    # 🔹 Bullet insights (existing)
+    for insight in insights:
+        st.markdown(f"- {insight}")
+
+    # ---------------------------------------------------
+    # 🔥 ADD THIS BLOCK RIGHT HERE
+    # ---------------------------------------------------
+    narrative = generate_indicator_narrative(
+        insights=insights,
+        indicator=indicator,
+        country=selected_country
+    )
+
+    st.markdown("### 📊 Analyst Narrative")
+    st.info(narrative)
+
+    # 🔹 Caption (keep LAST)
+    st.caption(
+        "These insights are generated from the current chart and matrix results only. "
+        "They do not change thresholds or classifications."
+    )
 
 # ---------------------------------------------------
 # Aggregated Stacked Chart (Season-Aware Display)
@@ -1325,8 +1661,8 @@ if method == "spi_true":
 
     else:
         st.caption(
-            "Gray = Opposite signal is treated as Minimal "
-            "(e.g. drought periods appear as Minimal in flood view, and vice versa)."
+            f"Gray = Opposite signal is treated as {minimal_label} "
+            f"(e.g. drought periods appear as {minimal_label} in flood view, and vice versa)."
         )
 
 if method == "spi_true" and spi_mode == "Both":
@@ -1343,7 +1679,7 @@ if method == "spi_true" and spi_mode == "Both":
             .unstack(fill_value=0)
             .reset_index()
         )
-        for col in ["Alarm", "Alert", "Minimal", "No data"]:
+        for col in [alarm_label, alert_label, minimal_label, no_data_label]:
             if col not in c.columns:
                 c[col] = 0
         c["date"] = c["year_month"].dt.to_timestamp()
@@ -1387,19 +1723,29 @@ if method == "spi_true" and spi_mode == "Both":
 
     # Display mode
     def get_y(df, col):
-        return df[col] if display_mode == "Count" else df[f"{col}_pct"]
+        if display_mode == "Count":
+            return df[col]
+        else:
+            if col == alarm_label:
+                return df[alarm_pct_col]
+            elif col == alert_label:
+                return df[alert_pct_col]
+            elif col == minimal_label:
+                return df[minimal_pct_col]
+            elif col == no_data_label:
+                return df[no_data_pct_col]
 
     # 🔴 Drought
     fig.add_bar(
         x=counts_drought["date"],
-        y=get_y(counts_drought, "Alarm"),
+        y=get_y(counts_drought, alarm_label),
         name="Drought Alarm",
         marker=dict(color="red", opacity=opacity_drought)
     )
 
     fig.add_bar(
         x=counts_drought["date"],
-        y=get_y(counts_drought, "Alert"),
+        y=get_y(counts_drought, alert_label),
         name="Drought Alert",
         marker=dict(color="orange", opacity=opacity_drought)
     )
@@ -1407,14 +1753,14 @@ if method == "spi_true" and spi_mode == "Both":
     # 🔵 Flood
     fig.add_bar(
         x=counts_flood["date"],
-        y=get_y(counts_flood, "Alarm"),
+        y=get_y(counts_flood, alarm_label),
         name="Flood Alarm",
         marker=dict(color="blue", opacity=opacity_flood)
     )
 
     fig.add_bar(
         x=counts_flood["date"],
-        y=get_y(counts_flood, "Alert"),
+        y=get_y(counts_flood, alert_label),
         name="Flood Alert",
         marker=dict(color="lightblue", opacity=opacity_flood)
     )
@@ -1427,13 +1773,13 @@ else:
     counts["Month"] = counts["date"].dt.month
 
     if display_mode == "Count":
-        alarm_y = counts["Alarm"]
-        alert_y = counts["Alert"]
-        minimal_y = counts["Minimal"]
+        alarm_y = counts[alarm_label]
+        alert_y = counts[alert_label]
+        minimal_y = counts[minimal_label]
     else:
-        alarm_y = counts["Alarm_pct"]
-        alert_y = counts["Alert_pct"]
-        minimal_y = counts["Minimal_pct"]
+        alarm_y = counts[alarm_pct_col]
+        alert_y = counts[alert_pct_col]
+        minimal_y = counts[minimal_pct_col]
 
     opacity_values = [
         1 if m in selected_season_months else 0.25
@@ -1441,35 +1787,35 @@ else:
     ]
 
     if display_mode == "Count":
-        no_data_y = counts["No data"]
+        no_data_y = counts[no_data_label]
     else:
-        no_data_y = counts["No data_pct"]
+        no_data_y = counts[no_data_pct_col]
 
     fig.add_bar(
         x=counts["date"],
         y=alarm_y,
-        name="Alarm",
+        name=alarm_label,
         marker=dict(color="red", opacity=opacity_values)
     )
 
     fig.add_bar(
         x=counts["date"],
         y=alert_y,
-        name="Alert",
+        name=alert_label,
         marker=dict(color="orange", opacity=opacity_values)
     )
 
     fig.add_bar(
         x=counts["date"],
         y=minimal_y,
-        name="Minimal",
+        name=minimal_label,
         marker=dict(color="green", opacity=opacity_values)
     )
 
     fig.add_bar(
         x=counts["date"],
         y=no_data_y,
-        name="No data",
+        name=no_data_label,
         marker=dict(color="gray", opacity=opacity_values)
     )
 
@@ -1482,55 +1828,25 @@ fig.update_layout(
 # ---------------------------------------------------
 # Overlay Reference Events
 # ---------------------------------------------------
-
 if show_events:
 
-    if indicator in PRICE_INDICATORS:
-        indicator_type = "price"
+    events_chart = events.copy()
 
-    elif indicator in CLIMATE_INDICATORS:
-        indicator_type = "climate"
+    if method == "spi_true" and "type" in events_chart.columns:
+        if spi_mode == "Drought":
+            events_chart = events_chart[events_chart["type"] == "drought"]
+        elif spi_mode == "Flood":
+            events_chart = events_chart[events_chart["type"] == "flood"]
 
-    elif indicator in FLOOD_INDICATORS:
-        indicator_type = "climate"
+    events_chart["start"] = pd.to_datetime(events_chart["start"])
+    events_chart["end"] = pd.to_datetime(events_chart["end"])
 
+    events_chart = events_chart[
+        (events_chart["start"] <= end_date) &
+        (events_chart["end"] >= start_date)
+    ]
 
-    elif indicator in SHOCK_INDICATORS:
-        indicator_type = "shock"
-
-    else:
-        indicator_type = "price"
-
-    events = get_reference_events(
-        events_df,
-        selected_country,
-        indicator_type
-    )
-
-    # ---------------------------------------------------
-    # 🔥 SPI EVENT FILTERING (MAIN CHART)
-    # ---------------------------------------------------
-    if method == "spi_true":
-
-        if "type" in events.columns:
-
-            if spi_mode == "Drought":
-                events = events[events["type"] == "drought"]
-
-            elif spi_mode == "Flood":
-                events = events[events["type"] == "flood"]
-
-    # Convert event dates to datetime
-    events["start"] = pd.to_datetime(events["start"])
-    events["end"] = pd.to_datetime(events["end"])
-
-    # Keep only events overlapping with slider window
-    events = events[
-        (events["start"] <= end_date) &
-        (events["end"] >= start_date)
-        ]
-
-    for _, row in events.iterrows():
+    for _, row in events_chart.iterrows():
         fig.add_vrect(
             x0=row["start"],
             x1=row["end"],
@@ -1539,14 +1855,10 @@ if show_events:
             line_width=0,
             annotation_text=row["event"],
             annotation_position="top left",
-            annotation=dict(
-                textangle=-45,
-                font=dict(size=10)
-            )
+            annotation=dict(textangle=-45, font=dict(size=10))
         )
 
 st.plotly_chart(fig, width="stretch")
-
 
 # ---------------------------------------------------
 # Province Classification Matrix (Season-Aware – Chart-Matched)
@@ -1557,104 +1869,35 @@ show_matrix = st.checkbox(
 )
 
 if show_matrix and len(units_for_calc) > 0:
-
+    st.subheader("Signal Classification (by unit)")
     matrix = matrix_summary.copy()
 
-    # ---------------------------------------------------
-    # Attach reference events directly to matrix columns
-    # ---------------------------------------------------
-
     if show_events:
-
-        if indicator in PRICE_INDICATORS:
-            indicator_type = "price"
-        elif indicator in CLIMATE_INDICATORS:
-            indicator_type = "climate"
-        else:
-            indicator_type = "price"
-
-        events = get_reference_events(
-            events_df,
-            selected_country,
-            indicator_type
-        )
-
-        events["start"] = pd.to_datetime(events["start"])
-        events["end"] = pd.to_datetime(events["end"])
-
-        # Keep only visible window events
-        events = events[
-            (events["start"] <= end_date) &
-            (events["end"] >= start_date)
-            ]
-
-        # Build month → event mapping
+        events_matrix = events.copy()
+        events_matrix["start"] = pd.to_datetime(events_matrix["start"])
+        events_matrix["end"] = pd.to_datetime(events_matrix["end"])
+        events_matrix = events_matrix[
+            (events_matrix["start"] <= end_date) &
+            (events_matrix["end"] >= start_date)
+        ]
         event_months = {}
-
-        for _, row in events.iterrows():
-
+        for _, row in events_matrix.iterrows():
             months = pd.date_range(row["start"], row["end"], freq="MS")
-
             for m in months:
-                key = m.strftime("%Y %b")
-                event_months[key] = row["event"]
-
-        # Rename columns with event label
+                event_months[m.strftime("%Y %b")] = row["event"]
         new_columns = []
-
         for col in matrix.columns:
-
             col_clean = str(col)
-
             if col_clean in event_months:
-                event_name = event_months[col_clean]
                 new_columns.append(f"{col_clean} ⚠")
             else:
                 new_columns.append(col_clean)
-
         matrix.columns = new_columns
-
-    # ---------------------------------------------------
-    # Map reference events to matrix months
-    # ---------------------------------------------------
-
-    if show_events:
-
-        if indicator in PRICE_INDICATORS:
-            indicator_type = "price"
-        elif indicator in CLIMATE_INDICATORS:
-            indicator_type = "climate"
-        else:
-            indicator_type = "price"
-
-        events = get_reference_events(
-            events_df,
-            selected_country,
-            indicator_type
-        )
-
-        # Convert event dates to datetime
-        events["start"] = pd.to_datetime(events["start"])
-        events["end"] = pd.to_datetime(events["end"])
-
-        # Keep only events overlapping with slider window
-        events = events[
-            (events["start"] <= end_date) &
-            (events["end"] >= start_date)
-            ]
-
-        # ---------------------------------------------------
-        # Build event annotation positions
-        # ---------------------------------------------------
-
         event_annotations = []
-
-        for _, row in events.iterrows():
+        for _, row in events_matrix.iterrows():
             event_start = pd.to_datetime(row["start"])
             event_end = pd.to_datetime(row["end"])
-
             event_mid = event_start + (event_end - event_start) / 2
-
             event_annotations.append({
                 "text": row["event"],
                 "start": event_start,
@@ -1662,69 +1905,91 @@ if show_matrix and len(units_for_calc) > 0:
                 "mid": event_mid
             })
 
-    month_name_to_number = {
-        "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
-        "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
-        "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
-    }
+    styles = cached_style_matrix(
+        hash(matrix.to_csv()),
+        matrix,
+        tuple(selected_season_months)
+    )
 
-    def style_matrix(col):
-        col_name = str(col.name).replace("⚠", "").strip()
-        parts = col_name.split()
-        month_abbrev = parts[-1] if len(parts) > 1 else None
-        month_num = month_name_to_number.get(month_abbrev)
+    col_names = list(matrix.columns)
 
-        styled_col = []
 
-        for val in col:
+    def apply_precomputed_styles(col):
+        col_idx = col_names.index(col.name)
+        return styles[col_idx]
 
-            # Percent columns
-            if "%" in str(val):
-                styled_col.append(
-                    "background-color: #2b2b2b; color: white; font-weight: bold"
-                )
-                continue
 
-            # Determine if this column is in selected season
-            in_season = (
-                month_num in selected_season_months
-                if month_num is not None
-                else True
-            )
-
-            # Alarm
-            if val == "Alarm":
-                if in_season:
-                    styled_col.append("background-color: red; color: white")
-                else:
-                    styled_col.append("background-color: #ff9999; color: black")
-
-            # Alert
-            elif val == "Alert":
-                if in_season:
-                    styled_col.append("background-color: orange; color: black")
-                else:
-                    styled_col.append("background-color: #ffd699; color: black")
-
-            elif val == "No data":
-                styled_col.append("background-color: gray; color: white")
-
-            # Minimal
-            elif val == "Minimal":
-                if in_season:
-                    styled_col.append("background-color: green; color: white")
-                else:
-                    styled_col.append("background-color: #a6e3a1; color: black")
-
-            else:
-                styled_col.append("")
-
-        return styled_col
-
-    styled_matrix = matrix.style.apply(style_matrix, axis=0)
-
+    styled_matrix = matrix.style.apply(apply_precomputed_styles, axis=0)
     st.dataframe(styled_matrix, width="stretch")
 
+# ---------------------------------------------------
+# IPC HISTORICAL CLASSIFICATION MATRIX
+# ---------------------------------------------------
+show_ipc = st.checkbox(
+    "IPC Historical Classification (by unit)",
+    value=False
+)
+
+if show_ipc:
+
+    st.subheader("IPC Historical Classification")
+
+    if ipc_matrix.empty:
+        st.info("No IPC data available for selected filters.")
+
+    else:
+
+        # -----------------------------------------
+        # IPC STYLING
+        # -----------------------------------------
+        def get_max_phase(cell):
+            if pd.isna(cell):
+                return None
+            try:
+                phases = [
+                    int(part.split("(")[0].replace("phase", "").strip())
+                    for part in cell.split("|")
+                ]
+                return max(phases)
+            except:
+                return None
+
+
+        def style_ipc(cell):
+
+            if cell == no_data_label:
+                return "background-color: gray; color: white"
+
+            phase = get_max_phase(cell)
+
+            if phase is None:
+                return ""
+
+            color = IPC_PHASE_COLORS.get(f"phase {phase}")
+
+            if color is None:
+                return ""
+
+            return f"background-color: {color}; color: white"
+
+
+        styled_ipc = (
+            ipc_matrix.style
+            .map(style_ipc)
+            .set_properties(**{
+                "white-space": "normal",
+                "word-wrap": "break-word",
+                "max-width": "120px",  # 🔥 THIS is the key fix
+                "text-align": "center",
+                "font-size": "12px"
+            })
+        )
+
+        st.dataframe(
+            styled_ipc,
+            width="stretch",
+            height=500  # optional, improves layout
+        )
 
 # ---------------------------------------------------
 # National Seasonal Charts (Season-Aware Display)
@@ -1737,8 +2002,8 @@ if view_mode == "National (all units)":
     counts["Year"] = counts["date"].dt.year
     counts["Month"] = counts["date"].dt.month
 
-    alarm_col_name = "Alarm" if display_mode == "Count" else "Alarm_pct"
-    alert_col_name = "Alert" if display_mode == "Count" else "Alert_pct"
+    alarm_col_name = alarm_label if display_mode == "Count" else alarm_pct_col
+    alert_col_name = alert_label if display_mode == "Count" else alert_pct_col
 
     last_6_years = sorted(counts["Year"].unique())[-6:]
 
