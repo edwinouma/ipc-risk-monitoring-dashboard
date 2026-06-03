@@ -13,6 +13,8 @@ import numpy as np
 from src.conflict_hybrid import classify_conflict_row
 from src.indicator_insights import generate_indicator_insights
 
+from src.config import get_country_seasons
+
 alarm_label = CLASSIFICATION_LABELS["alarm"]
 alert_label = CLASSIFICATION_LABELS["alert"]
 minimal_label = CLASSIFICATION_LABELS["minimal"]
@@ -431,29 +433,25 @@ retention_mode = st.sidebar.selectbox(
 )
 
 # 🔹 NEW: Time Frame Selector (ADDITIONAL ONLY)
-season_scope = "All Months"
+indicator_seasons = get_country_seasons(
+    selected_country,
+    indicator
+)
 
-if df_thresholds_file is not None and "season_scope" in df_thresholds_file.columns:
+available_seasons = list(indicator_seasons.keys())
 
-    available_seasons = (
-        df_thresholds_file[
-            df_thresholds_file["indicator"] == indicator
-        ]["season_scope"]
-        .dropna()
-        .unique()
-        .tolist()
-    )
-
-    if available_seasons:
-        season_scope = st.sidebar.selectbox(
-            "Time Frame",
-            available_seasons
-        )
+season_scope = st.sidebar.selectbox(
+    "Time Frame",
+    available_seasons
+)
 
 # ---------------------------------------------------
 # Season Month Mapping (Display Logic Only)
 # ---------------------------------------------------
-indicator_seasons = SEASONAL_DEFINITIONS.get(indicator, {"All Months": None})
+indicator_seasons = get_country_seasons(
+    selected_country,
+    indicator
+)
 
 selected_season_months = indicator_seasons.get(season_scope)
 
@@ -1097,44 +1095,103 @@ else:
 
     else:
 
-        planting_alarm, planting_alert = get_season_thresholds("Planting (Mar–Jun)")
-        off_alarm, off_alert = get_season_thresholds("Off-Season (Jul–Feb)")
-
-        # Run both classifications
-        classified_planting, counts_planting = apply_thresholds(
-            df_filtered,
-            units_for_calc,
-            planting_alarm,
-            planting_alert,
+        season_definitions = get_country_seasons(
+            selected_country,
             indicator
         )
 
-        classified_off, counts_off = apply_thresholds(
-            df_filtered,
-            units_for_calc,
-            off_alarm,
-            off_alert,
-            indicator
-        )
+        season_names = [
+            s for s in season_definitions.keys()
+            if s != "All Months"
+        ]
 
-        counts_planting["Month"] = counts_planting["date"].dt.month
-        counts_off["Month"] = counts_off["date"].dt.month
+        if len(season_names) != 2:
 
-        counts = counts_planting.copy()
+            st.warning(
+                f"{selected_country} currently has "
+                f"{len(season_names)} seasonal scopes. "
+                f"The seasonal threshold engine currently expects 2."
+            )
 
-        for idx, row in counts.iterrows():
-            month = row["Month"]
+            classified_df, counts = cached_apply_thresholds(
+                df_filtered["value"].sum(),
+                df_filtered,
+                tuple(sorted(units_for_calc)),
+                round(alarm_threshold, 6),
+                round(alert_threshold, 6),
+                indicator
+            )
 
-            # If month belongs to off-season, replace with off-season result
-            if month not in [3, 4, 5, 6]:
-                match = counts_off[counts_off["date"] == row["date"]]
-                if not match.empty:
-                    counts.loc[idx, [alarm_label, alert_label, minimal_label,
-                                     f"{alarm_label}_pct", f"{alert_label}_pct", f"{minimal_label}_pct"]] = \
-                        match[[alarm_label, alert_label, minimal_label,
-                               f"{alarm_label}_pct", f"{alert_label}_pct", f"{minimal_label}_pct"]].values[0]
+        else:
 
-        classified_df = classified_planting
+            season1 = season_names[0]
+            season2 = season_names[1]
+
+            season1_alarm, season1_alert = get_season_thresholds(season1)
+            season2_alarm, season2_alert = get_season_thresholds(season2)
+
+            # -----------------------------------------
+            # Run both classifications
+            # -----------------------------------------
+            classified_season1, counts_season1 = apply_thresholds(
+                df_filtered,
+                units_for_calc,
+                season1_alarm,
+                season1_alert,
+                indicator
+            )
+
+            classified_season2, counts_season2 = apply_thresholds(
+                df_filtered,
+                units_for_calc,
+                season2_alarm,
+                season2_alert,
+                indicator
+            )
+
+            counts_season1["Month"] = counts_season1["date"].dt.month
+            counts_season2["Month"] = counts_season2["date"].dt.month
+
+            counts = counts_season1.copy()
+
+            season1_months = season_definitions[season1]
+
+            for idx, row in counts.iterrows():
+
+                month = row["Month"]
+
+                # If month belongs to Season 2,
+                # replace Season 1 result with Season 2 result
+                if month not in season1_months:
+
+                    match = counts_season2[
+                        counts_season2["date"] == row["date"]
+                    ]
+
+                    if not match.empty:
+
+                        counts.loc[
+                            idx,
+                            [
+                                alarm_label,
+                                alert_label,
+                                minimal_label,
+                                f"{alarm_label}_pct",
+                                f"{alert_label}_pct",
+                                f"{minimal_label}_pct"
+                            ]
+                        ] = match[
+                            [
+                                alarm_label,
+                                alert_label,
+                                minimal_label,
+                                f"{alarm_label}_pct",
+                                f"{alert_label}_pct",
+                                f"{minimal_label}_pct"
+                            ]
+                        ].values[0]
+
+            classified_df = classified_season1
 
 # ---------------------------------------------------
 # APPLY SPI DISPLAY LOGIC (SAFE FIX)

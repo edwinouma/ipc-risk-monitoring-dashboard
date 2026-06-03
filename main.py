@@ -949,7 +949,10 @@ def main():
 
                     all_thresholds.append(merged_robust)
 
-                seasonal_dict = SEASONAL_DEFINITIONS.get(ind, {})
+                seasonal_dict = get_country_seasons(
+                    country,
+                    ind
+                )
 
                 for season_name, season_months in seasonal_dict.items():
 
