@@ -12,8 +12,9 @@ from src.config import CLASSIFICATION_LABELS
 import numpy as np
 from src.conflict_hybrid import classify_conflict_row
 from src.indicator_insights import generate_indicator_insights
-
+from src.config import get_percentile_config
 from src.config import get_country_seasons
+from src.config import get_thresholds
 
 alarm_label = CLASSIFICATION_LABELS["alarm"]
 alert_label = CLASSIFICATION_LABELS["alert"]
@@ -56,6 +57,22 @@ from threshold_storage import (
     save_override,
     reset_override
 )
+
+# ---------------------------------------------------
+# AVAILABLE PERCENTILES
+# ---------------------------------------------------
+
+PERCENTILE_OPTIONS = [
+    5,
+    10,
+    25,
+    50,
+    70,
+    75,
+    80,
+    90,
+    95
+]
 
 @st.cache_data
 def cached_apply_thresholds(df_hash, df, units, alarm, alert, indicator):
@@ -401,8 +418,10 @@ with st.sidebar.expander("ℹ️ About this method", expanded=False):
     if method == "percentile":
         direction = INDICATOR_DIRECTION.get(indicator, "lower")
 
-        default_alert = 50
-        default_alarm = 25 if direction == "lower" else 75
+        pct_cfg = get_percentile_config(indicator)
+
+        default_alarm = pct_cfg["alarm"]
+        default_alert = pct_cfg["alert"]
 
         explanation = get_percentile_explanation(
             indicator,
@@ -550,14 +569,10 @@ user_override_active = False
 # ---------------------------------------------------
 if method in ["percentile", "tukey"]:
 
-    direction = INDICATOR_DIRECTION.get(indicator, "lower")
+    pct_cfg = get_percentile_config(indicator)
 
-    if direction == "lower":
-        default_alarm_pct = 25
-        default_alert_pct = 50
-    else:
-        default_alarm_pct = 75
-        default_alert_pct = 50
+    default_alarm_pct = pct_cfg["alarm"]
+    default_alert_pct = pct_cfg["alert"]
 
     # Use session state if available
     alarm_pct_temp = st.session_state.get("alarm_pct", default_alarm_pct)
@@ -578,10 +593,16 @@ if method in ["percentile", "tukey"]:
 # ---------------------------------------------------
 if method == "categorical":
 
-    thresholds = EVENT_THRESHOLDS.get(indicator)
+    thresholds = get_thresholds(
+        selected_country,
+        indicator
+    )
 
-    if thresholds is None:
-        st.error(f"No event thresholds configured for {indicator}")
+    if not thresholds:
+        st.error(
+            f"No thresholds configured for "
+            f"{indicator}"
+        )
         st.stop()
 
     alert_threshold = thresholds["alert"]
@@ -820,14 +841,11 @@ if "last_context" not in st.session_state:
     st.session_state["last_context"] = current_context
 
 if st.session_state["last_context"] != current_context:
-    direction = INDICATOR_DIRECTION.get(indicator, "lower")
 
-    if direction == "lower":
-        st.session_state["alarm_pct"] = 25
-        st.session_state["alert_pct"] = 50
-    else:
-        st.session_state["alarm_pct"] = 75
-        st.session_state["alert_pct"] = 50
+    pct_cfg = get_percentile_config(indicator)
+
+    st.session_state["alarm_pct"] = pct_cfg["alarm"]
+    st.session_state["alert_pct"] = pct_cfg["alert"]
 
     st.session_state["last_context"] = current_context
 
@@ -836,39 +854,30 @@ if st.session_state["last_context"] != current_context:
 # -----------------------------------------
 if method in ["percentile", "tukey"]:
 
-    direction = INDICATOR_DIRECTION.get(indicator, "lower")
+    pct_cfg = get_percentile_config(indicator)
 
-    # 🔥 Smart defaults based on direction
-    if direction == "lower":
-        default_alarm_pct = 25
-        default_alert_pct = 50
-    else:
-        default_alarm_pct = 75
-        default_alert_pct = 50
+    default_alarm_pct = pct_cfg["alarm"]
+    default_alert_pct = pct_cfg["alert"]
 
     with row1_col1:
         sub_col1, _ = st.columns([1, 2])  # 🔥 shrink input
         with sub_col1:
-            alarm_pct = st.number_input(
+            alarm_pct = st.select_slider(
                 "Alarm Percentile",
-                min_value=1,
-                max_value=99,
+                options=PERCENTILE_OPTIONS,
                 value=default_alarm_pct,
-                step=1,
-                key="alarm_pct"  # 🔥 ADD THIS
+                key="alarm_pct"
             )
 
     if method == "percentile":
         with row2_col1:
             sub_col2, _ = st.columns([1, 2])  # Adjust ratio if you want smaller/larger input
             with sub_col2:
-                alert_pct = st.number_input(
+                alert_pct = st.select_slider(
                     "Alert Percentile",
-                    min_value=1,
-                    max_value=99,
+                    options=PERCENTILE_OPTIONS,
                     value=default_alert_pct,
-                    step=1,
-                    key="alert_pct"  # 🔥 ADD THIS
+                    key="alert_pct"
                 )
     else:
         # Tukey → no alert input
@@ -1016,6 +1025,7 @@ if method == "hybrid" and indicator in ["conflict_events", "conflict_fatalities"
         lambda row: classify_conflict_row(
             row,
             indicator=indicator,
+            country=selected_country,
             method="hybrid"
         ),
         axis=1

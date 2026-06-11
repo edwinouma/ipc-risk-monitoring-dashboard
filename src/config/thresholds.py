@@ -5,8 +5,8 @@
 EVENT_THRESHOLDS = {
 
     "conflict_events": {
-        "alert": 5,
-        "alarm": 10
+        "alert": 3,
+        "alarm": 5
     },
 
     "conflict_fatalities": {
@@ -23,8 +23,8 @@ EVENT_THRESHOLDS = {
 CONFLICT_HYBRID_THRESHOLDS = {
 
     "conflict_events": {
-        "alert": 5,
-        "alarm": 10
+        "alert": 3,
+        "alarm": 5
     },
 
     "conflict_fatalities": {
@@ -155,6 +155,82 @@ ZSCORE_TRUE_THRESHOLDS = {
 
 
 # ==========================================================
+# INDICATOR-SPECIFIC PERCENTILE CONFIGURATION
+# ==========================================================
+#
+# Used by percentile-based methods.
+#
+# Lower-direction indicators:
+#   Alert = less severe percentile
+#   Alarm = more severe percentile
+#
+# Upper-direction indicators:
+#   Alert = lower upper-tail percentile
+#   Alarm = higher upper-tail percentile
+#
+# Examples:
+#
+# Lower direction:
+#   Alert = P50
+#   Alarm = P25
+#
+# Upper direction:
+#   Alert = P50
+#   Alarm = P75
+#
+# ==========================================================
+
+INDICATOR_PERCENTILES = {
+
+    # --------------------------------------------------
+    # DEFAULTS
+    # --------------------------------------------------
+
+    "default_lower": {
+        "alert": 50,
+        "alarm": 25
+    },
+
+    "default_upper": {
+        "alert": 50,
+        "alarm": 75
+    },
+
+    # --------------------------------------------------
+    # CLIMATE
+    # --------------------------------------------------
+
+    "rainfall 1-month anomaly [%]": {
+        "alert": 50,
+        "alarm": 25
+    },
+
+    "rainfall 3-month anomaly [%]": {
+        "alert": 50,
+        "alarm": 25
+    },
+
+    "10 day NDVI anomaly": {
+        "alert": 50,
+        "alarm": 25
+    },
+
+    # --------------------------------------------------
+    # PRICES
+    # --------------------------------------------------
+
+    "Maize": {
+        "alert": 70,
+        "alarm": 90
+    }
+
+    #
+    # Other price indicators currently inherit
+    # default_upper.
+    #
+}
+
+# ==========================================================
 # FUTURE COUNTRY-SPECIFIC THRESHOLDS
 # ==========================================================
 #
@@ -181,4 +257,26 @@ ZSCORE_TRUE_THRESHOLDS = {
 #
 # ==========================================================
 
-COUNTRY_THRESHOLDS = {}
+COUNTRY_THRESHOLDS = {
+
+    "South Sudan": {
+
+        "conflict_events": {
+            "alert": 3,
+            "alarm": 5
+        },
+
+        "conflict_fatalities": {
+            "alert": 5,
+            "alarm": 20
+        }
+    },
+
+    "Kenya": {
+
+        "conflict_events": {
+            "alert": 3,
+            "alarm": 5
+        }
+    }
+}

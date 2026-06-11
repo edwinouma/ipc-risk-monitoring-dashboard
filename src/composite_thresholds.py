@@ -1,5 +1,8 @@
 import pandas as pd
-from src.config import INDICATOR_DIRECTION
+from src.config import (
+    INDICATOR_DIRECTION,
+    get_percentile_config
+)
 
 
 def compute_composite_thresholds(spatial_df, indicator_value):
@@ -25,7 +28,20 @@ def compute_composite_thresholds(spatial_df, indicator_value):
     # ---------------------------------------------------
     # Validate required columns
     # ---------------------------------------------------
-    required_cols = ["q25", "q50", "q75"]
+    required_cols = [
+        col for col in [
+            "q05",
+            "q10",
+            "q25",
+            "q50",
+            "q70",
+            "q75",
+            "q80",
+            "q90",
+            "q95"
+        ]
+        if col in spatial_df.columns
+    ]
 
     for col in required_cols:
         if col not in spatial_df.columns:
@@ -42,20 +58,40 @@ def compute_composite_thresholds(spatial_df, indicator_value):
     # ---------------------------------------------------
     # Compute thresholds
     # ---------------------------------------------------
+
+    cfg = get_percentile_config(indicator_value)
+
+    alert_pct = cfg["alert"]
+    alarm_pct = cfg["alarm"]
+
     if direction == "lower":
 
-        alert = spatial_df["q50"].median(skipna=True)
-        alarm = spatial_df["q25"].median(skipna=True)
+        alert_col = f"q{int(alert_pct):02d}"
+        alarm_col = f"q{int(alarm_pct):02d}"
 
     elif direction == "upper":
 
-        alert = spatial_df["q50"].median(skipna=True)
-        alarm = spatial_df["q75"].median(skipna=True)
+        alert_col = f"q{int(alert_pct):02d}"
+        alarm_col = f"q{int(alarm_pct):02d}"
 
     else:
         raise ValueError(
             f"Unknown direction '{direction}' for indicator {indicator_value}"
         )
+
+    required_cols = [alert_col, alarm_col]
+
+    for col in required_cols:
+
+        if col not in spatial_df.columns:
+            raise ValueError(
+                f"{col} missing from spatial_df. "
+                f"Percentile configuration requires "
+                f"monthly percentile column '{col}'."
+            )
+
+    alert = spatial_df[alert_col].median(skipna=True)
+    alarm = spatial_df[alarm_col].median(skipna=True)
 
     # ---------------------------------------------------
     # Return structured result

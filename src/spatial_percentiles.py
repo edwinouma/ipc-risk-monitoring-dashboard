@@ -160,13 +160,20 @@ def compute_spatial_percentiles(
     # ---------------------------------------------------
     # 5. Compute spatial percentiles
     # ---------------------------------------------------
+
     grouped = (
         df_filtered
         .groupby("year_month")[value_col]
         .agg(
+            q05=lambda x: x.quantile(0.05),
+            q10=lambda x: x.quantile(0.10),
             q25=lambda x: x.quantile(0.25),
             q50=lambda x: x.quantile(0.50),
+            q70=lambda x: x.quantile(0.70),
             q75=lambda x: x.quantile(0.75),
+            q80=lambda x: x.quantile(0.80),
+            q90=lambda x: x.quantile(0.90),
+            q95=lambda x: x.quantile(0.95),
             count="count"
         )
         .reset_index()

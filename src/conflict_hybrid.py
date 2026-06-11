@@ -3,13 +3,18 @@ import numpy as np
 
 from src.config import (
     EVENT_THRESHOLDS,
-    CONFLICT_HYBRID_THRESHOLDS,
     CONFLICT_TREND_RULES,
-    CONFLICT_ANOMALY_RULES
+    CONFLICT_ANOMALY_RULES,
+    get_hybrid_thresholds
 )
 
 
-def classify_conflict_row(row, indicator, method):
+def classify_conflict_row(
+    row,
+    indicator,
+    country,
+    method
+):
 
     value = row.get("value")
 
@@ -49,7 +54,10 @@ def classify_conflict_row(row, indicator, method):
     # -------------------------------------------------
     elif method == "hybrid":
 
-        thresholds = CONFLICT_HYBRID_THRESHOLDS.get(indicator, {})
+        thresholds = get_hybrid_thresholds(
+            country,
+            indicator
+        )
 
         # 🔥 FIXED: GLOBAL RULES
         trend_rules = CONFLICT_TREND_RULES

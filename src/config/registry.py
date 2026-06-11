@@ -24,11 +24,13 @@ from .labels import (
 
 from .thresholds import (
     EVENT_THRESHOLDS,
+    CONFLICT_HYBRID_THRESHOLDS,
     ZSCORE_THRESHOLDS,
     SPI_TRUE_THRESHOLDS,
     SPI_TRUE_FLOOD_THRESHOLDS,
     ZSCORE_TRUE_THRESHOLDS,
     COUNTRY_THRESHOLDS,
+    INDICATOR_PERCENTILES,
 )
 
 from .countries import (
@@ -136,6 +138,21 @@ def get_zscore_true_thresholds(indicator):
         ZSCORE_TRUE_THRESHOLDS["default"]
     )
 
+# ==========================================================
+# PERCENTILE CONFIGURATION
+# ==========================================================
+
+def get_percentile_config(indicator):
+
+    direction = get_direction(indicator)
+
+    if indicator in INDICATOR_PERCENTILES:
+        return INDICATOR_PERCENTILES[indicator]
+
+    if direction == "upper":
+        return INDICATOR_PERCENTILES["default_upper"]
+
+    return INDICATOR_PERCENTILES["default_lower"]
 
 # ==========================================================
 # FUTURE COUNTRY-SPECIFIC THRESHOLDS
@@ -151,6 +168,23 @@ def get_thresholds(country, indicator):
         return COUNTRY_THRESHOLDS[country][indicator]
 
     return EVENT_THRESHOLDS.get(indicator, {})
+
+# ==========================================================
+# COUNTRY HYBRID THRESHOLDS
+# ==========================================================
+
+def get_hybrid_thresholds(country, indicator):
+
+    if (
+        country in COUNTRY_THRESHOLDS
+        and indicator in COUNTRY_THRESHOLDS[country]
+    ):
+        return COUNTRY_THRESHOLDS[country][indicator]
+
+    return CONFLICT_HYBRID_THRESHOLDS.get(
+        indicator,
+        {}
+    )
 
 # ==========================================================
 # SEASONS
