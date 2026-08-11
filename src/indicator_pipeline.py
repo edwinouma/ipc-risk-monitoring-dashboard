@@ -10,7 +10,8 @@ from src.ltm_baseline import compute_long_term_monthly_median
 from src.ltm_anomaly import compute_ltm_anomaly
 from src.yoy_anomaly import compute_yoy_anomaly
 from src.five_year_anomaly import compute_five_year_anomaly
-
+from src.alps import compute_alps
+from src.config import INDICATOR_METHOD
 
 def run_indicator_pipeline(
     df,
@@ -65,10 +66,32 @@ def run_indicator_pipeline(
         elif is_price_indicator(indicator_value):
 
             # Filter data for this indicator
-            df_price = df[df[indicator_col] == indicator_value]
+            df_price = (
+                df[df[indicator_col] == indicator_value]
+                .copy()
+            )
 
             # Step 1: Convert to monthly prices
             monthly_df = compute_monthly_prices(df_price)
+
+            method = INDICATOR_METHOD.get(
+                indicator_value,
+                "percentile"
+            )
+
+            if method == "alps":
+                alps_df = compute_alps(monthly_df)
+
+                alps_df["indicator"] = indicator_value
+                alps_df["season"] = season_name
+
+                results.append(alps_df)
+
+                continue
+
+            # -----------------------------------
+            # BASELINE-BASED METHODS
+            # -----------------------------------
 
             # Step 2: Choose anomaly method
             if baseline_method == "LTM":

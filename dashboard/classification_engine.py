@@ -56,6 +56,24 @@ def apply_thresholds(
         names=["year_month", unit_col]
     ).to_frame(index=False)
 
+    print("\n===== BEFORE FULL GRID MERGE =====")
+
+    print("Rows:", len(df))
+
+    dup = df[df.duplicated(
+        subset=["year_month", unit_col],
+        keep=False
+    )].sort_values([unit_col, "year_month"])
+
+    print("Duplicate rows:", len(dup))
+
+    dup.to_excel(
+        "outputs/debug_before_full_grid_merge.xlsx",
+        index=False
+    )
+
+    print("Saved outputs/debug_before_full_grid_merge.xlsx")
+
     df = full_grid.merge(
         df,
         on=["year_month", unit_col],
@@ -128,16 +146,48 @@ def apply_thresholds(
         df["indicator"] = "conflict_events"
 
     # ---------------------------------------------------
-    # 3B. NORMAL LOGIC (existing)
+    # 3B. ALPS (MODEL-BASED CLASSIFICATION)
+    # ---------------------------------------------------
+    elif method == "alps":
+
+        if "classification" not in df.columns:
+            raise ValueError(
+                "ALPS classification column not found. "
+                "Ensure compute_alps() outputs are written to unit_month_values."
+            )
+
+        df["classification"] = (
+            df["classification"]
+            .replace("", np.nan)
+            .fillna(no_data_label)
+            .astype(str)
+            .str.strip()
+        )
+
+    # ---------------------------------------------------
+    # 3C. VCI (STANDARDIZED THRESHOLD METHOD)
+    # ---------------------------------------------------
+    elif method == "vci":
+
+        valid_mask = df[value_col].notna()
+
+        df["classification"] = no_data_label
+
+        df.loc[valid_mask, "classification"] = classify_series(
+            df.loc[valid_mask, value_col],
+            indicator_value,
+            alarm_threshold,
+            alert_threshold
+        )
+
+    # ---------------------------------------------------
+    # 3D. THRESHOLD-BASED METHODS
     # ---------------------------------------------------
     else:
 
-        # -----------------------------------------
-        # Apply classification ONLY on valid values
-        # -----------------------------------------
         valid_mask = df[value_col].notna()
 
-        df["classification"] = no_data_label  # default
+        df["classification"] = no_data_label
 
         df.loc[valid_mask, "classification"] = classify_series(
             df.loc[valid_mask, value_col],
@@ -168,6 +218,36 @@ def apply_thresholds(
     # 4. Monthly counts (fixed 34 logic)
     # ---------------------------------------------------
     df["classification"] = df["classification"].astype(str).str.strip()
+
+    # ---------------------------------------------------
+    # DEBUG EXPORT OF DATA USED FOR COUNTS
+    # ---------------------------------------------------
+
+    debug_counts = df.copy()
+
+    # Make Excel-friendly
+    if "year_month" in debug_counts.columns:
+        debug_counts["year_month"] = debug_counts["year_month"].astype(str)
+
+    debug_counts.to_excel(
+        "outputs/debug_apply_thresholds_input.xlsx",
+        index=False
+    )
+
+    print("✅ Saved: outputs/debug_apply_thresholds_input.xlsx")
+
+    print("\nBaseline methods entering counts:")
+    print(debug_counts["baseline_method"].value_counts(dropna=False))
+
+    print("\nUnique unit-month rows:")
+    print(
+        debug_counts[
+            ["adm1_name", "year_month", "baseline_method"]
+        ].drop_duplicates().shape
+    )
+
+    print("\nTotal rows entering counts:")
+    print(len(debug_counts))
 
     counts = (
         df.groupby(["year_month", "classification"], dropna=False)

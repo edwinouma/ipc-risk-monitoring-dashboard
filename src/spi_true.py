@@ -100,6 +100,88 @@ def compute_true_spi(df):
         raise ValueError("SPI computation failed — 'spi' column missing.")
 
     # -----------------------------------------
+    # DEBUG EXPORT: MONTHLY RAINFALL + SPI
+    # BEFORE REPLACING value WITH spi
+    # -----------------------------------------
+
+    from pathlib import Path
+
+    output_folder = Path("outputs")
+    output_folder.mkdir(parents=True, exist_ok=True)
+
+    # Columns to export
+    export_cols = [
+        "adm1_name",
+        "date",
+        "year_month",
+        "value",
+        "spi"
+    ]
+
+    # --------------------------------------------------
+    # Export separately for each country
+    # --------------------------------------------------
+
+    if "country" in monthly.columns:
+
+        for country, country_df in monthly.groupby("country"):
+            export_df = country_df[export_cols].copy()
+
+            # Excel does not support Period dtype cleanly
+            export_df["year_month"] = export_df["year_month"].astype(str)
+
+            # Clean country name for filename
+            country_name = (
+                str(country)
+                .strip()
+                .lower()
+                .replace(" ", "_")
+                .replace("/", "_")
+            )
+
+            output_file = (
+                    output_folder /
+                    f"spi_monthly_rainfall_{country_name}.xlsx"
+            )
+
+            export_df.to_excel(
+                output_file,
+                index=False
+            )
+
+            print(
+                f"✅ SPI monthly rainfall debug saved: "
+                f"{output_file}"
+            )
+
+    # --------------------------------------------------
+    # Fallback if country column does not exist
+    # --------------------------------------------------
+
+    else:
+
+        export_df = monthly[export_cols].copy()
+
+        export_df["year_month"] = (
+            export_df["year_month"].astype(str)
+        )
+
+        output_file = (
+                output_folder /
+                "spi_monthly_rainfall.xlsx"
+        )
+
+        export_df.to_excel(
+            output_file,
+            index=False
+        )
+
+        print(
+            f"✅ SPI monthly rainfall debug saved: "
+            f"{output_file}"
+        )
+
+    # -----------------------------------------
     # 🔥 FINAL STEP: Replace value cleanly
     # -----------------------------------------
     monthly = monthly.drop(columns=["value"])

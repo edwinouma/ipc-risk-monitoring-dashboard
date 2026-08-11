@@ -4,48 +4,92 @@ from src.config import PRICE_INDICATORS
 
 
 def compute_true_zscore(df):
+    print("\n==============================")
+    print("TRUE_ZSCORE VERSION LOADED")
+    print(__file__)
+    print("==============================")
+
     """
     Compute seasonal + unit-level Z-score
 
-    Enhancements:
-    - Uses anomaly data for PRICE indicators when available
-    - Falls back to log(raw) ONLY if anomaly missing
-    - Aggregates price data separately by baseline_method (LTM, YOY, FIVE_YEAR)
-    - Keeps NDVI and other indicators unchanged
+    Enhancements
+    ------------
+    - Accepts both 'date' and 'year_month'
+    - Supports raw and anomaly datasets
+    - Preserves baseline_method throughout
+    - Computes seasonal statistics separately
+      for each baseline method
     - Fully backward compatible
     """
 
     df = df.copy()
 
-    # -----------------------------------------
-    # Ensure required columns
-    # -----------------------------------------
-    required = ["adm1_name", "date", "value"]
+    # --------------------------------------------------
+    # Required columns
+    # --------------------------------------------------
+    required = ["adm1_name", "value"]
+
     for col in required:
         if col not in df.columns:
             raise ValueError(f"Missing column: {col}")
 
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df["value"] = pd.to_numeric(df["value"], errors="coerce")
+    # --------------------------------------------------
+    # Build date column if only year_month exists
+    # --------------------------------------------------
+    if (
+        "date" not in df.columns
+        or df["date"].isna().all()
+    ):
+
+        if "year_month" in df.columns:
+
+            df["date"] = pd.to_datetime(
+                df["year_month"].astype(str),
+                format="%Y-%m",
+                errors="coerce"
+            )
+
+        else:
+
+            raise ValueError(
+                "Input dataframe must contain either "
+                "'date' or 'year_month'."
+            )
+
+    else:
+
+        df["date"] = pd.to_datetime(
+            df["date"],
+            errors="coerce"
+        )
+
+    # --------------------------------------------------
+    # Numeric values
+    # --------------------------------------------------
+    df["value"] = pd.to_numeric(
+        df["value"],
+        errors="coerce"
+    )
+
+    print("Rows before cleaning :", len(df))
+    print("Missing date         :", df["date"].isna().sum())
+    print("Missing value        :", df["value"].isna().sum())
+
     df = df.dropna(subset=["date", "value"])
+
+    print("Rows after cleaning  :", len(df))
 
     if df.empty:
         raise ValueError("Input dataframe is empty after cleaning.")
 
-    # -----------------------------------------
+    # --------------------------------------------------
     # Preserve original value
-    # -----------------------------------------
+    # --------------------------------------------------
     df["value_original"] = df["value"]
 
-    # -----------------------------------------
-    # 🔥 PRICE HANDLING (FINAL - NO LOG)
-    # -----------------------------------------
-    # Prices are expected to already be anomaly (%)
-    # No transformation required
-
-    # -----------------------------------------
+    # --------------------------------------------------
     # Monthly aggregation
-    # -----------------------------------------
+    # --------------------------------------------------
     df["year_month"] = df["date"].dt.to_period("M")
 
     group_cols = ["adm1_name", "year_month"]
@@ -53,12 +97,8 @@ def compute_true_zscore(df):
     if "country" in df.columns:
         group_cols = ["country"] + group_cols
 
-    # -----------------------------------------
-    # 🔥 KEEP BASELINES SEPARATE FOR PRICES
-    # -----------------------------------------
     if "baseline_method" in df.columns:
-        if "indicator" in df.columns and df["indicator"].isin(PRICE_INDICATORS).any():
-            group_cols = group_cols + ["baseline_method"]
+        group_cols.append("baseline_method")
 
     monthly = (
         df.groupby(group_cols)["value"]
@@ -66,19 +106,25 @@ def compute_true_zscore(df):
         .reset_index()
     )
 
-    # -----------------------------------------
-    # Add month
-    # -----------------------------------------
+    # --------------------------------------------------
+    # Month
+    # --------------------------------------------------
     monthly["date"] = monthly["year_month"].dt.to_timestamp()
+
     monthly["month"] = monthly["date"].dt.month
 
-    # -----------------------------------------
-    # Seasonal Z-score (DO NOT include baseline)
-    # -----------------------------------------
+    # --------------------------------------------------
+    # Seasonal statistics
+    # IMPORTANT:
+    # Compute mean/std separately for each baseline
+    # --------------------------------------------------
     z_group_cols = ["adm1_name", "month"]
 
     if "country" in monthly.columns:
         z_group_cols = ["country"] + z_group_cols
+
+    if "baseline_method" in monthly.columns:
+        z_group_cols.append("baseline_method")
 
     stats = (
         monthly
@@ -87,46 +133,75 @@ def compute_true_zscore(df):
         .reset_index()
     )
 
-    monthly = monthly.merge(stats, on=z_group_cols, how="left")
+    monthly = monthly.merge(
+        stats,
+        on=z_group_cols,
+        how="left"
+    )
 
-    # -----------------------------------------
-    # Stability improvement
-    # -----------------------------------------
+    # --------------------------------------------------
+    # Compute Z-score
+    # --------------------------------------------------
     monthly["std"] = monthly["std"].replace(0, np.nan)
 
     monthly["value_zscore"] = (
-        (monthly["value"] - monthly["mean"]) / monthly["std"]
+        (monthly["value"] - monthly["mean"])
+        / monthly["std"]
     )
 
-    # -----------------------------------------
-    # Restore original value
-    # -----------------------------------------
+    # --------------------------------------------------
+    # Restore original values
+    # --------------------------------------------------
     original = (
         df.groupby(group_cols)["value_original"]
         .mean()
         .reset_index()
     )
 
-    monthly = monthly.merge(original, on=group_cols, how="left")
+    monthly = monthly.merge(
+        original,
+        on=group_cols,
+        how="left"
+    )
 
-    # -----------------------------------------
-    # Final format
-    # -----------------------------------------
-    monthly = monthly.drop(columns=["value", "mean", "std"])
-    monthly = monthly.rename(columns={"value_original": "value"})
+    # --------------------------------------------------
+    # Final formatting
+    # --------------------------------------------------
+    monthly = monthly.drop(
+        columns=[
+            "value",
+            "mean",
+            "std"
+        ]
+    )
 
-    cols = ["adm1_name", "date", "year_month", "value", "value_zscore"]
+    monthly = monthly.rename(
+        columns={
+            "value_original": "value"
+        }
+    )
+
+    cols = [
+        "adm1_name",
+        "date",
+        "year_month",
+        "value",
+        "value_zscore"
+    ]
 
     if "country" in monthly.columns:
         cols = ["country"] + cols
 
-    # Preserve baseline_method if present
     if "baseline_method" in monthly.columns:
-        cols = cols + ["baseline_method"]
+        cols.append("baseline_method")
 
     monthly = monthly[cols]
 
-    # Drop rows without zscore
-    monthly = monthly.dropna(subset=["value_zscore"])
+    # --------------------------------------------------
+    # Remove rows where Z-score cannot be computed
+    # --------------------------------------------------
+    monthly = monthly.dropna(
+        subset=["value_zscore"]
+    )
 
     return monthly

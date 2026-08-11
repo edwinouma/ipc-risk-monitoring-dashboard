@@ -135,19 +135,62 @@ SPI_TRUE_FLOOD_THRESHOLDS = {
 
 ZSCORE_TRUE_THRESHOLDS = {
 
+    # ------------------------------------------------------
+    # Default
+    # Lower-tail deterioration
+    # ------------------------------------------------------
+
     "default": {
         "alert": -1.0,
         "alarm": -2.0
     },
 
-    # Climate indicators
+    # ------------------------------------------------------
+    # Climate
+    # Lower values indicate deterioration
+    # ------------------------------------------------------
+
     "ndvi_absolute": {
         "alert": -1.0,
         "alarm": -2.0
     },
 
-    # Price indicators
+    # ------------------------------------------------------
+    # Prices
+    # Upper values generally indicate deterioration
+    # ------------------------------------------------------
+
     "price_default": {
+        "alert": 1.0,
+        "alarm": 2.0
+    },
+
+    # ------------------------------------------------------
+    # Morbidity
+    #
+    # Seasonal Z-score applied directly to monthly
+    # reported/admission case counts.
+    #
+    # Alert:
+    # Cases >= 1 SD above the historical mean for the
+    # same calendar month.
+    #
+    # Alarm:
+    # Cases >= 2 SD above the historical mean for the
+    # same calendar month.
+    # ------------------------------------------------------
+
+    "Malaria": {
+        "alert": 1.0,
+        "alarm": 2.0
+    },
+
+    "URTI": {
+        "alert": 1.0,
+        "alarm": 2.0
+    },
+
+    "Diarrhoea": {
         "alert": 1.0,
         "alarm": 2.0
     }
@@ -187,13 +230,13 @@ INDICATOR_PERCENTILES = {
     # --------------------------------------------------
 
     "default_lower": {
-        "alert": 50,
-        "alarm": 25
+        "alert": 70,
+        "alarm": 10
     },
 
     "default_upper": {
         "alert": 50,
-        "alarm": 75
+        "alarm": 90
     },
 
     # --------------------------------------------------
@@ -202,17 +245,17 @@ INDICATOR_PERCENTILES = {
 
     "rainfall 1-month anomaly [%]": {
         "alert": 50,
-        "alarm": 25
+        "alarm": 10
     },
 
     "rainfall 3-month anomaly [%]": {
         "alert": 50,
-        "alarm": 25
+        "alarm": 10
     },
 
     "10 day NDVI anomaly": {
         "alert": 50,
-        "alarm": 25
+        "alarm": 10
     },
 
     # --------------------------------------------------
@@ -220,7 +263,7 @@ INDICATOR_PERCENTILES = {
     # --------------------------------------------------
 
     "Maize": {
-        "alert": 70,
+        "alert": 50,
         "alarm": 90
     }
 
@@ -257,6 +300,23 @@ INDICATOR_PERCENTILES = {
 #
 # ==========================================================
 
+# ==========================================================
+# ALPS THRESHOLDS
+# ==========================================================
+
+ALPS_THRESHOLDS = {
+
+    "default": {
+
+        "alert": 1.0,
+
+        "alarm": 2.0
+
+    }
+
+}
+
+
 COUNTRY_THRESHOLDS = {
 
     "South Sudan": {
@@ -279,4 +339,28 @@ COUNTRY_THRESHOLDS = {
             "alarm": 5
         }
     }
+}
+
+# ==========================================================
+# VCI THRESHOLDS
+# ==========================================================
+
+VCI_THRESHOLDS = {
+
+    "default": {
+
+        "alert": 35,
+
+        "alarm": 20
+
+    },
+
+    "ndvi_absolute": {
+
+        "alert": 35,
+
+        "alarm": 20
+
+    }
+
 }

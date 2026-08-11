@@ -26,6 +26,7 @@ COUNTRY_CONFIG = {
         "price_file": "data/price_data_kenya.xlsx",
         "rainfall_file": "data/rainfall_ndvi_kenya.xlsx",
         "conflict_file": "data/acled_kenya.xlsx",
+        "morbidity_file": "data/morbidity_long_kenya.xlsx",
     }
 }
 

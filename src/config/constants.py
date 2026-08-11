@@ -7,7 +7,7 @@ DATE_COL = "date"
 INDICATOR_COL = "indicator"
 VALUE_COL = "value"
 COUNTRY_COL = "country"
-
+YEAR_MONTH_COL = "year_month"
 
 # ==========================================================
 # REFERENCE EVENTS CONFIGURATION

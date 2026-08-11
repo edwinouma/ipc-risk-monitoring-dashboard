@@ -36,6 +36,7 @@ from src.config import (
     INDICATOR_DIRECTION,
     PRICE_INDICATORS,
     CLIMATE_INDICATORS,
+    MORBIDITY_INDICATORS,
     BASELINE_METHODS,
     COUNTRY_CONFIG,
     SEASONAL_DEFINITIONS,
@@ -47,7 +48,9 @@ from src.config import (
     DEFAULT_METHOD_DESCRIPTIONS,
     SPI_TRUE_THRESHOLDS,
     FLOOD_INDICATORS,
-    SHOCK_INDICATORS
+    SHOCK_INDICATORS,
+    ALPS_THRESHOLDS,
+    VCI_THRESHOLDS
 )
 from src.event_loader import load_reference_events, get_reference_events
 
@@ -347,31 +350,7 @@ indicator = st.sidebar.selectbox(
 )
 
 # ---------------------------------------------------
-# Price Baseline Selector (ONLY for price indicators)
-# ---------------------------------------------------
-
-from src.config import INDICATOR_ALLOWED_BASELINES
-
-baseline_method = None
-
-allowed_baselines = INDICATOR_ALLOWED_BASELINES.get(
-    indicator,
-    [DEFAULT_BASELINE]
-)
-
-# Only show selector if more than one option
-if len(allowed_baselines) > 1:
-
-    baseline_method = st.sidebar.selectbox(
-        "Measure",
-        allowed_baselines
-    )
-
-else:
-    baseline_method = allowed_baselines[0]
-
-# ---------------------------------------------------
-# Method Selection (Dynamic per indicator)
+# Method Selection (needed before Measure logic)
 # ---------------------------------------------------
 
 from src.config import SPI_TRUE_INDICATORS
@@ -384,30 +363,73 @@ else:
         ["percentile"]
     )
 
-# Label
 st.sidebar.markdown("**Method**")
 
-# Caption
 st.sidebar.caption(
     "Choose how alert and alarm levels are calculated. "
     "Each method has different assumptions."
 )
 
-# Dropdown
 method = st.sidebar.selectbox(
     "",
     available_methods,
     label_visibility="collapsed"
 )
 
+# ---------------------------------------------------
+# Measure (ALPS USES NOMINAL)
+# ---------------------------------------------------
+
+from src.config import INDICATOR_ALLOWED_BASELINES
+
+if method == "alps":
+
+    # ALPS is always computed from the Nominal price series
+    baseline_method = "Nominal"
+
+else:
+
+    allowed_baselines = INDICATOR_ALLOWED_BASELINES.get(
+        indicator,
+        [DEFAULT_BASELINE]
+    )
+
+    if len(allowed_baselines) > 1:
+
+        baseline_method = st.sidebar.selectbox(
+            "Measure",
+            allowed_baselines
+        )
+
+    else:
+
+        baseline_method = allowed_baselines[0]
+
 # -----------------------------------------
 # 🔥 SHOW ACTIVE SIGNAL TYPE
 # -----------------------------------------
-if method == "zscore_true":
-    st.sidebar.success("Using standardized signal (Z-score)")
-elif method == "spi_true":
-    st.sidebar.success("Using SPI standardized signal")
+STANDARDIZED_METHODS = [
+    "spi_true",
+    "zscore_true",
+    "alps",
+    "vci"
+]
+
+if method in STANDARDIZED_METHODS:
+
+    method_name = {
+        "spi_true": "SPI",
+        "zscore_true": "Z-score",
+        "alps": "ALPS",
+        "vci": "VCI"
+    }
+
+    st.sidebar.success(
+        f"Using standardized signal ({method_name[method]})"
+    )
+
 else:
+
     st.sidebar.info("Using anomaly-based signal")
 
 # 🔹 spacing
@@ -517,14 +539,21 @@ show_events = st.sidebar.checkbox(
 # Determine indicator_type once for the whole page
 if indicator in PRICE_INDICATORS:
     indicator_type = "price"
+
 elif indicator in CLIMATE_INDICATORS:
     indicator_type = "climate"
+
 elif indicator in FLOOD_INDICATORS:
     indicator_type = "climate"
+
 elif indicator in SHOCK_INDICATORS:
     indicator_type = "shock"
+
+elif indicator in MORBIDITY_INDICATORS:
+    indicator_type = "morbidity"
+
 else:
-    indicator_type = "price"
+    indicator_type = "other"
 
 # Fetch events once here — reused everywhere below
 events = cached_get_reference_events(
@@ -547,9 +576,43 @@ def get_filtered_df(df, country, indicator, baseline_method, method):
         result.loc[:, "value"] = result["value_zscore"]
 
     # 🔥 DO NOT FILTER CONFLICT BASELINE
-    if baseline_method is not None and "baseline_method" in result.columns:
-        if indicator not in ["conflict_events", "conflict_fatalities"]:
-            result = result[result["baseline_method"] == baseline_method]
+    # -----------------------------------------
+    # FILTER BASELINE
+    # -----------------------------------------
+
+    if "baseline_method" in result.columns:
+
+        if method == "alps":
+
+            result = result[
+                result["baseline_method"] == "Nominal"
+                ]
+
+        elif baseline_method is not None:
+
+            if indicator not in [
+                "conflict_events",
+                "conflict_fatalities"
+            ]:
+                result = result[
+                    result["baseline_method"] == baseline_method
+                    ]
+
+    # -----------------------------------------
+    # USE THE CORRECT SIGNAL COLUMN
+    # -----------------------------------------
+
+    if method == "alps" and "alps" in result.columns:
+
+        result["value"] = result["alps"]
+
+    elif method == "vci" and "vci" in result.columns:
+
+        result["value"] = result["vci"]
+
+    elif method == "zscore_true" and "value_zscore" in result.columns:
+
+        result["value"] = result["value_zscore"]
 
     return result
 
@@ -608,27 +671,72 @@ if method == "categorical":
     alert_threshold = thresholds["alert"]
     alarm_threshold = thresholds["alarm"]
 
-# ---------------------------------------------------
-# NORMAL INDICATORS → EXISTING LOGIC
-# ---------------------------------------------------
 else:
 
     # -----------------------------------------
-    # 🔥 TRUE SPI THRESHOLDS (CONFIG-DRIVEN)
+    # ALPS THRESHOLDS (Direction-aware)
     # -----------------------------------------
-    if method == "spi_true":
+    if method == "alps":
+
+        thresholds = ALPS_THRESHOLDS.get(
+            indicator,
+            ALPS_THRESHOLDS["default"]
+        )
+
+        direction = INDICATOR_DIRECTION.get(indicator, "upper")
+
+        alert_alps = thresholds["alert"]
+        alarm_alps = thresholds["alarm"]
+
+        if direction == "lower":
+
+            # Lower-tail indicators (e.g. ToT)
+            alert_threshold = -abs(alert_alps)
+            alarm_threshold = -abs(alarm_alps)
+
+            # Ensure alarm is more extreme
+            alert_threshold = max(alert_threshold, alarm_threshold)
+            alarm_threshold = min(alert_threshold, alarm_threshold)
+
+        else:
+
+            # Upper-tail indicators (e.g. prices)
+            alert_threshold = abs(alert_alps)
+            alarm_threshold = abs(alarm_alps)
+
+            # Ensure alarm is more extreme
+            alert_threshold = min(alert_threshold, alarm_threshold)
+            alarm_threshold = max(alert_threshold, alarm_threshold)
+
+    # -----------------------------------------
+    # VCI THRESHOLDS
+    # -----------------------------------------
+    elif method == "vci":
+
+        thresholds = VCI_THRESHOLDS.get(
+            indicator,
+            VCI_THRESHOLDS["default"]
+        )
+
+        alert_threshold = thresholds["alert"]
+        alarm_threshold = thresholds["alarm"]
+
+    # -----------------------------------------
+    # TRUE SPI THRESHOLDS (CONFIG-DRIVEN)
+    # -----------------------------------------
+    elif method == "spi_true":
 
         thresholds = SPI_TRUE_THRESHOLDS.get(
             indicator,
             SPI_TRUE_THRESHOLDS["default"]
         )
 
-        # -----------------------------
-        # Drought (default)
-        # -----------------------------
         alert_threshold = thresholds["alert"]
         alarm_threshold = thresholds["alarm"]
 
+    # -----------------------------------------
+    # TRUE Z-SCORE
+    # -----------------------------------------
     elif method == "zscore_true":
 
         from src.config import ZSCORE_TRUE_THRESHOLDS, INDICATOR_DIRECTION, PRICE_INDICATORS
@@ -725,21 +833,47 @@ else:
                     st.warning("Z-score thresholds not available for this configuration.")
                     st.stop()
 
-        else:
-            alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
 
+
+        else:
+
+            alarm_threshold, alert_threshold = get_active_thresholds(
+
+                indicator,
+
+                method
+
+            )
 
 
     else:
 
-        if not user_override_active and method != "hybrid":
-            alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
+        if (
+                not user_override_active
+                and method not in ["hybrid", "alps", "vci"]
+        ):
+            alarm_threshold, alert_threshold = get_active_thresholds(
+
+                indicator,
+
+                method
+
+            )
 
 # ---------------------------------------------------
 # Dynamic Threshold Recalculation (Selected Units)
 # ---------------------------------------------------
 
-if method not in ["spi_true"] and baseline_mode == "Dynamic (Selected Units)" and len(selected_units) > 0:
+if (
+    method not in [
+        "spi_true",
+        "zscore_true",
+        "alps",
+        "vci"
+    ]
+    and baseline_mode == "Dynamic (Selected Units)"
+    and len(selected_units) > 0
+):
 
     # Only recompute if subset of provinces selected
     if len(selected_units) < len(all_units):
@@ -800,7 +934,23 @@ def get_season_thresholds(season_name):
 #if description:
 #    st.info(description)
 st.subheader("Interpretation Note")
-st.info("Thresholds reflect how unusual current conditions are compared to historical patterns.")
+
+if indicator in MORBIDITY_INDICATORS:
+
+    st.info(
+        "Morbidity signals compare reported monthly cases with the "
+        "historical distribution for the same calendar month. "
+        "Alert indicates cases at least 1 standard deviation above "
+        "the historical seasonal mean, while Alarm indicates cases "
+        "at least 2 standard deviations above the historical seasonal mean."
+    )
+
+else:
+
+    st.info(
+        "Thresholds reflect how unusual current conditions are "
+        "compared to historical patterns."
+    )
 
 st.markdown(f"### Suggested Thresholds ({method.lower()})")
 row1_col1, row1_col2 = st.columns([1, 1])
@@ -810,10 +960,18 @@ row2_col1, row2_col2 = st.columns([1, 1])
 # 🔥 SAFETY DEFAULT (FIX NameError)
 # ---------------------------------------------------
 if "alarm_threshold" not in locals():
+
     if method != "hybrid":
-        alarm_threshold, alert_threshold = get_active_thresholds(indicator, method)
+
+        alarm_threshold, alert_threshold = get_active_thresholds(
+            indicator,
+            method
+        )
+
     else:
-        alarm_threshold, alert_threshold = None, None
+
+        alarm_threshold = None
+        alert_threshold = None
 
 # -----------------------------------------
 # SPI DISPLAY FIX (UI ONLY)
@@ -1464,16 +1622,28 @@ else:
         # Market indicators
         elif indicator in PRICE_INDICATORS:
 
-            if method == "zscore_true":
-                # 🔥 NO FILTERING for Z-score
+            if method in ["zscore_true", "alps", "vci"]:
+
+                # Standardized methods use the full distribution
                 filtered_count = total_count
+
             else:
+
                 # Existing logic for anomaly-based methods
                 if direction == "upper":
-                    filtered_count = df_retention[df_retention["value"] > 0]["value"].count()
+
+                    filtered_count = df_retention[
+                        df_retention["value"] > 0
+                        ]["value"].count()
+
                 elif direction == "lower":
-                    filtered_count = df_retention[df_retention["value"] < 0]["value"].count()
+
+                    filtered_count = df_retention[
+                        df_retention["value"] < 0
+                        ]["value"].count()
+
                 else:
+
                     filtered_count = total_count
 
         else:
@@ -1514,9 +1684,10 @@ else:
 
             )
 
+
         elif indicator in PRICE_INDICATORS:
 
-            if method == "zscore_true":
+            if method in ["zscore_true", "alps", "vci"]:
 
                 monthly_stats = (
 
@@ -1529,6 +1700,7 @@ else:
                     .reset_index()
 
                 )
+
 
             else:
 
@@ -1552,6 +1724,7 @@ else:
 
                     )
 
+
                 elif direction == "lower":
 
                     monthly_stats = (
@@ -1571,6 +1744,7 @@ else:
                         .reset_index()
 
                     )
+
 
                 else:
 
@@ -1901,7 +2075,14 @@ if show_events:
 
     if method == "spi_true" and "type" in events_chart.columns:
         if spi_mode == "Drought":
-            events_chart = events_chart[events_chart["type"] == "drought"]
+            events_chart = events_chart[
+                events_chart["type"].str.lower().isin([
+                    "drought",
+                    "drought (la niña)",
+                    "la niña",
+                    "la_nina"
+                ])
+            ]
         elif spi_mode == "Flood":
             events_chart = events_chart[events_chart["type"] == "flood"]
 

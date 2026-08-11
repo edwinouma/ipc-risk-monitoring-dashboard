@@ -10,6 +10,7 @@ CLIMATE_INDICATORS = [
     "ndvi_absolute"
 ]
 
+
 PRICE_INDICATORS = [
 
     # Afghanistan
@@ -49,20 +50,35 @@ PRICE_INDICATORS = [
     "ToT (Goat/Cereal)"
 ]
 
+
 SHOCK_INDICATORS = [
     "conflict_events",
     "conflict_fatalities"
 ]
+
 
 SHOCK_MANMADE = [
     "conflict_events",
     "conflict_fatalities"
 ]
 
+
 FLOOD_INDICATORS = [
     "percent_area_flooded",
     "rainfall-mm"
 ]
+
+
+# ==========================================================
+# MORBIDITY INDICATORS
+# ==========================================================
+
+MORBIDITY_INDICATORS = [
+    "Malaria",
+    "URTI",
+    "Diarrhoea"
+]
+
 
 # ==========================================================
 # ALL INDICATORS
@@ -73,7 +89,9 @@ INDICATORS = (
     + PRICE_INDICATORS
     + SHOCK_INDICATORS
     + FLOOD_INDICATORS
+    + MORBIDITY_INDICATORS
 )
+
 
 # ==========================================================
 # INDICATOR GROUPS (UI / DASHBOARD)
@@ -84,7 +102,10 @@ INDICATOR_GROUPS = {
     "Flood": FLOOD_INDICATORS,
     "Price / Economic": PRICE_INDICATORS,
     "Shock (Man-made)": SHOCK_MANMADE,
+    "Nutrition / Morbidity": MORBIDITY_INDICATORS,
 }
+
+
 
 # ==========================================================
 # INDICATOR TYPE
@@ -92,7 +113,10 @@ INDICATOR_GROUPS = {
 
 INDICATOR_TYPE = {
 
+    # ------------------------------------------------------
     # Climate
+    # ------------------------------------------------------
+
     "rainfall 1-month anomaly [%]": "climate",
     "rainfall 3-month anomaly [%]": "climate",
     "10 day NDVI anomaly": "climate",
@@ -100,7 +124,10 @@ INDICATOR_TYPE = {
     "ndvi_absolute": "climate",
     "percent_area_flooded": "climate",
 
+    # ------------------------------------------------------
     # Market
+    # ------------------------------------------------------
+
     "Bread": "market",
     "Exchange rate": "market",
     "Fuel (diesel)": "market",
@@ -133,10 +160,22 @@ INDICATOR_TYPE = {
     "Sorghum (brown)": "market",
     "Rice": "market",
 
+    # ------------------------------------------------------
     # Shock
+    # ------------------------------------------------------
+
     "conflict_events": "shock",
-    "conflict_fatalities": "shock"
+    "conflict_fatalities": "shock",
+
+    # ------------------------------------------------------
+    # Morbidity
+    # ------------------------------------------------------
+
+    "Malaria": "morbidity",
+    "URTI": "morbidity",
+    "Diarrhoea": "morbidity",
 }
+
 
 # ==========================================================
 # INDICATOR RISK DIRECTION
@@ -144,7 +183,10 @@ INDICATOR_TYPE = {
 
 INDICATOR_DIRECTION = {
 
+    # ------------------------------------------------------
     # Lower-tail risk
+    # ------------------------------------------------------
+
     "rainfall 1-month anomaly [%]": "lower",
     "rainfall 3-month anomaly [%]": "lower",
     "10 day NDVI anomaly": "lower",
@@ -157,7 +199,10 @@ INDICATOR_DIRECTION = {
     "ToT (Labour/Cereal)": "lower",
     "ToT (Goat/Cereal)": "lower",
 
+    # ------------------------------------------------------
     # Afghanistan
+    # ------------------------------------------------------
+
     "Bread": "upper",
     "Exchange rate": "upper",
     "Fuel (diesel)": "upper",
@@ -171,12 +216,18 @@ INDICATOR_DIRECTION = {
     "Wheat flour (high quality)": "upper",
     "Wheat flour (low quality)": "upper",
 
+    # ------------------------------------------------------
     # Kenya
+    # ------------------------------------------------------
+
     "Goat": "lower",
     "Maize": "upper",
     "Beans": "upper",
 
+    # ------------------------------------------------------
     # South Sudan
+    # ------------------------------------------------------
+
     "Fuel (diesel, parallel market)": "upper",
     "Fuel (petrol-gasoline, parallel market)": "upper",
     "Sorghum (local)": "upper",
@@ -189,10 +240,25 @@ INDICATOR_DIRECTION = {
     "Sorghum (brown)": "upper",
     "Rice": "upper",
 
+    # ------------------------------------------------------
     # Shocks
+    # ------------------------------------------------------
+
     "conflict_events": "upper",
     "conflict_fatalities": "upper",
 
+    # ------------------------------------------------------
     # Flood
-    "percent_area_flooded": "upper"
+    # ------------------------------------------------------
+
+    "percent_area_flooded": "upper",
+
+    # ------------------------------------------------------
+    # Morbidity
+    # Higher case counts = increasing risk
+    # ------------------------------------------------------
+
+    "Malaria": "upper",
+    "URTI": "upper",
+    "Diarrhoea": "upper",
 }

@@ -34,27 +34,58 @@ def generate_indicator_insights(
     df_counts = counts.copy()
 
     # ---------------------------------------------------
-    # 1. Peak warning months
+    # 1. Peak warning and alarm months
     # ---------------------------------------------------
     alarm_pct_col = f"{alarm_label}_pct"
     alert_pct_col = f"{alert_label}_pct"
 
     if alarm_pct_col in df_counts.columns and alert_pct_col in df_counts.columns:
+
+        # ---------------------------------------------------
+        # Combined Alert + Alarm signal
+        # ---------------------------------------------------
         df_counts["warning_pct"] = (
-            df_counts[alarm_pct_col].fillna(0) +
-            df_counts[alert_pct_col].fillna(0)
+                df_counts[alarm_pct_col].fillna(0) +
+                df_counts[alert_pct_col].fillna(0)
         )
 
-        peak_row = df_counts.sort_values("warning_pct", ascending=False).iloc[0]
+        peak_warning_row = (
+            df_counts
+            .sort_values("warning_pct", ascending=False)
+            .iloc[0]
+        )
 
-        peak_month = peak_row["date"].strftime("%Y %b")
-        peak_pct = round(peak_row["warning_pct"], 1)
+        peak_warning_month = peak_warning_row["date"].strftime("%Y %b")
+        peak_warning_pct = round(peak_warning_row["warning_pct"], 1)
 
         insights.append(
             f"The strongest warning signal for **{indicator}** in **{selected_country}** "
-            f"occurred in **{peak_month}**, when **{peak_pct}%** of selected units were in "
-            f"**{alert_label}** or **{alarm_label}**."
+            f"occurred in **{peak_warning_month}**, when **{peak_warning_pct}%** of selected units "
+            f"were in **{alert_label}** or **{alarm_label}**."
         )
+
+        # ---------------------------------------------------
+        # Alarm-only peak
+        # ---------------------------------------------------
+        peak_alarm_row = (
+            df_counts
+            .sort_values(alarm_pct_col, ascending=False)
+            .iloc[0]
+        )
+
+        peak_alarm_month = peak_alarm_row["date"].strftime("%Y %b")
+        peak_alarm_pct = round(peak_alarm_row[alarm_pct_col], 1)
+
+        if peak_alarm_pct > 0:
+            insights.append(
+                f"The highest concentration of **{alarm_label}** conditions occurred in "
+                f"**{peak_alarm_month}**, when **{peak_alarm_pct}%** of selected units "
+                f"were classified as **{alarm_label}**."
+            )
+        else:
+            insights.append(
+                f"No **{alarm_label}** conditions were observed during the selected period."
+            )
 
     # ---------------------------------------------------
     # 2. Persistent hotspot units

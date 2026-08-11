@@ -6,7 +6,8 @@ from src.data_loader import (
     load_price_data,
     load_conflict_data,
     load_flood_data,
-    load_ipc_data   # 🔥 ADD THIS
+    load_ipc_data,
+    load_morbidity_data
 )
 
 from src.config import CLASSIFICATION_LABELS
@@ -34,6 +35,9 @@ from src.conflict_baseline import compute_conflict_baseline
 from src.tot_calculation import compute_tot
 from src.config import TOT_CONFIG, DERIVED_INDICATORS
 from src.spi_true import compute_true_spi
+from src.alps import compute_alps
+from src.vci import compute_vci
+
 import pandas as pd
 import os
 import numpy as np
@@ -98,6 +102,7 @@ def main():
     all_conflict = []
     all_flood = []
     all_ipc = []
+    all_morbidity = []
 
     for country, cfg in COUNTRY_CONFIG.items():
 
@@ -193,6 +198,47 @@ def main():
         else:
             print(f"IPC file not found for {country}")
 
+        # -------------------------
+        # Morbidity
+        # -------------------------
+        morbidity_path = cfg.get("morbidity_file")
+
+        if morbidity_path and os.path.exists(morbidity_path):
+
+            df_morbidity_country = load_morbidity_data(
+                morbidity_path
+            )
+
+            df_morbidity_country["country"] = country
+
+            # -----------------------------------------
+            # Admin group mapping
+            # -----------------------------------------
+            df_morbidity_country["group"] = (
+                df_morbidity_country["adm1_name"]
+                .map(ADM1_GROUP_MAPPING)
+            )
+
+            df_morbidity_country["group"] = (
+                df_morbidity_country["group"]
+                .fillna("Unknown")
+            )
+
+            all_morbidity.append(
+                df_morbidity_country
+            )
+
+            print(
+                f"Morbidity data for {country} "
+                f"loaded successfully."
+            )
+
+        else:
+
+            print(
+                f"Morbidity file not found for {country}"
+            )
+
     df_rainfall = pd.concat(all_rainfall, ignore_index=True)
     df_price_raw = pd.concat(all_prices, ignore_index=True)
     df_conflict = (
@@ -213,7 +259,114 @@ def main():
         if all_ipc else pd.DataFrame()
     )
 
+    # -------------------------
+    # MORBIDITY CONCAT
+    # -------------------------
+
+    df_morbidity = (
+        pd.concat(
+            all_morbidity,
+            ignore_index=True
+        )
+        if all_morbidity
+        else pd.DataFrame()
+    )
+
+    print(
+        f"Morbidity records loaded: "
+        f"{len(df_morbidity):,}"
+    )
+
     df_price_monthly = compute_monthly_prices(df_price_raw)
+
+    # -------------------------
+    # CREATE ALPS DATASET
+    # -------------------------
+
+    alps_datasets = []
+
+    for country in df_price_monthly["country"].unique():
+
+        df_country = df_price_monthly[
+            df_price_monthly["country"] == country
+            ]
+
+        for ind in PRICE_INDICATORS:
+
+            df_indicator = df_country[
+                df_country["indicator"] == ind
+                ]
+
+            for adm1 in df_indicator["adm1_name"].unique():
+
+                df_series = (
+                    df_indicator[
+                        df_indicator["adm1_name"] == adm1
+                        ]
+                    .copy()
+                    .sort_values("year_month")
+                )
+
+                if df_series.empty:
+                    continue
+
+                df_series["date"] = (
+                    df_series["year_month"]
+                    .dt.to_timestamp()
+                )
+
+                df_alps = compute_alps(
+                    df_series,
+                    value_column="value",
+                    date_column="date"
+                )
+
+                df_alps["country"] = country
+                df_alps["indicator"] = ind
+
+                # 🔥 IMPORTANT
+                df_alps["baseline_method"] = "Nominal"
+
+                alps_datasets.append(df_alps)
+
+    df_alps_all = pd.concat(
+        alps_datasets,
+        ignore_index=True
+    )
+
+    # ---------------------------------------------------
+    # EXPORT ALPS OUTPUT (BEFORE MERGING)
+    # ---------------------------------------------------
+
+    alps_export = df_alps_all.copy()
+
+    # Convert Period to string for Excel
+    if "year_month" in alps_export.columns:
+        alps_export["year_month"] = (
+            alps_export["year_month"].astype(str)
+        )
+
+    alps_export.to_excel(
+        "outputs/alps_output_before_merge.xlsx",
+        index=False
+    )
+
+    print("ALPS output saved to outputs/alps_output_before_merge.xlsx")
+
+    # ---------------------------------------------------
+    # STANDARDIZE ALPS DATASET
+    # (Nominal prices become another baseline dataset)
+    # ---------------------------------------------------
+
+    df_alps_standard = df_alps_all.copy()
+
+    df_alps_standard["group"] = (
+        df_alps_standard["adm1_name"]
+        .map(ADM1_GROUP_MAPPING)
+    )
+
+    print("ALPS standard dataset created.")
+    print(df_alps_standard["baseline_method"].value_counts())
 
     # ---------------------------------------------------
     # 🔥 Compute ToT EARLY (BEFORE BASELINES)
@@ -286,6 +439,26 @@ def main():
         VALUE_COL: "value"
     })
 
+    # ---------------------------------------------------
+    # ADD ALPS (Nominal) TO PRICE DATASET
+    # ---------------------------------------------------
+
+    df_price_standard = pd.concat(
+        [
+            df_price_standard,
+            df_alps_standard
+        ],
+        ignore_index=True,
+        sort=False
+    )
+
+    print("\nPrice baseline counts after adding ALPS:")
+    print(df_price_standard["baseline_method"].value_counts())
+
+    # -----------------------------------------------------------
+    # END OF MERGING OF PRICE DATASETS WITH ALPS
+    # -----------------------------------------------------------
+
     price_export = df_price_standard.copy()
     price_export["year_month"] = price_export["year_month"].astype(str)
 
@@ -313,6 +486,103 @@ def main():
     })
 
     df_rainfall_standard["baseline_method"] = "none"
+
+    # ---------------------------------------------------
+    # Morbidity standardization
+    # ---------------------------------------------------
+
+    df_morbidity_standard = df_morbidity[
+        ["country", UNIT_COL, "year_month", INDICATOR_COL, VALUE_COL]
+    ].copy()
+
+    if not df_morbidity.empty:
+
+        df_morbidity_standard = df_morbidity[
+            [
+                "country",
+                UNIT_COL,
+                "year_month",
+                INDICATOR_COL,
+                VALUE_COL
+            ]
+        ].copy()
+
+        # -----------------------------------------
+        # Ensure monthly period
+        # -----------------------------------------
+
+        if not isinstance(
+                df_morbidity_standard["year_month"].dtype,
+                pd.PeriodDtype
+        ):
+            df_morbidity_standard["year_month"] = (
+                pd.to_datetime(
+                    df_morbidity_standard["year_month"],
+                    errors="coerce"
+                ).dt.to_period("M")
+            )
+
+        # -----------------------------------------
+        # Ensure numeric case counts
+        # -----------------------------------------
+
+        df_morbidity_standard["value"] = pd.to_numeric(
+            df_morbidity_standard["value"],
+            errors="coerce"
+        )
+
+        df_morbidity_standard = (
+            df_morbidity_standard
+            .dropna(
+                subset=[
+                    "adm1_name",
+                    "year_month",
+                    "indicator",
+                    "value"
+                ]
+            )
+            .copy()
+        )
+
+        # -----------------------------------------
+        # Group mapping
+        # -----------------------------------------
+
+        df_morbidity_standard["group"] = (
+            df_morbidity_standard["adm1_name"]
+            .map(ADM1_GROUP_MAPPING)
+        )
+
+        df_morbidity_standard["group"] = (
+            df_morbidity_standard["group"]
+            .fillna("Unknown")
+        )
+
+        # -----------------------------------------
+        # No baseline transformation
+        # -----------------------------------------
+
+        df_morbidity_standard["baseline_method"] = "none"
+
+        # -----------------------------------------
+        # Restore date for downstream functions
+        # -----------------------------------------
+
+        df_morbidity_standard["date"] = (
+            df_morbidity_standard["year_month"]
+            .dt.to_timestamp()
+        )
+
+        print("\nMorbidity standard dataset created.")
+        print(
+            df_morbidity_standard[
+                "indicator"
+            ].value_counts()
+        )
+
+    else:
+
+        df_morbidity_standard = pd.DataFrame()
 
     # ---------------------------------------------------
     # Flood standardization
@@ -470,10 +740,18 @@ def main():
             df_rainfall_standard,
             df_price_standard,
             df_conflict_standard,
-            df_flood_standard
+            df_flood_standard,
+            df_morbidity_standard
         ],
-        ignore_index=True
-    ).sort_values(["country", "year_month", UNIT_COL])
+        ignore_index=True,
+        sort=False
+    ).sort_values(
+        [
+            "country",
+            "year_month",
+            UNIT_COL
+        ]
+    )
 
     df.to_csv("outputs/merged_standardized_dataset.csv", index=False)
 
@@ -497,16 +775,82 @@ def main():
                 [DEFAULT_BASELINE]
             )
 
+            print("\n" + "=" * 70)
+            print(f"Country   : {country}")
+            print(f"Indicator : {ind}")
+            print(f"Baselines : {baseline_list}")
+            print("=" * 70)
+
             for baseline_method in baseline_list:
 
                 print(f"\nProcessing Indicator: {ind} | Baseline: {baseline_method}")
+                if baseline_method == "Nominal":
+                    print(f"✅ Nominal baseline detected for {ind}")
 
                 if ind in PRICE_INDICATORS and baseline_method == "none":
                     continue
 
                 df_indicator = df_country[df_country["indicator"] == ind].copy()
 
+                print("\n==============================")
+                print(f"Indicator : {ind}")
+                print(f"Baseline  : {baseline_method}")
+                print(df_indicator["baseline_method"].value_counts(dropna=False))
+                print("==============================")
+
                 method_type = INDICATOR_METHOD.get(ind, "percentile")
+
+                # -----------------------------------------
+                # 🔥 VCI
+                # -----------------------------------------
+                if ind in VCI_INDICATORS:
+
+                    try:
+
+                        df_vci_source = df_rainfall_standard[
+                            (df_rainfall_standard["country"] == country) &
+                            (df_rainfall_standard["indicator"] == ind)
+                            ].copy()
+
+                        df_vci = compute_vci(
+                            df_vci_source,
+                            indicator=ind,
+                            value_col="value"
+                        )
+
+                        df_vci_small = (
+                            df_vci[
+                                [
+                                    "adm1_name",
+                                    "year_month",
+                                    "vci"
+                                ]
+                            ]
+                            .drop_duplicates()
+                        )
+
+                        df_indicator = df_indicator.merge(
+                            df_vci_small,
+                            on=[
+                                "adm1_name",
+                                "year_month"
+                            ],
+                            how="left"
+                        )
+
+                        export = df_vci.copy()
+                        export["year_month"] = export["year_month"].astype(str)
+
+                        export.to_excel(
+                            "outputs/vci_output_before_merge.xlsx",
+                            index=False
+                        )
+
+                        print("✅ VCI computed successfully.")
+
+                    except Exception as e:
+
+                        print(f"VCI failed: {e}")
 
                 # -----------------------------------------
                 # 🔥 TRUE SPI (Gamma-based)
@@ -539,14 +883,44 @@ def main():
 
                     try:
                         # -----------------------------------------
-                        # 🔥 SELECT CORRECT DATA SOURCE
+                        # SELECT CORRECT DATA SOURCE
                         # -----------------------------------------
+
                         if ind in PRICE_INDICATORS:
+
+                            # Price Z-score uses the selected
+                            # price baseline/anomaly dataset
                             df_z_source = df_indicator.copy()
+
+                        elif ind in MORBIDITY_INDICATORS:
+
+                            # Morbidity Z-score is calculated directly
+                            # from historical monthly case counts
+                            df_z_source = df_morbidity_standard[
+                                (
+                                        df_morbidity_standard["country"]
+                                        == country
+                                )
+                                &
+                                (
+                                        df_morbidity_standard["indicator"]
+                                        == ind
+                                )
+                                ].copy()
+
                         else:
-                            df_z_source = df_rainfall[
-                                (df_rainfall["country"] == country) &
-                                (df_rainfall[INDICATOR_COL] == ind)
+
+                            # Climate / NDVI
+                            df_z_source = df_rainfall_standard[
+                                (
+                                        df_rainfall_standard["country"]
+                                        == country
+                                )
+                                &
+                                (
+                                        df_rainfall_standard[INDICATOR_COL]
+                                        == ind
+                                )
                                 ].copy()
 
                         # -----------------------------------------
@@ -557,14 +931,57 @@ def main():
                                 df_z_source["baseline_method"] == baseline_method
                                 ]
 
+                        print("\n------------------------------")
+                        print(f"{ind} | {baseline_method}")
+                        print(f"Rows after baseline filter: {len(df_z_source)}")
+
+                        if len(df_z_source):
+                            print(df_z_source["baseline_method"].value_counts(dropna=False))
+                            print(df_z_source[["adm1_name", "year_month", "value"]].head())
+                        else:
+                            print("EMPTY DATAFRAME")
+                        print("------------------------------")
+
                         # ✅ ADD THIS HERE
                         if "date" not in df_z_source.columns:
                             df_z_source["date"] = df_z_source["year_month"].dt.to_timestamp()
+
+                        print("\n" + "=" * 80)
+                        print(f"TRUE Z INPUT : {ind}")
+                        print("=" * 80)
+
+                        print("Rows:", len(df_z_source))
+
+                        print("Columns:")
+                        print(df_z_source.columns.tolist())
+
+                        print("\nSample:")
+                        print(df_z_source.head())
+
+                        print("\nMissing values:")
+                        print(df_z_source.isna().sum())
+
+                        print("=" * 80)
 
                         # -----------------------------------------
                         # Apply zscore_true
                         # -----------------------------------------
                         df_z = compute_true_zscore(df_z_source)
+
+                        print("\nReturned columns from compute_true_zscore():")
+                        print(df_z.columns.tolist())
+
+                        df_z["indicator"] = ind
+
+                        if ind not in PRICE_INDICATORS:
+                            df_z["baseline_method"] = "none"
+
+                        print("\nColumns after adding baseline:")
+                        print(df_z.columns.tolist())
+
+                        df_z_small = df_z[
+                            ["adm1_name", "year_month", "baseline_method", "value_zscore"]
+                        ]
 
                         df_z["indicator"] = ind
 
@@ -586,6 +1003,29 @@ def main():
                             on=["adm1_name", "year_month", "baseline_method"],
                             how="left"
                         )
+
+                        # --------------------------------------------------------
+                        # DEBUG TRUE Z MERGE
+                        # --------------------------------------------------------
+                        if ind == "ndvi_absolute":
+                            print("\n" + "=" * 80)
+                            print("AFTER TRUE Z MERGE - NDVI")
+                            print("=" * 80)
+
+                            print(df_indicator[[
+                                "adm1_name",
+                                "year_month",
+                                "baseline_method",
+                                "value_zscore"
+                            ]].head(10))
+
+                            print("\nMissing value_zscore:",
+                                  df_indicator["value_zscore"].isna().sum())
+
+                            print("Total rows:",
+                                  len(df_indicator))
+
+                            print("=" * 80)
 
                         print(f"✅ TRUE Z-SCORE applied for {ind}")
 
@@ -707,20 +1147,80 @@ def main():
                             how="left"
                         )
 
+                    # -----------------------------------------
+                    # 🔥 MERGE ALPS AT UNIT-MONTH LEVEL
+                    # -----------------------------------------
+                    if "alps" in df_indicator.columns:
+                        df_alps_unit = (
+                            df_indicator[
+                                [
+                                    "adm1_name",
+                                    "year_month",
+                                    "baseline_method",
+                                    "alps"
+                                ]
+                            ]
+                            .dropna(subset=["alps"])
+                            .drop_duplicates()
+                        )
+
+                        unit_month = unit_month.merge(
+                            df_alps_unit,
+                            on=[
+                                "adm1_name",
+                                "year_month",
+                                "baseline_method"
+                            ],
+                            how="left"
+                        )
+
+                    # -----------------------------------------
+                    # 🔥 MERGE VCI AT UNIT-MONTH LEVEL
+                    # -----------------------------------------
+                    if "vci" in df_indicator.columns:
+                        df_vci_unit = (
+                            df_indicator[
+                                [
+                                    "adm1_name",
+                                    "year_month",
+                                    "vci"
+                                ]
+                            ]
+                            .dropna(subset=["vci"])
+                            .drop_duplicates()
+                        )
+
+                        unit_month = unit_month.merge(
+                            df_vci_unit,
+                            on=[
+                                "adm1_name",
+                                "year_month"
+                            ],
+                            how="left"
+                        )
+
                     unit_month["indicator"] = ind
                     unit_month["baseline_method"] = baseline_method
 
                 all_unit_month_values.append(unit_month)
 
                 # -----------------------------------------
-                # 🔥 SELECT VALUE COLUMN (SPATIAL - FINAL FIX)
+                # SELECT VALUE COLUMN (SPATIAL)
                 # -----------------------------------------
-                if method_type == "zscore_true":
+
+                if method_type == "vci":
+
+                    value_col_spatial = "vci"
+
+                elif method_type == "zscore_true":
+
                     value_col_spatial = "value_zscore"
+
                 else:
+
                     value_col_spatial = VALUE_COL
 
-                # fallback safety
+                # Safety fallback
                 if value_col_spatial not in df_indicator.columns:
                     value_col_spatial = VALUE_COL
 
@@ -1144,15 +1644,23 @@ def main():
         method_type = INDICATOR_METHOD.get(ind, "percentile")
 
         # -----------------------------------------
-        # 🔥 SAFE VALUE COLUMN (TRIGGER - FINAL)
+        # SELECT VALUE COLUMN (TRIGGERS)
         # -----------------------------------------
-        if (
+
+        if ind in VCI_INDICATORS:
+
+            value_col_trigger = "vci"
+
+        elif (
                 ind in ZSCORE_TRUE_INDICATORS
                 and "value_zscore" in final_unit_month.columns
                 and final_unit_month["value_zscore"].notna().any()
         ):
+
             value_col_trigger = "value_zscore"
+
         else:
+
             value_col_trigger = VALUE_COL
 
         # -----------------------------------------
@@ -1295,13 +1803,24 @@ def main():
         if "baseline_method" in df_matrix.columns:
             df_matrix = df_matrix[df_matrix["baseline_method"] == DEFAULT_BASELINE].copy()
 
-        if (
+        # -----------------------------------------
+        # SELECT VALUE COLUMN (CLASSIFICATION)
+        # -----------------------------------------
+
+        if ind in VCI_INDICATORS:
+
+            value_col_classification = "vci"
+
+        elif (
                 ind in ZSCORE_TRUE_INDICATORS
                 and "value_zscore" in df_matrix.columns
                 and df_matrix["value_zscore"].notna().any()
         ):
+
             value_col_classification = "value_zscore"
+
         else:
+
             value_col_classification = VALUE_COL
 
         # ---------------------------------------------------

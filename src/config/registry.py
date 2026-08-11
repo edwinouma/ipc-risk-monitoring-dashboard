@@ -1,6 +1,7 @@
 # ==========================================================
 # IMPORTS
 # ==========================================================
+
 from .seasonality import (
     COUNTRY_SEASONS,
     ALL_MONTHS_ONLY
@@ -15,6 +16,7 @@ from .methods import (
 from .indicators import (
     INDICATOR_DIRECTION,
     INDICATOR_TYPE,
+    MORBIDITY_INDICATORS,
 )
 
 from .labels import (
@@ -29,6 +31,7 @@ from .thresholds import (
     SPI_TRUE_THRESHOLDS,
     SPI_TRUE_FLOOD_THRESHOLDS,
     ZSCORE_TRUE_THRESHOLDS,
+    ALPS_THRESHOLDS,
     COUNTRY_THRESHOLDS,
     INDICATOR_PERCENTILES,
 )
@@ -138,6 +141,16 @@ def get_zscore_true_thresholds(indicator):
         ZSCORE_TRUE_THRESHOLDS["default"]
     )
 
+
+# ==========================================================
+# ALPS THRESHOLDS
+# ==========================================================
+
+def get_alps_thresholds():
+
+    return ALPS_THRESHOLDS["default"]
+
+
 # ==========================================================
 # PERCENTILE CONFIGURATION
 # ==========================================================
@@ -154,6 +167,7 @@ def get_percentile_config(indicator):
 
     return INDICATOR_PERCENTILES["default_lower"]
 
+
 # ==========================================================
 # FUTURE COUNTRY-SPECIFIC THRESHOLDS
 # ==========================================================
@@ -167,7 +181,11 @@ def get_thresholds(country, indicator):
     ):
         return COUNTRY_THRESHOLDS[country][indicator]
 
-    return EVENT_THRESHOLDS.get(indicator, {})
+    return EVENT_THRESHOLDS.get(
+        indicator,
+        {}
+    )
+
 
 # ==========================================================
 # COUNTRY HYBRID THRESHOLDS
@@ -186,6 +204,7 @@ def get_hybrid_thresholds(country, indicator):
         {}
     )
 
+
 # ==========================================================
 # SEASONS
 # ==========================================================
@@ -203,6 +222,10 @@ def get_country_seasons(country, indicator):
         "ndvi_absolute"
     ]
 
+    # ------------------------------------------------------
+    # Rainfall
+    # ------------------------------------------------------
+
     if indicator in rainfall_indicators:
 
         return COUNTRY_SEASONS.get(
@@ -213,6 +236,10 @@ def get_country_seasons(country, indicator):
             ALL_MONTHS_ONLY
         )
 
+    # ------------------------------------------------------
+    # NDVI
+    # ------------------------------------------------------
+
     if indicator in ndvi_indicators:
 
         return COUNTRY_SEASONS.get(
@@ -222,5 +249,26 @@ def get_country_seasons(country, indicator):
             "NDVI",
             ALL_MONTHS_ONLY
         )
+
+    # ------------------------------------------------------
+    # Morbidity
+    #
+    # Morbidity is seasonally standardized by calendar month:
+    #
+    # January  -> historical Januaries
+    # February -> historical Februaries
+    # ...
+    # December -> historical Decembers
+    #
+    # Therefore no rainfall/NDVI seasonal-window definition
+    # is applied.
+    # ------------------------------------------------------
+
+    if indicator in MORBIDITY_INDICATORS:
+        return ALL_MONTHS_ONLY
+
+    # ------------------------------------------------------
+    # Default
+    # ------------------------------------------------------
 
     return ALL_MONTHS_ONLY
