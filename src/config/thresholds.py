@@ -364,3 +364,71 @@ VCI_THRESHOLDS = {
     }
 
 }
+
+# ==========================================================
+# OUTCOME INDICATOR DETERIORATION THRESHOLDS
+# ==========================================================
+#
+# Hybrid outcome methodology.
+#
+# Thresholds represent percentage-point increases in adverse
+# outcome prevalence.
+#
+# Two deterioration dimensions are evaluated:
+#
+#   baseline:
+#       Difference between current adverse prevalence and the
+#       mean of previous available observations.
+#
+#   mom:
+#       Difference between current adverse prevalence and the
+#       immediately previous observation.
+#
+# Positive values indicate deterioration.
+#
+# Current thresholds are provisional operational thresholds
+# informed by the Jan-Jul 2026 Kenya outcome dataset and should
+# be reassessed as additional historical data become available.
+# ==========================================================
+
+OUTCOME_DETERIORATION_THRESHOLDS = {
+
+    "FCS": {
+
+        "baseline": {
+            "alert": 3.0,
+            "alarm": 7.0
+        },
+
+        "mom": {
+            "alert": 8.0,
+            "alarm": 12.0
+        }
+    },
+
+    "RCSI": {
+
+        "baseline": {
+            "alert": 2.5,
+            "alarm": 5.0
+        },
+
+        "mom": {
+            "alert": 4.0,
+            "alarm": 6.0
+        }
+    },
+
+    "LCS": {
+
+        "baseline": {
+            "alert": 3.0,
+            "alarm": 7.0
+        },
+
+        "mom": {
+            "alert": 3.0,
+            "alarm": 7.0
+        }
+    }
+}

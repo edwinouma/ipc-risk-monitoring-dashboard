@@ -37,7 +37,6 @@ from src.config import TOT_CONFIG, DERIVED_INDICATORS
 from src.spi_true import compute_true_spi
 from src.alps import compute_alps
 from src.vci import compute_vci
-
 import pandas as pd
 import os
 import numpy as np
